@@ -1,0 +1,164 @@
+import { useNavigate } from "react-router-dom"
+import { Card, Eyebrow, Screen } from "../components/Screen"
+import { ProgressRing } from "../components/ProgressRing"
+import { useAppStore } from "../store/useAppStore"
+
+const quickAdd = [
+  {
+    label: "Log Food",
+    to: "/log",
+    path: "M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z",
+    extra: <circle cx="12" cy="13" r="3.5" />,
+  },
+  {
+    label: "Scan Grocery",
+    to: "/scan",
+    path: "M7 8v8M10 8v8M13 8v3M13 13v3M16 8v8",
+    extra: <rect x="3" y="6" width="18" height="12" rx="1.5" />,
+  },
+  {
+    label: "Log Exercise",
+    to: "/log",
+    path: "M6.5 17.5l11-11M4 15l5 5M15 4l5 5M2.5 12.5l3-3M18.5 18.5l3-3",
+  },
+  {
+    label: "Log Water",
+    to: "/hydration",
+    path: "M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z",
+  },
+]
+
+function formatToday() {
+  return new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
+}
+
+export function Home() {
+  const navigate = useNavigate()
+  const totals = useAppStore((s) => s.totals)
+  const targets = useAppStore((s) => s.targets)
+  const reminder = useAppStore((s) => s.reminder)
+
+  return (
+    <Screen>
+      <div>
+        <Eyebrow>{formatToday()}</Eyebrow>
+        <h1 className="mt-1 text-2xl font-semibold">Good afternoon, Asha</h1>
+      </div>
+
+      <Card>
+        <div className="grid grid-cols-2 gap-x-2.5 gap-y-4">
+          <ProgressRing
+            value={totals.fiberG}
+            target={targets.fiberG}
+            label="Fiber"
+            unit="g"
+            colorVar="--color-sage"
+            bgVar="--color-sage-bg"
+          />
+          <ProgressRing
+            value={totals.proteinG}
+            target={targets.proteinG}
+            label="Protein"
+            unit="g"
+            colorVar="--color-honey"
+            bgVar="--color-honey-bg"
+          />
+          <ProgressRing
+            value={totals.carbG}
+            target={targets.carbG}
+            label="Carbs"
+            unit="g"
+            colorVar="--color-berry"
+            bgVar="--color-berry-bg"
+          />
+          <ProgressRing
+            value={totals.waterCups}
+            target={targets.waterCups}
+            label="Water"
+            colorVar="--color-water"
+            bgVar="--color-water-bg"
+          />
+        </div>
+      </Card>
+
+      <Card className="border-transparent bg-[color:var(--color-sage-bg)]">
+        <div className="text-[0.85rem] leading-relaxed text-[color:var(--color-ink)]">
+          Your fiber intake is up from last week — nice work keeping breakfast fiber-forward.
+        </div>
+      </Card>
+
+      <div>
+        <Eyebrow>Quick add</Eyebrow>
+        <div className="mt-2.5 grid grid-cols-4 gap-2.5">
+          {quickAdd.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => navigate(item.to)}
+              className="flex min-h-11 flex-col items-center gap-2 rounded-2xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-center"
+            >
+              <svg
+                width={22}
+                height={22}
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-[color:var(--color-sage)]"
+              >
+                <path d={item.path} />
+                {item.extra}
+              </svg>
+              <span className="text-[0.66rem] font-bold leading-tight text-[color:var(--color-ink-soft)]">
+                {item.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button onClick={() => navigate("/hydration")} className="text-left">
+        <Card className="cursor-pointer">
+          <Eyebrow>Up next</Eyebrow>
+          <div className="mt-2.5 flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[color:var(--color-honey-bg)]">
+              <svg
+                width={20}
+                height={20}
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-[color:var(--color-honey)]"
+              >
+                <path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <div className="text-[0.92rem] font-bold">Fiber supplement — {reminder.nextDoseTime}</div>
+              <div className="text-[0.78rem] text-[color:var(--color-ink-soft)]">
+                Full detail in Water &amp; Fiber
+              </div>
+            </div>
+            <svg
+              width={18}
+              height={18}
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="shrink-0 text-[color:var(--color-ink-faint)]"
+            >
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </div>
+        </Card>
+      </button>
+    </Screen>
+  )
+}

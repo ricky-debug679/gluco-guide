@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #fbf7f1;
+  --color-surface: #ffffff;
+  --color-surface-2: #f3ecdf;
+  --color-ink: #2b2620;
+  --color-ink-soft: #6b6152;
+  --color-ink-faint: #9c9282;
+  --color-line: #e7dfd0;
+  --color-sage: #5e8261;
+  --color-sage-bg: #e5eee2;
+  --color-honey: #b4823a;
+  --color-honey-bg: #f5e9d3;
+  --color-berry: #a8636b;
+  --color-berry-bg: #f3e3e1;
+  --color-water: #4c7a8c;
+  --color-water-bg: #e1ebee;
+
+  --font-display: "Lora", Georgia, serif;
+  --font-body: "Karla", ui-sans-serif, system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #141210;
+    --color-surface: #242019;
+    --color-surface-2: #2b2620;
+    --color-ink: #f2ecdf;
+    --color-ink-soft: #bdb2a0;
+    --color-ink-faint: #8a8070;
+    --color-line: #3a3428;
+    --color-sage: #8fb78c;
+    --color-sage-bg: #28332a;
+    --color-honey: #d9ac63;
+    --color-honey-bg: #382c1a;
+    --color-berry: #cc9198;
+    --color-berry-bg: #372524;
+    --color-water: #7fb3c4;
+    --color-water-bg: #22323a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+}
+
+input {
+  font-family: inherit;
+}
