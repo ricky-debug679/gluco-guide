@@ -2,11 +2,56 @@ import { useState } from "react"
 import { Card, Eyebrow, Screen } from "../components/Screen"
 import { useAppStore } from "../store/useAppStore"
 import { mockFoodSearchResults, mockPhotoRecognizedFood } from "../lib/mockData"
+import { searchFoods, usdaConfigured } from "../lib/usda"
+import { useOptionalHousehold } from "../context/HouseholdContext"
+import { useFoodLogsToday } from "../hooks/useFoodLogsToday"
+import type { FoodItem } from "../lib/types"
 
 export function FoodLog() {
   const [tab, setTab] = useState<"photo" | "search">("photo")
-  const addFoodToLog = useAppStore((s) => s.addFoodToLog)
+  const mockAddFoodToLog = useAppStore((s) => s.addFoodToLog)
   const [added, setAdded] = useState(false)
+
+  const householdCtx = useOptionalHousehold()
+  const selfMemberId = householdCtx?.household.selfMember.id
+  const isLive = !!householdCtx
+  const foodLogs = useFoodLogsToday(selfMemberId)
+
+  const [query, setQuery] = useState("lentil")
+  const [results, setResults] = useState<FoodItem[]>(mockFoodSearchResults)
+  const [searching, setSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
+
+  async function runSearch(q: string) {
+    setQuery(q)
+    if (!isLive || !usdaConfigured) {
+      setResults(mockFoodSearchResults.filter((f) => f.name.toLowerCase().includes(q.toLowerCase())))
+      return
+    }
+    if (!q.trim()) {
+      setResults([])
+      return
+    }
+    setSearching(true)
+    setSearchError(null)
+    try {
+      const found = await searchFoods(q)
+      setResults(found)
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : "Search failed")
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  async function handleAddFood(food: FoodItem, source: "photo" | "search") {
+    if (isLive) {
+      await foodLogs.addFood(food, source)
+    } else {
+      mockAddFoodToLog(food)
+    }
+    setAdded(true)
+  }
 
   return (
     <Screen>
@@ -19,7 +64,10 @@ export function FoodLog() {
         {(["photo", "search"] as const).map((t) => (
           <button
             key={t}
-            onClick={() => setTab(t)}
+            onClick={() => {
+              setTab(t)
+              if (t === "search") void runSearch(query)
+            }}
             className={`min-h-[38px] flex-1 rounded-lg text-center text-[0.86rem] font-bold capitalize ${
               tab === t
                 ? "bg-[color:var(--color-surface)] text-[color:var(--color-sage)] shadow-sm"
@@ -49,6 +97,9 @@ export function FoodLog() {
               <circle cx="12" cy="13" r="3.5" />
             </svg>
             <div className="text-[0.82rem] font-bold">Photo captured</div>
+            <div className="px-6 text-center text-[0.68rem] text-[color:var(--color-ink-faint)]">
+              Demo only for now — on-device food recognition is next on the roadmap
+            </div>
           </div>
           <Card>
             <div className="text-[0.72rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-sage)]">
@@ -65,10 +116,7 @@ export function FoodLog() {
             </div>
           </Card>
           <button
-            onClick={() => {
-              addFoodToLog(mockPhotoRecognizedFood)
-              setAdded(true)
-            }}
+            onClick={() => handleAddFood(mockPhotoRecognizedFood, "photo")}
             disabled={added}
             className={`min-h-11 rounded-xl px-4 py-3.5 text-[0.9rem] font-bold ${
               added
@@ -84,23 +132,40 @@ export function FoodLog() {
           <input
             className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.92rem]"
             placeholder="Search foods"
-            defaultValue="lentil"
+            value={query}
+            onChange={(e) => void runSearch(e.target.value)}
           />
+          {isLive && !usdaConfigured && (
+            <div className="text-[0.76rem] text-[color:var(--color-ink-faint)]">
+              USDA search isn't configured yet — showing sample results.
+            </div>
+          )}
+          {searchError && (
+            <div className="rounded-xl bg-[color:var(--color-berry-bg)] p-3 text-[0.82rem]">{searchError}</div>
+          )}
           <Card className="p-0">
-            {mockFoodSearchResults.map((food, i) => (
-              <button
-                key={food.id}
-                onClick={() => addFoodToLog(food)}
-                className={`w-full px-4 py-3 text-left ${
-                  i < mockFoodSearchResults.length - 1 ? "border-b border-[color:var(--color-line)]" : ""
-                }`}
-              >
-                <div className="text-[0.88rem] font-bold">{food.name}</div>
-                <div className="mt-0.5 text-[0.72rem] text-[color:var(--color-ink-faint)]">
-                  Fiber {food.fiberG}g · Protein {food.proteinG}g · Carbs {food.carbG}g
-                </div>
-              </button>
-            ))}
+            {searching ? (
+              <div className="p-4 text-center text-[0.85rem] text-[color:var(--color-ink-faint)]">Searching…</div>
+            ) : results.length === 0 ? (
+              <div className="p-4 text-center text-[0.85rem] text-[color:var(--color-ink-faint)]">
+                No results yet
+              </div>
+            ) : (
+              results.map((food, i) => (
+                <button
+                  key={food.id}
+                  onClick={() => handleAddFood(food, "search")}
+                  className={`w-full px-4 py-3 text-left ${
+                    i < results.length - 1 ? "border-b border-[color:var(--color-line)]" : ""
+                  }`}
+                >
+                  <div className="text-[0.88rem] font-bold">{food.name}</div>
+                  <div className="mt-0.5 text-[0.72rem] text-[color:var(--color-ink-faint)]">
+                    Fiber {food.fiberG}g · Protein {food.proteinG}g · Carbs {food.carbG}g
+                  </div>
+                </button>
+              ))
+            )}
           </Card>
         </>
       )}

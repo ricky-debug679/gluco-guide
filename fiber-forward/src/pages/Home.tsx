@@ -5,6 +5,7 @@ import { useAppStore } from "../store/useAppStore"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useWaterToday } from "../hooks/useWaterToday"
 import { useFiberSupplement } from "../hooks/useFiberSupplement"
+import { useFoodLogsToday } from "../hooks/useFoodLogsToday"
 
 const quickAdd = [
   {
@@ -45,9 +46,14 @@ export function Home() {
   const selfMemberId = householdCtx?.household.selfMember.id
   const water = useWaterToday(selfMemberId)
   const supplement = useFiberSupplement(selfMemberId)
+  const foodLogs = useFoodLogsToday(selfMemberId)
 
-  const waterCups = householdCtx ? water.cupsToday : totals.waterCups
-  const nextDoseLabel = householdCtx ? supplement.name : "Fiber supplement"
+  const isLive = !!householdCtx
+  const waterCups = isLive ? water.cupsToday : totals.waterCups
+  const fiberG = isLive ? foodLogs.totals.fiberG : totals.fiberG
+  const proteinG = isLive ? foodLogs.totals.proteinG : totals.proteinG
+  const carbG = isLive ? foodLogs.totals.carbG : totals.carbG
+  const nextDoseLabel = isLive ? supplement.name : "Fiber supplement"
   const nextDoseTime = mockReminder.nextDoseTime
 
   return (
@@ -60,7 +66,7 @@ export function Home() {
       <Card>
         <div className="grid grid-cols-2 gap-x-2.5 gap-y-4">
           <ProgressRing
-            value={totals.fiberG}
+            value={fiberG}
             target={targets.fiberG}
             label="Fiber"
             unit="g"
@@ -68,7 +74,7 @@ export function Home() {
             bgVar="--color-sage-bg"
           />
           <ProgressRing
-            value={totals.proteinG}
+            value={proteinG}
             target={targets.proteinG}
             label="Protein"
             unit="g"
@@ -76,7 +82,7 @@ export function Home() {
             bgVar="--color-honey-bg"
           />
           <ProgressRing
-            value={totals.carbG}
+            value={carbG}
             target={targets.carbG}
             label="Carbs"
             unit="g"
@@ -95,7 +101,11 @@ export function Home() {
 
       <Card className="border-transparent bg-[color:var(--color-sage-bg)]">
         <div className="text-[0.85rem] leading-relaxed text-[color:var(--color-ink)]">
-          Your fiber intake is up from last week — nice work keeping breakfast fiber-forward.
+          {isLive
+            ? fiberG > 0
+              ? "Nice work logging today — every fiber-forward choice adds up."
+              : "Log your first meal today to start building your fiber trend."
+            : "Your fiber intake is up from last week — nice work keeping breakfast fiber-forward."}
         </div>
       </Card>
 
