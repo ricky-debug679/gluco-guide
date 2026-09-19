@@ -22,7 +22,7 @@ const quickAdd = [
   },
   {
     label: "Log Exercise",
-    to: "/log",
+    to: "/exercise",
     path: "M6.5 17.5l11-11M4 15l5 5M15 4l5 5M2.5 12.5l3-3M18.5 18.5l3-3",
   },
   {
