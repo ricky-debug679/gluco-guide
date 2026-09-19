@@ -1,42 +1,47 @@
+import { useState } from "react"
 import { Card, Eyebrow, Screen } from "../components/Screen"
 import { useAppStore } from "../store/useAppStore"
 import { mockLabMetrics } from "../lib/mockData"
-import type { LabMetric } from "../lib/types"
-
-const CHART_W = 310
-const CHART_H = 150
-const X0 = 10
-const X1 = 300
-
-function buildChart(metric: LabMetric) {
-  const values = metric.readings.map((r) => r.value)
-  const bandLo = metric.targetLow
-  const bandHi = metric.targetHigh
-  const min = Math.min(...values, bandLo) - (Math.max(...values) - Math.min(...values)) * 0.15 - 2
-  const max = Math.max(...values, bandHi) + 2
-  const yOf = (v: number) => CHART_H - 20 - ((v - min) * (CHART_H - 30)) / (max - min)
-
-  const points = metric.readings.map((r, i) => {
-    const x = X0 + ((X1 - X0) * i) / (metric.readings.length - 1)
-    return { x, y: yOf(r.value) }
-  })
-
-  return {
-    points,
-    pointsAttr: points.map((p) => `${p.x},${p.y}`).join(" "),
-    bandTop: yOf(bandHi),
-    bandHeight: yOf(bandLo) - yOf(bandHi),
-  }
-}
+import { useOptionalHousehold } from "../context/HouseholdContext"
+import { useLabReadings } from "../hooks/useLabReadings"
+import { buildChart, describeTrend } from "../lib/labTrend"
 
 export function LabTrends() {
-  const activeKey = useAppStore((s) => s.activeLabKey)
-  const setActiveKey = useAppStore((s) => s.setActiveLabKey)
-  const metric = mockLabMetrics.find((m) => m.key === activeKey)!
-  const chart = buildChart(metric)
-  const monthLabels = metric.readings.map((r) =>
-    new Date(r.date).toLocaleDateString(undefined, { month: "short" }),
-  )
+  const mockActiveKey = useAppStore((s) => s.activeLabKey)
+  const setMockActiveKey = useAppStore((s) => s.setActiveLabKey)
+
+  const householdCtx = useOptionalHousehold()
+  const isLive = !!householdCtx
+  const selfMemberId = householdCtx?.household.selfMember.id
+  const labs = useLabReadings(selfMemberId)
+
+  const [localActiveKey, setLocalActiveKey] = useState(mockActiveKey)
+  const activeKey = isLive ? localActiveKey : mockActiveKey
+  const setActiveKey = isLive ? setLocalActiveKey : setMockActiveKey
+
+  const metricDef = mockLabMetrics.find((m) => m.key === activeKey)!
+  const realReadings = labs.readingsByMetric[activeKey] ?? []
+  const readings = isLive ? realReadings : metricDef.readings
+  const chart = buildChart(readings, metricDef.targetLow, metricDef.targetHigh)
+  const summary = isLive ? describeTrend(metricDef.shortLabel, readings, metricDef.targetHigh) : metricDef.summary
+
+  const [showForm, setShowForm] = useState(false)
+  const [value, setValue] = useState("")
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [saving, setSaving] = useState(false)
+
+  async function handleAddReading() {
+    const numeric = Number(value)
+    if (!numeric || numeric <= 0) return
+    setSaving(true)
+    try {
+      await labs.addReading(activeKey, numeric, date)
+      setValue("")
+      setShowForm(false)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <Screen>
@@ -61,32 +66,93 @@ export function LabTrends() {
         ))}
       </div>
 
-      <Card>
-        <div className="text-[0.78rem] font-bold text-[color:var(--color-ink-faint)]">{metric.label}</div>
-        <svg width="100%" viewBox={`0 0 ${CHART_W} ${CHART_H}`} className="mt-2">
-          <rect x={0} y={chart.bandTop} width={CHART_W} height={chart.bandHeight} fill="var(--color-sage-bg)" rx={4} />
-          <polyline
-            points={chart.pointsAttr}
-            fill="none"
-            stroke="var(--color-berry)"
-            strokeWidth={3}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {chart.points.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r={4.5} fill="var(--color-surface)" stroke="var(--color-berry)" strokeWidth={2.5} />
-          ))}
-        </svg>
-        <div className="mt-0.5 flex justify-between px-1 text-[0.66rem] font-semibold text-[color:var(--color-ink-faint)]">
-          {monthLabels.map((m, i) => (
-            <span key={i}>{m}</span>
-          ))}
-        </div>
-      </Card>
+      {chart.points.length > 0 && (
+        <Card>
+          <div className="text-[0.78rem] font-bold text-[color:var(--color-ink-faint)]">{metricDef.label}</div>
+          <svg width="100%" viewBox="0 0 310 150" className="mt-2">
+            <rect x={0} y={chart.bandTop} width={310} height={chart.bandHeight} fill="var(--color-sage-bg)" rx={4} />
+            {chart.points.length > 1 && (
+              <polyline
+                points={chart.pointsAttr}
+                fill="none"
+                stroke="var(--color-berry)"
+                strokeWidth={3}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            )}
+            {chart.points.map((p, i) => (
+              <circle key={i} cx={p.x} cy={p.y} r={4.5} fill="var(--color-surface)" stroke="var(--color-berry)" strokeWidth={2.5} />
+            ))}
+          </svg>
+          <div className="mt-0.5 flex justify-between px-1 text-[0.66rem] font-semibold text-[color:var(--color-ink-faint)]">
+            {readings.map((r, i) => (
+              <span key={i}>{new Date(r.date).toLocaleDateString(undefined, { month: "short" })}</span>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Card className="border-transparent bg-[color:var(--color-sage-bg)]">
-        <div className="text-[0.85rem] leading-relaxed">{metric.summary}</div>
+        <div className="text-[0.85rem] leading-relaxed">{summary}</div>
       </Card>
+
+      {isLive && (
+        <>
+          {showForm ? (
+            <Card className="flex flex-col gap-2.5">
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="text-[0.72rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
+                    {metricDef.shortLabel} value
+                  </label>
+                  <input
+                    autoFocus
+                    type="number"
+                    inputMode="decimal"
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    className="mt-1.5 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[0.72rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="mt-1.5 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2.5">
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="min-h-11 flex-1 rounded-xl bg-[color:var(--color-surface-2)] text-[0.85rem] font-bold text-[color:var(--color-ink-soft)]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddReading}
+                  disabled={!value || saving}
+                  className="min-h-11 flex-1 rounded-xl bg-[color:var(--color-sage)] text-[0.85rem] font-bold text-white disabled:opacity-60"
+                >
+                  {saving ? "Saving…" : "Save reading"}
+                </button>
+              </div>
+            </Card>
+          ) : (
+            <button
+              onClick={() => setShowForm(true)}
+              className="min-h-11 w-full rounded-xl bg-[color:var(--color-surface-2)] py-3 text-[0.85rem] font-bold text-[color:var(--color-ink-soft)]"
+            >
+              + Add a {metricDef.shortLabel.toLowerCase()} reading
+            </button>
+          )}
+        </>
+      )}
 
       <div className="text-[0.72rem] leading-relaxed text-[color:var(--color-ink-faint)]">
         Target range reflects CDC National Diabetes Prevention Program benchmarks — not a diagnosis. Always
