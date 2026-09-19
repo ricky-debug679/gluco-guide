@@ -2,6 +2,9 @@ import { useNavigate } from "react-router-dom"
 import { Card, Eyebrow, Screen } from "../components/Screen"
 import { ProgressRing } from "../components/ProgressRing"
 import { useAppStore } from "../store/useAppStore"
+import { useOptionalHousehold } from "../context/HouseholdContext"
+import { useWaterToday } from "../hooks/useWaterToday"
+import { useFiberSupplement } from "../hooks/useFiberSupplement"
 
 const quickAdd = [
   {
@@ -36,7 +39,16 @@ export function Home() {
   const navigate = useNavigate()
   const totals = useAppStore((s) => s.totals)
   const targets = useAppStore((s) => s.targets)
-  const reminder = useAppStore((s) => s.reminder)
+  const mockReminder = useAppStore((s) => s.reminder)
+
+  const householdCtx = useOptionalHousehold()
+  const selfMemberId = householdCtx?.household.selfMember.id
+  const water = useWaterToday(selfMemberId)
+  const supplement = useFiberSupplement(selfMemberId)
+
+  const waterCups = householdCtx ? water.cupsToday : totals.waterCups
+  const nextDoseLabel = householdCtx ? supplement.name : "Fiber supplement"
+  const nextDoseTime = mockReminder.nextDoseTime
 
   return (
     <Screen>
@@ -72,7 +84,7 @@ export function Home() {
             bgVar="--color-berry-bg"
           />
           <ProgressRing
-            value={totals.waterCups}
+            value={waterCups}
             target={targets.waterCups}
             label="Water"
             colorVar="--color-water"
@@ -138,7 +150,9 @@ export function Home() {
               </svg>
             </div>
             <div className="flex-1">
-              <div className="text-[0.92rem] font-bold">Fiber supplement — {reminder.nextDoseTime}</div>
+              <div className="text-[0.92rem] font-bold">
+                {nextDoseLabel} — {nextDoseTime}
+              </div>
               <div className="text-[0.78rem] text-[color:var(--color-ink-soft)]">
                 Full detail in Water &amp; Fiber
               </div>
