@@ -1,19 +1,28 @@
 import { Card, Screen } from "../components/Screen"
+import { useOptionalHousehold } from "../context/HouseholdContext"
+import { supabase } from "../lib/supabase"
 
 const rows = ["Reminders", "Household", "Units (mg/dL)", "Privacy & sharing"]
 
 export function You() {
+  const householdCtx = useOptionalHousehold()
+  const isLive = !!householdCtx
+  const name = isLive ? householdCtx.household.selfMember.display_name : "Asha"
+  const goal = isLive ? (householdCtx.household.selfMember.goal ?? "No goal set yet") : "General wellness"
+
+  async function handleSignOut() {
+    if (supabase) await supabase.auth.signOut()
+  }
+
   return (
     <Screen>
       <div className="flex items-center gap-3.5">
         <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[color:var(--color-sage-bg)] font-serif text-[1.3rem] font-semibold text-[color:var(--color-sage)]">
-          A
+          {name[0]?.toUpperCase()}
         </div>
         <div>
-          <h1 className="text-[1.25rem] font-semibold">Asha</h1>
-          <div className="mt-0.5 text-[0.78rem] text-[color:var(--color-ink-faint)]">
-            Goal: General wellness
-          </div>
+          <h1 className="text-[1.25rem] font-semibold">{name}</h1>
+          <div className="mt-0.5 text-[0.78rem] text-[color:var(--color-ink-faint)]">Goal: {goal}</div>
         </div>
       </div>
 
@@ -33,9 +42,14 @@ export function You() {
         ))}
       </Card>
 
-      <button className="min-h-11 w-full rounded-xl bg-[color:var(--color-surface-2)] py-3 text-[0.85rem] font-bold text-[color:var(--color-ink-soft)]">
-        Sign out
-      </button>
+      {isLive && (
+        <button
+          onClick={handleSignOut}
+          className="min-h-11 w-full rounded-xl bg-[color:var(--color-surface-2)] py-3 text-[0.85rem] font-bold text-[color:var(--color-ink-soft)]"
+        >
+          Sign out
+        </button>
+      )}
     </Screen>
   )
 }

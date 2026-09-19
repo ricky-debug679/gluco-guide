@@ -36,6 +36,13 @@ function formatToday() {
   return new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
 }
 
+function greeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return "Good morning"
+  if (hour < 18) return "Good afternoon"
+  return "Good evening"
+}
+
 export function Home() {
   const navigate = useNavigate()
   const totals = useAppStore((s) => s.totals)
@@ -55,12 +62,15 @@ export function Home() {
   const carbG = isLive ? foodLogs.totals.carbG : totals.carbG
   const nextDoseLabel = isLive ? supplement.name : "Fiber supplement"
   const nextDoseTime = mockReminder.nextDoseTime
+  const name = isLive ? householdCtx.household.selfMember.display_name : "Asha"
 
   return (
     <Screen>
       <div>
         <Eyebrow>{formatToday()}</Eyebrow>
-        <h1 className="mt-1 text-2xl font-semibold">Good afternoon, Asha</h1>
+        <h1 className="mt-1 text-2xl font-semibold">
+          {greeting()}, {name}
+        </h1>
       </div>
 
       <Card>
