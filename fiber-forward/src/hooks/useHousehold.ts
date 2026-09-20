@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "../lib/supabase"
+import type { ActivityLevel, BiologicalSex } from "../lib/caloriePlan"
 
 export interface MemberRow {
   id: string
@@ -10,6 +11,11 @@ export interface MemberRow {
   relationship: "self" | "family"
   goal: string | null
   avatar_color: string
+  height_cm: number | null
+  weight_kg: number | null
+  age: number | null
+  biological_sex: BiologicalSex | null
+  activity_level: ActivityLevel | null
 }
 
 export interface HouseholdData {
@@ -74,6 +80,37 @@ export function useHousehold(user: User | null) {
     queryFn: () => bootstrapHousehold(user!),
     enabled: !!user && !!supabase,
     staleTime: 60_000,
+  })
+}
+
+export function useCompleteProfile(memberId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      displayName: string
+      goal: string
+      heightCm: number
+      weightKg: number
+      age: number
+      sex: BiologicalSex
+      activityLevel: ActivityLevel
+    }) => {
+      if (!supabase || !memberId) throw new Error("No profile to update yet")
+      const { error } = await supabase
+        .from("members")
+        .update({
+          display_name: input.displayName,
+          goal: input.goal,
+          height_cm: input.heightCm,
+          weight_kg: input.weightKg,
+          age: input.age,
+          biological_sex: input.sex,
+          activity_level: input.activityLevel,
+        })
+        .eq("id", memberId)
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["household"] }),
   })
 }
 

@@ -40,6 +40,7 @@ export const mockTargets: NutrientTargets = {
   proteinG: 90,
   carbG: 150,
   fatG: 78, // FDA Daily Value for total fat, 2,000-calorie diet
+  caloriesKcal: 2000,
   waterCups: 8,
 }
 
@@ -48,13 +49,14 @@ export const mockTotals: NutrientTotals = {
   proteinG: 52,
   carbG: 110,
   fatG: 34,
+  caloriesKcal: 950,
   waterCups: 5,
 }
 
 export const mockFoodSearchResults: FoodItem[] = [
-  { id: "f1", name: "Lentil & Vegetable Soup", portion: "1 bowl", fiberG: 8, proteinG: 12, carbG: 26, fatG: 4 },
-  { id: "f2", name: "Red Lentil Dal, 1 cup", portion: "1 cup", fiberG: 10, proteinG: 18, carbG: 32, fatG: 6 },
-  { id: "f3", name: "Lentil Crackers, 12 pc", portion: "12 pc", fiberG: 4, proteinG: 5, carbG: 20, fatG: 3 },
+  { id: "f1", name: "Lentil & Vegetable Soup", portion: "1 bowl", fiberG: 8, proteinG: 12, carbG: 26, fatG: 4, caloriesKcal: 210 },
+  { id: "f2", name: "Red Lentil Dal, 1 cup", portion: "1 cup", fiberG: 10, proteinG: 18, carbG: 32, fatG: 6, caloriesKcal: 260 },
+  { id: "f3", name: "Lentil Crackers, 12 pc", portion: "12 pc", fiberG: 4, proteinG: 5, carbG: 20, fatG: 3, caloriesKcal: 140 },
 ]
 
 export const mockPhotoRecognizedFood: FoodItem = {
@@ -65,6 +67,7 @@ export const mockPhotoRecognizedFood: FoodItem = {
   proteinG: 14,
   carbG: 38,
   fatG: 7,
+  caloriesKcal: 310,
 }
 
 export const mockGroceryItems: GroceryItem[] = [

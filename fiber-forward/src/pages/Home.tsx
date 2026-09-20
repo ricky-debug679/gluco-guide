@@ -8,6 +8,7 @@ import { useFiberSupplement } from "../hooks/useFiberSupplement"
 import { useFoodLogsToday } from "../hooks/useFoodLogsToday"
 import { useWellnessActivity } from "../hooks/useWellnessActivity"
 import { useSupplements } from "../hooks/useSupplements"
+import { buildCaloriePlan } from "../lib/caloriePlan"
 
 const MIND_STRESS_TARGET = 2 // a couple of mindful moments a day — a goal, not a clinical benchmark
 
@@ -78,6 +79,18 @@ export function Home() {
   const proteinG = isLive ? foodLogs.totals.proteinG : totals.proteinG
   const carbG = isLive ? foodLogs.totals.carbG : totals.carbG
   const fatG = isLive ? foodLogs.totals.fatG : totals.fatG
+  const caloriesKcal = isLive ? foodLogs.totals.caloriesKcal : totals.caloriesKcal
+  const selfMember = householdCtx?.household.selfMember
+  const calorieTarget =
+    isLive && selfMember?.height_cm && selfMember.weight_kg && selfMember.age && selfMember.biological_sex && selfMember.activity_level
+      ? buildCaloriePlan({
+          heightCm: selfMember.height_cm,
+          weightKg: selfMember.weight_kg,
+          age: selfMember.age,
+          sex: selfMember.biological_sex,
+          activityLevel: selfMember.activity_level,
+        }).targetCalories
+      : targets.caloriesKcal
   const mindStressCount = isLive ? wellness.today.length : 0
   const supplementsTaken = isLive ? supplements.takenCount : 0
   const supplementsTarget = isLive ? Math.max(supplements.active.length, 1) : 1
@@ -98,6 +111,13 @@ export function Home() {
       <Card>
         <div className="grid grid-cols-3 gap-x-2 gap-y-4">
           <ProgressRing
+            value={caloriesKcal}
+            target={calorieTarget}
+            label="Calories"
+            colorVar="--color-honey"
+            bgVar="--color-honey-bg"
+          />
+          <ProgressRing
             value={fiberG}
             target={targets.fiberG}
             label="Fiber"
@@ -110,8 +130,8 @@ export function Home() {
             target={targets.proteinG}
             label="Protein"
             unit="g"
-            colorVar="--color-honey"
-            bgVar="--color-honey-bg"
+            colorVar="--color-mind"
+            bgVar="--color-mind-bg"
           />
           <ProgressRing
             value={carbG}
@@ -136,14 +156,14 @@ export function Home() {
             colorVar="--color-water"
             bgVar="--color-water-bg"
           />
-          <ProgressRing
-            value={mindStressCount}
-            target={MIND_STRESS_TARGET}
-            label="Mind/Sleep"
-            colorVar="--color-mind"
-            bgVar="--color-mind-bg"
-          />
-          <div className="col-start-2">
+          <div className="col-span-3 flex justify-center gap-8">
+            <ProgressRing
+              value={mindStressCount}
+              target={MIND_STRESS_TARGET}
+              label="Mind/Sleep"
+              colorVar="--color-supp"
+              bgVar="--color-supp-bg"
+            />
             <ProgressRing
               value={supplementsTaken}
               target={supplementsTarget}

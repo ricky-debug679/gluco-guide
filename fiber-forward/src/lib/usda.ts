@@ -4,6 +4,7 @@ const USDA_KEY = import.meta.env.VITE_USDA_FDC_API_KEY as string | undefined
 
 interface UsdaNutrient {
   nutrientName: string
+  unitName?: string
   value: number
 }
 
@@ -15,8 +16,8 @@ interface UsdaFood {
   foodNutrients: UsdaNutrient[]
 }
 
-function pickNutrient(nutrients: UsdaNutrient[], name: string): number {
-  const match = nutrients.find((n) => n.nutrientName === name)
+function pickNutrient(nutrients: UsdaNutrient[], name: string, unit?: string): number {
+  const match = nutrients.find((n) => n.nutrientName === name && (!unit || n.unitName === unit))
   return match ? Math.round(match.value * 10) / 10 : 0
 }
 
@@ -30,6 +31,9 @@ function toFoodItem(food: UsdaFood): FoodItem {
     proteinG: pickNutrient(food.foodNutrients, "Protein"),
     carbG: pickNutrient(food.foodNutrients, "Carbohydrate, by difference"),
     fatG: pickNutrient(food.foodNutrients, "Total lipid (fat)"),
+    // Explicit KCAL unit — USDA also lists Energy in KJ, and picking the
+    // wrong one silently reports a number roughly 4x too high.
+    caloriesKcal: pickNutrient(food.foodNutrients, "Energy", "KCAL"),
   }
 }
 

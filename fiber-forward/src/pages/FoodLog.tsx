@@ -119,7 +119,8 @@ export function FoodLog() {
             <div className="mt-1 text-[0.8rem] text-[color:var(--color-ink-faint)]">
               {mockPhotoRecognizedFood.portion} · matched via nutrition database
             </div>
-            <div className="mt-3.5 flex gap-2">
+            <div className="mt-3.5 font-serif text-[1.5rem]">{mockPhotoRecognizedFood.caloriesKcal} kcal</div>
+            <div className="mt-2.5 flex gap-2">
               <Stat label="Fiber" value={`${mockPhotoRecognizedFood.fiberG}g`} colorVar="--color-sage" />
               <Stat label="Protein" value={`${mockPhotoRecognizedFood.proteinG}g`} colorVar="--color-honey" />
               <Stat label="Carbs" value={`${mockPhotoRecognizedFood.carbG}g`} colorVar="--color-berry" />
@@ -170,7 +171,12 @@ export function FoodLog() {
                     i < results.length - 1 ? "border-b border-[color:var(--color-line)]" : ""
                   }`}
                 >
-                  <div className="text-[0.88rem] font-bold">{food.name}</div>
+                  <div className="flex items-baseline justify-between">
+                    <div className="text-[0.88rem] font-bold">{food.name}</div>
+                    <div className="text-[0.8rem] font-bold text-[color:var(--color-ink-soft)]">
+                      {food.caloriesKcal} kcal
+                    </div>
+                  </div>
                   <div className="mt-0.5 text-[0.72rem] text-[color:var(--color-ink-faint)]">
                     Fiber {food.fiberG}g · Protein {food.proteinG}g · Carbs {food.carbG}g · Fat {food.fatG}g
                   </div>

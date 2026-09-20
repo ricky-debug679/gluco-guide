@@ -13,18 +13,21 @@ import { You } from "./pages/You"
 import { Auth } from "./pages/Auth"
 import { useAppStore } from "./store/useAppStore"
 import { useSession } from "./hooks/useSession"
-import { HouseholdProvider } from "./context/HouseholdContext"
+import { HouseholdProvider, useOptionalHousehold } from "./context/HouseholdContext"
 import { supabase } from "./lib/supabase"
 
 // isLive = true whenever a real signed-in household exists. In that case
-// onboarding is a one-time flow gated by the household itself already
-// existing (proven by Supabase, not by in-memory UI state), so it never
-// re-traps a returning real user. The mock-data fallback (no backend
-// configured) still gates on the in-memory onboarding flag, since there's
-// nothing else to check it against.
+// onboarding is gated on the real profile actually being complete (height
+// set on the member row), proven by Supabase rather than in-memory UI
+// state, so it never re-traps a returning user who already finished it.
+// The mock-data fallback (no backend configured) still gates on the
+// in-memory onboarding flag, since there's nothing else to check it
+// against.
 function AppRoutes({ isLive }: { isLive: boolean }) {
   const onboardingDone = useAppStore((s) => s.onboarding.done)
-  const showOnboardingGate = !isLive && !onboardingDone
+  const householdCtx = useOptionalHousehold()
+  const profileIncomplete = isLive && !!householdCtx && !householdCtx.household.selfMember.height_cm
+  const showOnboardingGate = isLive ? profileIncomplete : !onboardingDone
 
   return (
     <Routes>

@@ -14,6 +14,7 @@ export interface NutrientTotals {
   proteinG: number
   carbG: number
   fatG: number
+  caloriesKcal: number
   waterCups: number
 }
 
@@ -22,6 +23,7 @@ export interface NutrientTargets {
   proteinG: number
   carbG: number
   fatG: number
+  caloriesKcal: number
   waterCups: number
 }
 
@@ -33,6 +35,7 @@ export interface FoodItem {
   proteinG: number
   carbG: number
   fatG: number
+  caloriesKcal: number
 }
 
 export interface GrocerySwap {
