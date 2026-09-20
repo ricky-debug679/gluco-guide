@@ -21,6 +21,7 @@ export function FoodLog() {
   const [results, setResults] = useState<FoodItem[]>(mockFoodSearchResults)
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
+  const [addError, setAddError] = useState<string | null>(null)
 
   async function runSearch(q: string) {
     setQuery(q)
@@ -45,12 +46,17 @@ export function FoodLog() {
   }
 
   async function handleAddFood(food: FoodItem, source: "photo" | "search") {
-    if (isLive) {
-      await foodLogs.addFood(food, source)
-    } else {
-      mockAddFoodToLog(food)
+    setAddError(null)
+    try {
+      if (isLive) {
+        await foodLogs.addFood(food, source)
+      } else {
+        mockAddFoodToLog(food)
+      }
+      setAdded(true)
+    } catch (err) {
+      setAddError(err instanceof Error ? err.message : "Couldn't save that — try again.")
     }
-    setAdded(true)
   }
 
   return (
@@ -78,6 +84,10 @@ export function FoodLog() {
           </button>
         ))}
       </div>
+
+      {addError && (
+        <div className="rounded-xl bg-[color:var(--color-berry-bg)] p-3 text-[0.82rem]">{addError}</div>
+      )}
 
       {tab === "photo" ? (
         <>

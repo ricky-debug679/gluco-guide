@@ -29,15 +29,19 @@ export function LabTrends() {
   const [value, setValue] = useState("")
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleAddReading() {
     const numeric = Number(value)
     if (!numeric || numeric <= 0) return
     setSaving(true)
+    setError(null)
     try {
       await labs.addReading(activeKey, numeric, date)
       setValue("")
       setShowForm(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't save that — try again.")
     } finally {
       setSaving(false)
     }
@@ -127,6 +131,9 @@ export function LabTrends() {
                   />
                 </div>
               </div>
+              {error && (
+                <div className="rounded-xl bg-[color:var(--color-berry-bg)] p-3 text-[0.8rem]">{error}</div>
+              )}
               <div className="flex gap-2.5">
                 <button
                   onClick={() => setShowForm(false)}

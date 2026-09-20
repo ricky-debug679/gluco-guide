@@ -19,6 +19,7 @@ export function Exercise() {
   const [activity, setActivity] = useState(activities[0])
   const [minutes, setMinutes] = useState("30")
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const weekMinutes = isLive ? exercise.weekMinutes : 0
   const weekFraction = Math.min(1, weekMinutes / WEEKLY_TARGET_MINUTES)
@@ -27,10 +28,13 @@ export function Exercise() {
     const numeric = Number(minutes)
     if (!numeric || numeric <= 0) return
     setSaving(true)
+    setError(null)
     try {
       if (isLive) await exercise.addExercise(activity, numeric)
       setShowForm(false)
       setMinutes("30")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't save that — try again.")
     } finally {
       setSaving(false)
     }
@@ -99,6 +103,9 @@ export function Exercise() {
                   className="mt-1.5 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
                 />
               </div>
+              {error && (
+                <div className="rounded-xl bg-[color:var(--color-berry-bg)] p-3 text-[0.8rem]">{error}</div>
+              )}
               <div className="flex gap-2.5">
                 <button
                   onClick={() => setShowForm(false)}

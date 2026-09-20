@@ -33,6 +33,7 @@ export function GroceryScan() {
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [added, setAdded] = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
 
   async function runSearch(q: string) {
     setQuery(q)
@@ -61,8 +62,13 @@ export function GroceryScan() {
 
   async function handleAdd() {
     if (!selected) return
-    if (isLive) await logScan.mutateAsync(selected)
-    setAdded(true)
+    setAddError(null)
+    try {
+      if (isLive) await logScan.mutateAsync(selected)
+      setAdded(true)
+    } catch (err) {
+      setAddError(err instanceof Error ? err.message : "Couldn't save that — try again.")
+    }
   }
 
   return (
@@ -147,6 +153,10 @@ export function GroceryScan() {
                 <Eyebrow>Pair it with</Eyebrow>
                 <div className="mt-2 text-[0.85rem] leading-relaxed">{selected.pairSuggestion}</div>
               </Card>
+
+              {addError && (
+                <div className="rounded-xl bg-[color:var(--color-berry-bg)] p-3 text-[0.82rem]">{addError}</div>
+              )}
 
               <button
                 onClick={handleAdd}

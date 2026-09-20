@@ -24,6 +24,7 @@ export function Family() {
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState("")
   const [goal, setGoal] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
   const members = householdCtx
     ? householdCtx.household.members.map((m) => ({
@@ -38,10 +39,15 @@ export function Family() {
 
   async function handleAdd() {
     if (!name.trim()) return
-    await addMember.mutateAsync({ displayName: name.trim(), goal: goal.trim() || "General wellness" })
-    setName("")
-    setGoal("")
-    setShowForm(false)
+    setError(null)
+    try {
+      await addMember.mutateAsync({ displayName: name.trim(), goal: goal.trim() || "General wellness" })
+      setName("")
+      setGoal("")
+      setShowForm(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't save that — try again.")
+    }
   }
 
   return (
@@ -92,6 +98,9 @@ export function Family() {
             placeholder="Their wellness goal (optional)"
             className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
           />
+          {error && (
+            <div className="rounded-xl bg-[color:var(--color-berry-bg)] p-3 text-[0.82rem]">{error}</div>
+          )}
           <div className="flex gap-2.5">
             <button
               onClick={() => setShowForm(false)}
