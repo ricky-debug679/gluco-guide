@@ -33,6 +33,17 @@ export function Wellness() {
   const [hours, setHours] = useState("7.5")
   const [quality, setQuality] = useState<SleepQuality>("good")
   const [sleepSaving, setSleepSaving] = useState(false)
+
+  function openSleepForm() {
+    // If today's already logged, edit that entry's real values instead of
+    // resetting to defaults — otherwise it looks like you can't change
+    // what you picked, when really you just never saw it again.
+    if (isLive && sleep.loggedToday && sleep.latest) {
+      setHours(String(sleep.latest.hours))
+      if (sleep.latest.quality) setQuality(sleep.latest.quality)
+    }
+    setShowSleepForm(true)
+  }
   const [sleepError, setSleepError] = useState<string | null>(null)
 
   const [logging, setLogging] = useState<WellnessActivityKind | null>(null)
@@ -151,10 +162,10 @@ export function Wellness() {
               </div>
             ) : (
               <button
-                onClick={() => setShowSleepForm(true)}
+                onClick={openSleepForm}
                 className="mt-3 min-h-11 w-full rounded-xl bg-[color:var(--color-sage)] py-2.5 text-[0.85rem] font-bold text-white"
               >
-                {isLive && sleep.loggedToday ? "+ Log again" : "+ Log last night's sleep"}
+                {isLive && sleep.loggedToday ? "Edit today's entry" : "+ Log last night's sleep"}
               </button>
             )}
           </Card>

@@ -28,15 +28,20 @@ export function useSleepLogs(memberId: string | undefined) {
     enabled: !!memberId && !!supabase,
   })
 
+  // Upsert, not insert: one entry per (member, day) so logging again the
+  // same day edits today's entry instead of silently creating a duplicate.
   const addSleep = useMutation({
     mutationFn: async (input: { hours: number; quality: SleepQuality; date: string }) => {
       if (!supabase || !memberId) return
-      const { error } = await supabase.from("sleep_logs").insert({
-        member_id: memberId,
-        logged_at: input.date,
-        hours: input.hours,
-        quality: input.quality,
-      })
+      const { error } = await supabase.from("sleep_logs").upsert(
+        {
+          member_id: memberId,
+          logged_at: input.date,
+          hours: input.hours,
+          quality: input.quality,
+        },
+        { onConflict: "member_id,logged_at" },
+      )
       if (error) throw error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
