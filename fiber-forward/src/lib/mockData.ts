@@ -39,6 +39,7 @@ export const mockTargets: NutrientTargets = {
   fiberG: 30,
   proteinG: 90,
   carbG: 150,
+  fatG: 78, // FDA Daily Value for total fat, 2,000-calorie diet
   waterCups: 8,
 }
 
@@ -46,13 +47,14 @@ export const mockTotals: NutrientTotals = {
   fiberG: 18,
   proteinG: 52,
   carbG: 110,
+  fatG: 34,
   waterCups: 5,
 }
 
 export const mockFoodSearchResults: FoodItem[] = [
-  { id: "f1", name: "Lentil & Vegetable Soup", portion: "1 bowl", fiberG: 8, proteinG: 12, carbG: 26 },
-  { id: "f2", name: "Red Lentil Dal, 1 cup", portion: "1 cup", fiberG: 10, proteinG: 18, carbG: 32 },
-  { id: "f3", name: "Lentil Crackers, 12 pc", portion: "12 pc", fiberG: 4, proteinG: 5, carbG: 20 },
+  { id: "f1", name: "Lentil & Vegetable Soup", portion: "1 bowl", fiberG: 8, proteinG: 12, carbG: 26, fatG: 4 },
+  { id: "f2", name: "Red Lentil Dal, 1 cup", portion: "1 cup", fiberG: 10, proteinG: 18, carbG: 32, fatG: 6 },
+  { id: "f3", name: "Lentil Crackers, 12 pc", portion: "12 pc", fiberG: 4, proteinG: 5, carbG: 20, fatG: 3 },
 ]
 
 export const mockPhotoRecognizedFood: FoodItem = {
@@ -62,6 +64,7 @@ export const mockPhotoRecognizedFood: FoodItem = {
   fiberG: 9,
   proteinG: 14,
   carbG: 38,
+  fatG: 7,
 }
 
 export const mockGroceryItems: GroceryItem[] = [
@@ -165,5 +168,48 @@ export const fiberSupplementOptions: FiberSupplementOption[] = [
     mechanism:
       "A gentler soluble fiber with less bloating than psyllium — a good starting point if psyllium feels like too much at first.",
     fiberPerDoseG: 5,
+  },
+]
+
+export interface SupplementRecommendation {
+  key: "vitamin_d" | "magnesium" | "chromium" | "zinc" | "b1"
+  name: string
+  mechanism: string
+  typicalDosage: string
+}
+
+export const supplementRecommendations: SupplementRecommendation[] = [
+  {
+    key: "vitamin_d",
+    name: "Vitamin D",
+    mechanism:
+      "Low vitamin D is strongly linked to worse insulin resistance — and deficiency is common, especially with limited sun exposure.",
+    typicalDosage: "1,000–2,000 IU/day (maintenance)",
+  },
+  {
+    key: "magnesium",
+    name: "Magnesium",
+    mechanism:
+      "Involved directly in how your cells respond to insulin — low magnesium is common in type 2 diabetes and prediabetes.",
+    typicalDosage: "300–400 mg/day",
+  },
+  {
+    key: "chromium",
+    name: "Chromium",
+    mechanism: "Helps insulin do its job more effectively — some studies link low chromium to poorer glucose control.",
+    typicalDosage: "200 mcg/day",
+  },
+  {
+    key: "zinc",
+    name: "Zinc",
+    mechanism: "Needed for your body to produce and store insulin properly.",
+    typicalDosage: "15 mg/day",
+  },
+  {
+    key: "b1",
+    name: "B1 (Thiamine)",
+    mechanism:
+      "People with diabetes are more likely to run low on thiamine, which matters for nerve health — a common concern with diabetes.",
+    typicalDosage: "100 mg/day",
   },
 ]

@@ -16,6 +16,12 @@
   --color-berry-bg: #f3e3e1;
   --color-water: #4c7a8c;
   --color-water-bg: #e1ebee;
+  --color-fat: #9c7a4e;
+  --color-fat-bg: #f0e6d3;
+  --color-mind: #7c6fa0;
+  --color-mind-bg: #e8e4f1;
+  --color-supp: #3f8577;
+  --color-supp-bg: #deeeea;
 
   --font-display: "Lora", Georgia, serif;
   --font-body: "Karla", ui-sans-serif, system-ui, sans-serif;
@@ -38,6 +44,12 @@
     --color-berry-bg: #372524;
     --color-water: #7fb3c4;
     --color-water-bg: #22323a;
+    --color-fat: #d9b87f;
+    --color-fat-bg: #3a2f1c;
+    --color-mind: #b3a6d6;
+    --color-mind-bg: #302b42;
+    --color-supp: #7fc4b4;
+    --color-supp-bg: #1e3733;
   }
 }
 

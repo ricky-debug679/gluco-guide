@@ -29,6 +29,7 @@ function toFoodItem(food: UsdaFood): FoodItem {
     fiberG: pickNutrient(food.foodNutrients, "Fiber, total dietary"),
     proteinG: pickNutrient(food.foodNutrients, "Protein"),
     carbG: pickNutrient(food.foodNutrients, "Carbohydrate, by difference"),
+    fatG: pickNutrient(food.foodNutrients, "Total lipid (fat)"),
   }
 }
 

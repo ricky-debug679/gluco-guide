@@ -123,6 +123,7 @@ export function FoodLog() {
               <Stat label="Fiber" value={`${mockPhotoRecognizedFood.fiberG}g`} colorVar="--color-sage" />
               <Stat label="Protein" value={`${mockPhotoRecognizedFood.proteinG}g`} colorVar="--color-honey" />
               <Stat label="Carbs" value={`${mockPhotoRecognizedFood.carbG}g`} colorVar="--color-berry" />
+              <Stat label="Fat" value={`${mockPhotoRecognizedFood.fatG}g`} colorVar="--color-fat" />
             </div>
           </Card>
           <button
@@ -171,7 +172,7 @@ export function FoodLog() {
                 >
                   <div className="text-[0.88rem] font-bold">{food.name}</div>
                   <div className="mt-0.5 text-[0.72rem] text-[color:var(--color-ink-faint)]">
-                    Fiber {food.fiberG}g · Protein {food.proteinG}g · Carbs {food.carbG}g
+                    Fiber {food.fiberG}g · Protein {food.proteinG}g · Carbs {food.carbG}g · Fat {food.fatG}g
                   </div>
                 </button>
               ))

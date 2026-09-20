@@ -3,8 +3,15 @@ interface ProgressRingProps {
   target: number
   label: string
   unit?: string
-  colorVar: "--color-sage" | "--color-honey" | "--color-berry" | "--color-water"
-  bgVar: "--color-sage-bg" | "--color-honey-bg" | "--color-berry-bg" | "--color-water-bg"
+  colorVar: "--color-sage" | "--color-honey" | "--color-berry" | "--color-water" | "--color-fat" | "--color-mind" | "--color-supp"
+  bgVar:
+    | "--color-sage-bg"
+    | "--color-honey-bg"
+    | "--color-berry-bg"
+    | "--color-water-bg"
+    | "--color-fat-bg"
+    | "--color-mind-bg"
+    | "--color-supp-bg"
 }
 
 const RADIUS = 34

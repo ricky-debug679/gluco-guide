@@ -13,6 +13,7 @@ export interface NutrientTotals {
   fiberG: number
   proteinG: number
   carbG: number
+  fatG: number
   waterCups: number
 }
 
@@ -20,6 +21,7 @@ export interface NutrientTargets {
   fiberG: number
   proteinG: number
   carbG: number
+  fatG: number
   waterCups: number
 }
 
@@ -30,6 +32,7 @@ export interface FoodItem {
   fiberG: number
   proteinG: number
   carbG: number
+  fatG: number
 }
 
 export interface GrocerySwap {
@@ -105,6 +108,18 @@ export interface WellnessActivityEntry {
   activity: WellnessActivityKind
   custom_label: string | null
   duration_minutes: number | null
+}
+
+export type SupplementRecommendationKey = "vitamin_d" | "magnesium" | "chromium" | "zinc" | "b1"
+
+export interface Supplement {
+  id: string
+  member_id: string
+  name: string
+  dosage: string | null
+  recommendation_key: SupplementRecommendationKey | null
+  active: boolean
+  created_at: string
 }
 
 export interface OnboardingState {

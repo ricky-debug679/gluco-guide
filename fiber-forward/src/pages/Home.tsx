@@ -6,6 +6,10 @@ import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useWaterToday } from "../hooks/useWaterToday"
 import { useFiberSupplement } from "../hooks/useFiberSupplement"
 import { useFoodLogsToday } from "../hooks/useFoodLogsToday"
+import { useWellnessActivity } from "../hooks/useWellnessActivity"
+import { useSupplements } from "../hooks/useSupplements"
+
+const MIND_STRESS_TARGET = 2 // a couple of mindful moments a day — a goal, not a clinical benchmark
 
 const quickAdd = [
   {
@@ -26,7 +30,7 @@ const quickAdd = [
     path: "M6.5 17.5l11-11M4 15l5 5M15 4l5 5M2.5 12.5l3-3M18.5 18.5l3-3",
   },
   {
-    label: "Log Water",
+    label: "Log Water/Fibre",
     to: "/hydration",
     path: "M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z",
   },
@@ -34,6 +38,12 @@ const quickAdd = [
     label: "Mind & Sleep",
     to: "/wellness",
     path: "M12 3a6 6 0 0 0 0 12 6 6 0 0 1 0 6 9 9 0 1 1 0-18z",
+  },
+  {
+    label: "Log Supplements",
+    to: "/supplements",
+    path: "M7 3.5h10a1 1 0 0 1 1 1V10a5 5 0 0 1-10 0V4.5a1 1 0 0 1 1-1z",
+    extra: <path d="M9 20.5h6M12 15v5.5" />,
   },
 ]
 
@@ -59,12 +69,18 @@ export function Home() {
   const water = useWaterToday(selfMemberId)
   const supplement = useFiberSupplement(selfMemberId)
   const foodLogs = useFoodLogsToday(selfMemberId)
+  const wellness = useWellnessActivity(selfMemberId)
+  const supplements = useSupplements(selfMemberId)
 
   const isLive = !!householdCtx
   const waterCups = isLive ? water.cupsToday : totals.waterCups
   const fiberG = isLive ? foodLogs.totals.fiberG : totals.fiberG
   const proteinG = isLive ? foodLogs.totals.proteinG : totals.proteinG
   const carbG = isLive ? foodLogs.totals.carbG : totals.carbG
+  const fatG = isLive ? foodLogs.totals.fatG : totals.fatG
+  const mindStressCount = isLive ? wellness.today.length : 0
+  const supplementsTaken = isLive ? supplements.takenCount : 0
+  const supplementsTarget = isLive ? Math.max(supplements.active.length, 1) : 1
   const nextDoseLabel = isLive ? supplement.name : "Fiber supplement"
   const nextDoseTime = mockReminder.nextDoseTime
   const doseTakenToday = isLive ? supplement.takenToday : mockReminder.takenToday
@@ -80,7 +96,7 @@ export function Home() {
       </div>
 
       <Card>
-        <div className="grid grid-cols-2 gap-x-2.5 gap-y-4">
+        <div className="grid grid-cols-3 gap-x-2 gap-y-4">
           <ProgressRing
             value={fiberG}
             target={targets.fiberG}
@@ -106,12 +122,36 @@ export function Home() {
             bgVar="--color-berry-bg"
           />
           <ProgressRing
+            value={fatG}
+            target={targets.fatG}
+            label="Fat"
+            unit="g"
+            colorVar="--color-fat"
+            bgVar="--color-fat-bg"
+          />
+          <ProgressRing
             value={waterCups}
             target={targets.waterCups}
             label="Water"
             colorVar="--color-water"
             bgVar="--color-water-bg"
           />
+          <ProgressRing
+            value={mindStressCount}
+            target={MIND_STRESS_TARGET}
+            label="Mind"
+            colorVar="--color-mind"
+            bgVar="--color-mind-bg"
+          />
+          <div className="col-start-2">
+            <ProgressRing
+              value={supplementsTaken}
+              target={supplementsTarget}
+              label="Supplements"
+              colorVar="--color-supp"
+              bgVar="--color-supp-bg"
+            />
+          </div>
         </div>
       </Card>
 

@@ -100,6 +100,7 @@ export const useAppStore = create<AppState>((set) => ({
         fiberG: s.totals.fiberG + food.fiberG,
         proteinG: s.totals.proteinG + food.proteinG,
         carbG: s.totals.carbG + food.carbG,
+        fatG: s.totals.fatG + food.fatG,
       },
     })),
 
