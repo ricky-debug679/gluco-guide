@@ -30,6 +30,11 @@ const quickAdd = [
     to: "/hydration",
     path: "M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z",
   },
+  {
+    label: "Mind & Sleep",
+    to: "/wellness",
+    path: "M12 3a6 6 0 0 0 0 12 6 6 0 0 1 0 6 9 9 0 1 1 0-18z",
+  },
 ]
 
 function formatToday() {
@@ -62,6 +67,7 @@ export function Home() {
   const carbG = isLive ? foodLogs.totals.carbG : totals.carbG
   const nextDoseLabel = isLive ? supplement.name : "Fiber supplement"
   const nextDoseTime = mockReminder.nextDoseTime
+  const doseTakenToday = isLive ? supplement.takenToday : mockReminder.takenToday
   const name = isLive ? householdCtx.household.selfMember.display_name : "Asha"
 
   return (
@@ -121,7 +127,7 @@ export function Home() {
 
       <div>
         <Eyebrow>Quick add</Eyebrow>
-        <div className="mt-2.5 grid grid-cols-4 gap-2.5">
+        <div className="mt-2.5 grid grid-cols-3 gap-2.5">
           {quickAdd.map((item) => (
             <button
               key={item.label}
@@ -150,6 +156,7 @@ export function Home() {
         </div>
       </div>
 
+      {!doseTakenToday && (
       <button onClick={() => navigate("/hydration")} className="text-left">
         <Card className="cursor-pointer">
           <Eyebrow>Up next</Eyebrow>
@@ -193,6 +200,7 @@ export function Home() {
           </div>
         </Card>
       </button>
+      )}
     </Screen>
   )
 }

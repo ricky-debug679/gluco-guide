@@ -21,6 +21,7 @@ export function Hydration() {
   const mockMarkDoseTaken = useAppStore((s) => s.markDoseTaken)
   const mockSelectSupplement = useAppStore((s) => s.selectSupplement)
   const mockSetCustomSupplementName = useAppStore((s) => s.setCustomSupplementName)
+  const mockSetCustomSupplementFiberG = useAppStore((s) => s.setCustomSupplementFiberG)
   const mockSupplementInfo = useCurrentSupplementInfo()
 
   // Real-data path
@@ -29,6 +30,8 @@ export function Hydration() {
   const water = useWaterToday(selfMemberId)
   const supplement = useFiberSupplement(selfMemberId)
   const [customDraft, setCustomDraft] = useState(mockReminder.customName)
+  const [customFiberDraft, setCustomFiberDraft] = useState(String(mockReminder.customFiberG))
+  const [markError, setMarkError] = useState<string | null>(null)
 
   const isLive = !!householdCtx
 
@@ -40,23 +43,35 @@ export function Hydration() {
   const selectedKind = isLive ? supplement.kind : mockReminder.selectedKind
   const supplementName = isLive ? supplement.name : mockSupplementInfo.name
   const supplementMechanism = isLive ? supplement.mechanism : mockSupplementInfo.mechanism
+  const fiberPerDoseG = isLive ? supplement.fiberPerDoseG : mockSupplementInfo.fiberPerDoseG
   const takenToday = isLive ? supplement.takenToday : mockReminder.takenToday
   const nextDoseTime = mockReminder.nextDoseTime // mock time-of-day for both, for now
 
   function handleSelect(kind: typeof selectedKind) {
-    if (isLive) supplement.select(kind, kind === "custom" ? customDraft : undefined)
+    if (isLive) supplement.select(kind, kind === "custom" ? customDraft : undefined, kind === "custom" ? Number(customFiberDraft) || 0 : undefined)
     else mockSelectSupplement(kind)
   }
 
   function handleCustomChange(value: string) {
     setCustomDraft(value)
-    if (isLive) supplement.select("custom", value)
+    if (isLive) supplement.select("custom", value, Number(customFiberDraft) || 0)
     else mockSetCustomSupplementName(value)
   }
 
-  function handleMarkTaken() {
-    if (isLive) supplement.markTaken()
-    else mockMarkDoseTaken()
+  function handleCustomFiberChange(value: string) {
+    setCustomFiberDraft(value)
+    if (isLive) supplement.select("custom", customDraft, Number(value) || 0)
+    else mockSetCustomSupplementFiberG(Number(value) || 0)
+  }
+
+  async function handleMarkTaken() {
+    setMarkError(null)
+    try {
+      if (isLive) await supplement.markTaken()
+      else mockMarkDoseTaken()
+    } catch (err) {
+      setMarkError(err instanceof Error ? err.message : "Couldn't save that — try again.")
+    }
   }
 
   return (
@@ -127,6 +142,14 @@ export function Hydration() {
             <div className="mt-3 rounded-xl bg-[color:var(--color-honey-bg)] p-3.5 text-[0.82rem] leading-relaxed">
               Take with a full 8 oz glass of water — fiber supplements need it to work safely and comfortably.
             </div>
+            {fiberPerDoseG > 0 && (
+              <div className="mt-2.5 text-[0.76rem] text-[color:var(--color-sage)]">
+                Marking this taken adds {fiberPerDoseG}g to today's fiber total.
+              </div>
+            )}
+            {markError && (
+              <div className="mt-2.5 rounded-xl bg-[color:var(--color-berry-bg)] p-3 text-[0.8rem]">{markError}</div>
+            )}
             <button
               onClick={handleMarkTaken}
               className={`mt-3 min-h-11 w-full rounded-xl text-[0.9rem] font-bold ${
@@ -135,7 +158,7 @@ export function Hydration() {
                   : "bg-[color:var(--color-sage)] text-white"
               }`}
             >
-              {takenToday ? "Marked as taken" : "Mark as taken"}
+              {takenToday ? "Marked as taken — tap to undo" : "Mark as taken"}
             </button>
             <div className="mt-2.5 text-[0.76rem] leading-relaxed text-[color:var(--color-ink-faint)]">
               Taking other medication? Space fiber doses by 1–2 hours so it doesn't affect absorption.{" "}
@@ -165,8 +188,11 @@ export function Hydration() {
                   >
                     <div className="flex items-center gap-2 text-[0.86rem] font-bold">
                       {opt.name}
+                      <span className="text-[0.68rem] font-semibold text-[color:var(--color-ink-faint)]">
+                        ~{opt.fiberPerDoseG}g/dose
+                      </span>
                       {selected && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--color-sage)] px-1.5 py-0.5 text-[0.6rem] font-extrabold uppercase tracking-[0.05em] text-white">
+                        <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-[color:var(--color-sage)] px-1.5 py-0.5 text-[0.6rem] font-extrabold uppercase tracking-[0.05em] text-white">
                           <svg width={9} height={9} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5} fill="none" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M20 6L9 17l-5-5" />
                           </svg>
@@ -204,14 +230,23 @@ export function Hydration() {
                   Already using a specific brand? Enter it below.
                 </div>
                 {selectedKind === "custom" && (
-                  <input
-                    autoFocus
-                    onClick={(e) => e.stopPropagation()}
-                    value={customDraft}
-                    onChange={(e) => handleCustomChange(e.target.value)}
-                    placeholder="e.g. Metamucil, Benefiber, ground flaxseed"
-                    className="mt-2.5 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
-                  />
+                  <div className="mt-2.5 grid grid-cols-3 gap-2" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      autoFocus
+                      value={customDraft}
+                      onChange={(e) => handleCustomChange(e.target.value)}
+                      placeholder="e.g. Metamucil, Benefiber"
+                      className="col-span-2 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
+                    />
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      value={customFiberDraft}
+                      onChange={(e) => handleCustomFiberChange(e.target.value)}
+                      placeholder="g fiber"
+                      className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
+                    />
+                  </div>
                 )}
               </button>
             </div>

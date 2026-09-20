@@ -41,6 +41,7 @@ interface AppState {
   markDoseTaken: () => void
   selectSupplement: (kind: FiberSupplementKind, customName?: string) => void
   setCustomSupplementName: (name: string) => void
+  setCustomSupplementFiberG: (grams: number) => void
 
   onboardingSetName: (name: string) => void
   onboardingSetGoal: (index: number) => void
@@ -69,6 +70,7 @@ export const useAppStore = create<AppState>((set) => ({
     takenToday: false,
     selectedKind: "psyllium",
     customName: "",
+    customFiberG: 4,
   },
 
   onboarding: {
@@ -107,7 +109,16 @@ export const useAppStore = create<AppState>((set) => ({
   setActiveLabKey: (key) => set({ activeLabKey: key }),
 
   markDoseTaken: () =>
-    set((s) => ({ reminder: { ...s.reminder, takenToday: !s.reminder.takenToday } })),
+    set((s) => {
+      const nowTaken = !s.reminder.takenToday
+      const option = fiberSupplementOptions.find((o) => o.kind === s.reminder.selectedKind)
+      const doseFiberG = s.reminder.selectedKind === "custom" ? s.reminder.customFiberG : (option?.fiberPerDoseG ?? 0)
+      const delta = nowTaken ? doseFiberG : -doseFiberG
+      return {
+        reminder: { ...s.reminder, takenToday: nowTaken },
+        totals: { ...s.totals, fiberG: Math.max(0, s.totals.fiberG + delta) },
+      }
+    }),
 
   selectSupplement: (kind, customName) =>
     set((s) => ({
@@ -120,6 +131,9 @@ export const useAppStore = create<AppState>((set) => ({
 
   setCustomSupplementName: (name) =>
     set((s) => ({ reminder: { ...s.reminder, customName: name } })),
+
+  setCustomSupplementFiberG: (grams) =>
+    set((s) => ({ reminder: { ...s.reminder, customFiberG: grams } })),
 
   onboardingSetName: (name) =>
     set((s) => ({ onboarding: { ...s.onboarding, name } })),
@@ -142,10 +156,11 @@ export const useCurrentSupplementInfo = () => {
     return {
       name: reminder.customName || "Your fiber supplement",
       mechanism: "Tell us what you take so we can keep your reminder accurate.",
+      fiberPerDoseG: reminder.customFiberG,
     }
   }
   const option = fiberSupplementOptions.find((o) => o.kind === reminder.selectedKind) ?? currentSupplement()
-  return { name: option.name, mechanism: option.mechanism }
+  return { name: option.name, mechanism: option.mechanism, fiberPerDoseG: option.fiberPerDoseG }
 }
 
 export { mockGroceryItems, mockLabMetrics, fiberSupplementOptions }

@@ -150,17 +150,20 @@ export const fiberSupplementOptions: FiberSupplementOption[] = [
     name: "Psyllium husk",
     mechanism:
       "Forms a thick gel in your gut that slows how fast sugar enters your bloodstream — regular use is linked to better insulin sensitivity.",
+    fiberPerDoseG: 5,
   },
   {
     kind: "barley",
     name: "Barley beta-glucan",
     mechanism:
       "Binds bile acids in the gut, which your liver replaces using LDL cholesterol from your blood — shown to help lower LDL over time.",
+    fiberPerDoseG: 3,
   },
   {
     kind: "acacia",
     name: "Acacia fiber",
     mechanism:
       "A gentler soluble fiber with less bloating than psyllium — a good starting point if psyllium feels like too much at first.",
+    fiberPerDoseG: 5,
   },
 ]

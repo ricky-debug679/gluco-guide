@@ -6,6 +6,7 @@ import { GroceryScan } from "./pages/GroceryScan"
 import { LabTrends } from "./pages/LabTrends"
 import { Hydration } from "./pages/Hydration"
 import { Exercise } from "./pages/Exercise"
+import { Wellness } from "./pages/Wellness"
 import { Family } from "./pages/Family"
 import { You } from "./pages/You"
 import { Auth } from "./pages/Auth"
@@ -33,6 +34,7 @@ function AppRoutes({ isLive }: { isLive: boolean }) {
       <Route path="/trends" element={<LabTrends />} />
       <Route path="/hydration" element={<Hydration />} />
       <Route path="/exercise" element={<Exercise />} />
+      <Route path="/wellness" element={<Wellness />} />
       <Route path="/family" element={<Family />} />
       <Route path="/you" element={<You />} />
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -76,6 +76,8 @@ export interface FiberSupplementOption {
   kind: FiberSupplementKind
   name: string
   mechanism: string
+  /** Typical fiber grams per dose, for a real starting number a serving label would show. */
+  fiberPerDoseG: number
 }
 
 export interface ReminderState {
@@ -83,6 +85,26 @@ export interface ReminderState {
   takenToday: boolean
   selectedKind: FiberSupplementKind
   customName: string
+  customFiberG: number
+}
+
+export type SleepQuality = "poor" | "okay" | "good" | "great"
+
+export interface SleepEntry {
+  id: string
+  logged_at: string
+  hours: number
+  quality: SleepQuality | null
+}
+
+export type WellnessActivityKind = "meditation" | "mindfulness" | "journaling" | "gratitude" | "breathing" | "custom"
+
+export interface WellnessActivityEntry {
+  id: string
+  logged_at: string
+  activity: WellnessActivityKind
+  custom_label: string | null
+  duration_minutes: number | null
 }
 
 export interface OnboardingState {
