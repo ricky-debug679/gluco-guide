@@ -139,7 +139,7 @@ export function Home() {
           <ProgressRing
             value={mindStressCount}
             target={MIND_STRESS_TARGET}
-            label="Mind"
+            label="Mind/Sleep"
             colorVar="--color-mind"
             bgVar="--color-mind-bg"
           />
