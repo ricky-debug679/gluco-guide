@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { Card, Eyebrow } from "../components/Screen"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useLogGroceryScan } from "../hooks/useGroceryScans"
+import { useGroceryList, type GroceryListAnalysis } from "../hooks/useGroceryList"
 import { searchGroceries, type GroceryResult } from "../lib/openFoodFacts"
 import { mockGroceryItems } from "../lib/mockData"
 
@@ -26,6 +27,12 @@ export function GroceryScan() {
   const isLive = !!householdCtx
   const selfMemberId = householdCtx?.household.selfMember.id
   const logScan = useLogGroceryScan(selfMemberId)
+  const groceryList = useGroceryList(householdCtx?.household.householdId, selfMemberId)
+
+  const [tab, setTab] = useState<"scan" | "list">("scan")
+  const [newItemName, setNewItemName] = useState("")
+  const [listError, setListError] = useState<string | null>(null)
+  const [analysis, setAnalysis] = useState<GroceryListAnalysis | null>(null)
 
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<GroceryResult[]>(isLive ? [] : mockGroceryItems.map(fromMock))
@@ -71,6 +78,50 @@ export function GroceryScan() {
     }
   }
 
+  async function handleAddListItem() {
+    if (!newItemName.trim()) return
+    setListError(null)
+    try {
+      if (isLive) await groceryList.addItem(newItemName.trim())
+      setNewItemName("")
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : "Couldn't save that — try again.")
+    }
+  }
+
+  async function handleToggleItem(id: string, checked: boolean) {
+    setListError(null)
+    try {
+      if (isLive) await groceryList.toggleChecked(id, checked)
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : "Couldn't save that — try again.")
+    }
+  }
+
+  async function handleRemoveItem(id: string) {
+    setListError(null)
+    try {
+      if (isLive) await groceryList.removeItem(id)
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : "Couldn't remove that — try again.")
+    }
+  }
+
+  async function handleAnalyzeList() {
+    setListError(null)
+    setAnalysis(null)
+    try {
+      const result = await groceryList.analyze(groceryList.items.map((i) => i.name))
+      setAnalysis(result)
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : "Couldn't analyze your list — try again.")
+    }
+  }
+
+  function flagFor(name: string) {
+    return analysis?.itemFlags.find((f) => f.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(f.name.toLowerCase()))
+  }
+
   return (
     <div className="flex h-screen w-full justify-center bg-[color:var(--color-bg)]">
       <div className="flex h-screen w-full max-w-md flex-col">
@@ -83,7 +134,27 @@ export function GroceryScan() {
           <Eyebrow>Grocery check</Eyebrow>
         </div>
 
+        <div className="px-5 pt-4">
+          <div className="flex gap-1.5 rounded-xl bg-[color:var(--color-surface-2)] p-1">
+            {(["scan", "list"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`min-h-[38px] flex-1 rounded-lg text-center text-[0.86rem] font-bold ${
+                  tab === t
+                    ? "bg-[color:var(--color-surface)] text-[color:var(--color-sage)] shadow-sm"
+                    : "text-[color:var(--color-ink-faint)]"
+                }`}
+              >
+                {t === "scan" ? "Scan" : "My List"}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex flex-1 flex-col gap-3.5 overflow-y-auto px-5 pb-8 pt-4">
+          {tab === "scan" ? (
+          <>
           <input
             className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.92rem]"
             placeholder="Search a product, e.g. wheat bread"
@@ -179,6 +250,115 @@ export function GroceryScan() {
                 Search another item
               </button>
             </>
+          )}
+          </>
+          ) : (
+          <>
+            <Card>
+              <div className="text-[0.8rem] text-[color:var(--color-ink-soft)]">
+                Build your shopping list, then let AI flag anything worth a second look and suggest healthier ways
+                to combine what you've got.
+              </div>
+              <div className="mt-3 flex gap-2">
+                <input
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddListItem()}
+                  placeholder="e.g. coke, olive oil, potatoes"
+                  className="min-h-11 flex-1 rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
+                />
+                <button
+                  onClick={handleAddListItem}
+                  disabled={!newItemName.trim()}
+                  className="min-h-11 rounded-xl bg-[color:var(--color-sage)] px-4 text-[0.85rem] font-bold text-white disabled:opacity-60"
+                >
+                  Add
+                </button>
+              </div>
+            </Card>
+
+            {listError && (
+              <div className="rounded-xl bg-[color:var(--color-berry-bg)] p-3 text-[0.82rem]">{listError}</div>
+            )}
+
+            {groceryList.items.length > 0 ? (
+              <Card className="p-0">
+                {groceryList.items.map((item, i) => {
+                  const flag = flagFor(item.name)
+                  return (
+                    <div
+                      key={item.id}
+                      className={`px-4 py-3 ${
+                        i < groceryList.items.length - 1 ? "border-b border-[color:var(--color-line)]" : ""
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={item.checked}
+                          onChange={(e) => handleToggleItem(item.id, e.target.checked)}
+                          className="h-5 w-5 shrink-0 accent-[color:var(--color-sage)]"
+                        />
+                        <div
+                          className={`flex-1 text-[0.9rem] font-bold ${
+                            item.checked ? "text-[color:var(--color-ink-faint)] line-through" : ""
+                          }`}
+                        >
+                          {item.name}
+                        </div>
+                        <button
+                          onClick={() => handleRemoveItem(item.id)}
+                          aria-label={`Remove ${item.name}`}
+                          className="shrink-0 text-[0.78rem] font-bold text-[color:var(--color-ink-faint)]"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      {flag && (
+                        <div
+                          className={`mt-1.5 ml-8 text-[0.76rem] ${
+                            flag.verdict === "caution"
+                              ? "text-[color:var(--color-berry)]"
+                              : "text-[color:var(--color-sage)]"
+                          }`}
+                        >
+                          {flag.verdict === "caution" ? "⚠ " : "✓ "}
+                          {flag.note}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </Card>
+            ) : (
+              <div className="p-4 text-center text-[0.85rem] text-[color:var(--color-ink-faint)]">
+                Your list is empty — add a few items above.
+              </div>
+            )}
+
+            {groceryList.items.length > 0 && (
+              <button
+                onClick={handleAnalyzeList}
+                disabled={groceryList.analyzing}
+                className="min-h-11 rounded-xl bg-[color:var(--color-sage)] px-4 py-3.5 text-[0.9rem] font-bold text-white disabled:opacity-60"
+              >
+                {groceryList.analyzing ? "Analyzing…" : "✨ Analyze my list"}
+              </button>
+            )}
+
+            {analysis && analysis.combinationTips.length > 0 && (
+              <Card className="border-transparent bg-[color:var(--color-honey-bg)]">
+                <Eyebrow>Suggestions</Eyebrow>
+                <div className="mt-2 flex flex-col gap-2.5">
+                  {analysis.combinationTips.map((tip, i) => (
+                    <div key={i} className="text-[0.85rem] leading-relaxed text-[color:var(--color-ink)]">
+                      {tip.items.join(" + ")}: {tip.tip}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+          </>
           )}
         </div>
       </div>
