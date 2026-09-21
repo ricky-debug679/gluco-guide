@@ -5,6 +5,7 @@ import { mockFoodSearchResults, mockPhotoRecognizedFood } from "../lib/mockData"
 import { searchOpenNutrition } from "../lib/opennutrition"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useFoodLogsToday } from "../hooks/useFoodLogsToday"
+import { MicButton } from "../components/MicButton"
 import type { FoodItem } from "../lib/types"
 
 // Standard Atwater factors. Carbs here means *total* carbohydrate (the
@@ -226,12 +227,15 @@ export function FoodLog() {
         </>
       ) : tab === "search" ? (
         <>
-          <input
-            className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.92rem]"
-            placeholder="Search foods"
-            value={query}
-            onChange={(e) => handleQueryChange(e.target.value)}
-          />
+          <div className="flex gap-2">
+            <input
+              className="min-h-11 flex-1 rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.92rem]"
+              placeholder="Search foods"
+              value={query}
+              onChange={(e) => handleQueryChange(e.target.value)}
+            />
+            <MicButton onResult={(text) => handleQueryChange(text)} />
+          </div>
           {isLive && (
             <div className="text-[0.7rem] text-[color:var(--color-ink-faint)]">
               Nutrition data from{" "}
@@ -299,12 +303,15 @@ export function FoodLog() {
                 <label className="text-[0.72rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
                   Food name
                 </label>
-                <input
-                  value={manualName}
-                  onChange={(e) => setManualName(e.target.value)}
-                  placeholder="e.g. Mom's lentil curry"
-                  className="mt-1.5 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
-                />
+                <div className="mt-1.5 flex gap-2">
+                  <input
+                    value={manualName}
+                    onChange={(e) => setManualName(e.target.value)}
+                    placeholder="e.g. Mom's lentil curry"
+                    className="min-h-11 flex-1 rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
+                  />
+                  <MicButton onResult={(text) => setManualName(text)} />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-2.5">
                 <NumberField label="Fiber (g)" value={manualFiber} onChange={setManualFiber} />

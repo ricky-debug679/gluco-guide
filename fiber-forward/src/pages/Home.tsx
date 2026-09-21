@@ -10,6 +10,7 @@ import { useWellnessActivity } from "../hooks/useWellnessActivity"
 import { useSupplements } from "../hooks/useSupplements"
 import { useExerciseLogs } from "../hooks/useExerciseLogs"
 import { buildCaloriePlan } from "../lib/caloriePlan"
+import { SpeakButton } from "../components/SpeakButton"
 
 const MIND_STRESS_TARGET = 2 // a couple of mindful moments a day — a goal, not a clinical benchmark
 const EXERCISE_WEEKLY_TARGET_MINUTES = 150 // CDC National DPP activity benchmark, same as the Exercise screen
@@ -103,13 +104,18 @@ export function Home() {
   const doseTakenToday = isLive ? supplement.takenToday : mockReminder.takenToday
   const name = isLive ? householdCtx.household.selfMember.display_name : "Asha"
 
+  const summaryText = `${greeting()}, ${name}. So far today, you've had ${caloriesKcal} of ${calorieTarget} calories, and ${fiberG} of ${targets.fiberG} grams of fiber. This week you've logged ${exerciseWeekMinutes} of ${EXERCISE_WEEKLY_TARGET_MINUTES} minutes of exercise.`
+
   return (
     <Screen>
-      <div>
-        <Eyebrow>{formatToday()}</Eyebrow>
-        <h1 className="mt-1 text-2xl font-semibold">
-          {greeting()}, {name}
-        </h1>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <Eyebrow>{formatToday()}</Eyebrow>
+          <h1 className="mt-1 text-2xl font-semibold">
+            {greeting()}, {name}
+          </h1>
+        </div>
+        <SpeakButton text={summaryText} className="mt-1" />
       </div>
 
       <Card>
@@ -227,10 +233,12 @@ export function Home() {
       </div>
 
       {!doseTakenToday && (
-      <button onClick={() => navigate("/hydration")} className="text-left">
-        <Card className="cursor-pointer">
+      <Card>
+        <div className="flex items-center justify-between">
           <Eyebrow>Up next</Eyebrow>
-          <div className="mt-2.5 flex items-center gap-3">
+          <SpeakButton text={`Reminder: ${nextDoseLabel} at ${nextDoseTime}.`} />
+        </div>
+        <button onClick={() => navigate("/hydration")} className="mt-2 flex w-full items-center gap-3 text-left">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[color:var(--color-honey-bg)]">
               <svg
                 width={20}
@@ -267,9 +275,8 @@ export function Home() {
             >
               <path d="M9 6l6 6-6 6" />
             </svg>
-          </div>
-        </Card>
-      </button>
+        </button>
+      </Card>
       )}
     </Screen>
   )

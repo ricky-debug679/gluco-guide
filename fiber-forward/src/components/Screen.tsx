@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import { BottomNav } from "./BottomNav"
+import { VoiceCommandButton } from "./VoiceCommandButton"
 
 interface ScreenProps {
   children: ReactNode
@@ -9,8 +10,11 @@ interface ScreenProps {
 export function Screen({ children, withNav = true }: ScreenProps) {
   return (
     <div className="flex h-screen w-full justify-center bg-[color:var(--color-bg)]">
-      <div className="flex h-screen w-full max-w-md flex-col">
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 pb-8 pt-6">{children}</div>
+      <div className="relative flex h-screen w-full max-w-md flex-col">
+        <div className={`flex flex-1 flex-col gap-4 overflow-y-auto px-5 pt-6 ${withNav ? "pb-24" : "pb-8"}`}>
+          {children}
+        </div>
+        {withNav && <VoiceCommandButton />}
         {withNav && <BottomNav />}
       </div>
     </div>
