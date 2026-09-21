@@ -47,6 +47,15 @@ export function useFoodLogsToday(memberId: string | undefined) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   })
 
+  const removeFood = useMutation({
+    mutationFn: async (id: string) => {
+      if (!supabase) return
+      const { error } = await supabase.from("food_logs").delete().eq("id", id)
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  })
+
   const rows = query.data ?? []
   const totals = rows.reduce(
     (acc, r) => ({
@@ -64,5 +73,6 @@ export function useFoodLogsToday(memberId: string | undefined) {
     totals,
     isLoading: query.isLoading,
     addFood: (food: FoodItem, source: "photo" | "search") => addFood.mutateAsync({ food, source }),
+    removeFood: (id: string) => removeFood.mutateAsync(id),
   }
 }

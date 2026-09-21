@@ -22,9 +22,13 @@ export function FoodLog() {
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [addError, setAddError] = useState<string | null>(null)
+  const [addingId, setAddingId] = useState<string | null>(null)
+  const [justAddedId, setJustAddedId] = useState<string | null>(null)
+  const [removingId, setRemovingId] = useState<string | null>(null)
 
   async function runSearch(q: string) {
     setQuery(q)
+    setJustAddedId(null)
     if (!isLive || !usdaConfigured) {
       setResults(mockFoodSearchResults.filter((f) => f.name.toLowerCase().includes(q.toLowerCase())))
       return
@@ -46,16 +50,33 @@ export function FoodLog() {
   }
 
   async function handleAddFood(food: FoodItem, source: "photo" | "search") {
+    if (source === "search" && (addingId || justAddedId === food.id)) return
     setAddError(null)
+    if (source === "search") setAddingId(food.id)
     try {
       if (isLive) {
         await foodLogs.addFood(food, source)
       } else {
         mockAddFoodToLog(food)
       }
-      setAdded(true)
+      if (source === "search") setJustAddedId(food.id)
+      else setAdded(true)
     } catch (err) {
       setAddError(err instanceof Error ? err.message : "Couldn't save that — try again.")
+    } finally {
+      if (source === "search") setAddingId(null)
+    }
+  }
+
+  async function handleRemoveFood(id: string) {
+    setAddError(null)
+    setRemovingId(id)
+    try {
+      if (isLive) await foodLogs.removeFood(id)
+    } catch (err) {
+      setAddError(err instanceof Error ? err.message : "Couldn't remove that — try again.")
+    } finally {
+      setRemovingId(null)
     }
   }
 
@@ -163,28 +184,68 @@ export function FoodLog() {
                 No results yet
               </div>
             ) : (
-              results.map((food, i) => (
-                <button
-                  key={food.id}
-                  onClick={() => handleAddFood(food, "search")}
-                  className={`w-full px-4 py-3 text-left ${
-                    i < results.length - 1 ? "border-b border-[color:var(--color-line)]" : ""
-                  }`}
-                >
-                  <div className="flex items-baseline justify-between">
-                    <div className="text-[0.88rem] font-bold">{food.name}</div>
-                    <div className="text-[0.8rem] font-bold text-[color:var(--color-ink-soft)]">
-                      {food.caloriesKcal} kcal
+              results.map((food, i) => {
+                const isAdding = addingId === food.id
+                const isAdded = justAddedId === food.id
+                return (
+                  <button
+                    key={food.id}
+                    onClick={() => handleAddFood(food, "search")}
+                    disabled={isAdding || isAdded}
+                    className={`w-full px-4 py-3 text-left ${
+                      i < results.length - 1 ? "border-b border-[color:var(--color-line)]" : ""
+                    } ${isAdded ? "bg-[color:var(--color-sage-bg)]" : ""}`}
+                  >
+                    <div className="flex items-baseline justify-between">
+                      <div className="text-[0.88rem] font-bold">{food.name}</div>
+                      {isAdded ? (
+                        <div className="text-[0.8rem] font-bold text-[color:var(--color-sage)]">Added ✓</div>
+                      ) : (
+                        <div className="text-[0.8rem] font-bold text-[color:var(--color-ink-soft)]">
+                          {isAdding ? "Adding…" : `${food.caloriesKcal} kcal`}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <div className="mt-0.5 text-[0.72rem] text-[color:var(--color-ink-faint)]">
-                    Fiber {food.fiberG}g · Protein {food.proteinG}g · Carbs {food.carbG}g · Fat {food.fatG}g
-                  </div>
-                </button>
-              ))
+                    <div className="mt-0.5 text-[0.72rem] text-[color:var(--color-ink-faint)]">
+                      Fiber {food.fiberG}g · Protein {food.proteinG}g · Carbs {food.carbG}g · Fat {food.fatG}g
+                    </div>
+                  </button>
+                )
+              })
             )}
           </Card>
         </>
+      )}
+
+      {isLive && foodLogs.todaysFoods.length > 0 && (
+        <div>
+          <Eyebrow>Today's log</Eyebrow>
+          <Card className="mt-2.5 p-0">
+            {foodLogs.todaysFoods.map((entry, i) => (
+              <div
+                key={entry.id}
+                className={`flex items-center justify-between gap-3 px-4 py-3 ${
+                  i < foodLogs.todaysFoods.length - 1 ? "border-b border-[color:var(--color-line)]" : ""
+                }`}
+              >
+                <div>
+                  <div className="text-[0.86rem] font-bold">{entry.name}</div>
+                  <div className="mt-0.5 text-[0.72rem] text-[color:var(--color-ink-faint)]">
+                    {entry.calories_kcal} kcal · Fiber {entry.fiber_g}g · Protein {entry.protein_g}g
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleRemoveFood(entry.id)}
+                  disabled={removingId === entry.id}
+                  aria-label={`Remove ${entry.name}`}
+                  className="shrink-0 rounded-lg px-2.5 py-1.5 text-[0.78rem] font-bold text-[color:var(--color-ink-faint)]"
+                >
+                  {removingId === entry.id ? "…" : "Remove"}
+                </button>
+              </div>
+            ))}
+          </Card>
+        </div>
       )}
     </Screen>
   )
