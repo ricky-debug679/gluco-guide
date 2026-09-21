@@ -53,7 +53,7 @@ export function Wellness() {
 
   async function handleSaveSleep() {
     const numeric = Number(hours)
-    if (!numeric || numeric <= 0) return
+    if (hours.trim() === "" || Number.isNaN(numeric) || numeric < 0 || numeric > 24) return
     setSleepSaving(true)
     setSleepError(null)
     try {
