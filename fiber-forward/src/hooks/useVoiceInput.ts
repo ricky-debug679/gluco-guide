@@ -20,6 +20,27 @@ interface SpeechRecognitionEventLike {
   results: ArrayLike<ArrayLike<{ transcript: string }>>
 }
 
+// The browser's error codes collapse a lot of very different failures
+// (permissions, no mic, dropped connection to the recognition service,
+// genuine silence) into one string — surfacing which one it actually was
+// matters, since "couldn't hear you" and "this browser can't reach the
+// speech service at all" call for completely different fixes.
+function describeSpeechError(code: string): string {
+  switch (code) {
+    case "not-allowed":
+    case "service-not-allowed":
+      return "Microphone access was denied — check this browser's site permissions."
+    case "no-speech":
+      return "Didn't hear anything — try again and speak right after tapping."
+    case "audio-capture":
+      return "No microphone found on this device."
+    case "network":
+      return "Voice recognition couldn't reach the speech service (needs an internet connection, and some embedded browsers don't support it)."
+    default:
+      return `Couldn't hear that (${code}) — try again.`
+  }
+}
+
 function getRecognitionCtor(): SpeechRecognitionCtor | null {
   if (typeof window === "undefined") return null
   const w = window as unknown as {
@@ -58,7 +79,7 @@ export function useVoiceInput() {
       setTranscript(text)
     }
     recognition.onerror = (event) => {
-      setError(event.error === "not-allowed" ? "Microphone access was denied." : "Couldn't hear that — try again.")
+      setError(describeSpeechError(event.error))
       setListening(false)
     }
     recognition.onend = () => setListening(false)
