@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Card, Eyebrow, Screen } from "../components/Screen"
 import { useAppStore } from "../store/useAppStore"
 import { mockFoodSearchResults, mockPhotoRecognizedFood } from "../lib/mockData"
-import { searchFoods, usdaConfigured } from "../lib/usda"
+import { searchOpenNutrition } from "../lib/opennutrition"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useFoodLogsToday } from "../hooks/useFoodLogsToday"
 import type { FoodItem } from "../lib/types"
@@ -29,7 +29,7 @@ export function FoodLog() {
   async function runSearch(q: string) {
     setQuery(q)
     setJustAddedId(null)
-    if (!isLive || !usdaConfigured) {
+    if (!isLive) {
       setResults(mockFoodSearchResults.filter((f) => f.name.toLowerCase().includes(q.toLowerCase())))
       return
     }
@@ -40,7 +40,7 @@ export function FoodLog() {
     setSearching(true)
     setSearchError(null)
     try {
-      const found = await searchFoods(q)
+      const found = await searchOpenNutrition(q)
       setResults(found)
     } catch (err) {
       setSearchError(err instanceof Error ? err.message : "Search failed")
@@ -168,9 +168,17 @@ export function FoodLog() {
             value={query}
             onChange={(e) => void runSearch(e.target.value)}
           />
-          {isLive && !usdaConfigured && (
-            <div className="text-[0.76rem] text-[color:var(--color-ink-faint)]">
-              USDA search isn't configured yet — showing sample results.
+          {isLive && (
+            <div className="text-[0.7rem] text-[color:var(--color-ink-faint)]">
+              Nutrition data from{" "}
+              <a
+                href="https://www.opennutrition.app"
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                OpenNutrition
+              </a>
             </div>
           )}
           {searchError && (
