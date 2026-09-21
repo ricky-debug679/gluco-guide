@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Card, Eyebrow, Screen } from "../components/Screen"
 import { useAppStore } from "../store/useAppStore"
 import { mockFoodSearchResults, mockPhotoRecognizedFood } from "../lib/mockData"
@@ -25,10 +25,15 @@ export function FoodLog() {
   const [addingId, setAddingId] = useState<string | null>(null)
   const [justAddedId, setJustAddedId] = useState<string | null>(null)
   const [removingId, setRemovingId] = useState<string | null>(null)
+  // Tracks the most recently *dispatched* query so a slow, older request's
+  // response can't clobber a newer one that already resolved — broad
+  // queries (e.g. a single letter) can take longer than narrow ones, so
+  // responses don't always arrive in the order they were sent.
+  const latestQueryRef = useRef("")
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   async function runSearch(q: string) {
-    setQuery(q)
-    setJustAddedId(null)
+    latestQueryRef.current = q
     if (!isLive) {
       setResults(mockFoodSearchResults.filter((f) => f.name.toLowerCase().includes(q.toLowerCase())))
       return
@@ -41,12 +46,21 @@ export function FoodLog() {
     setSearchError(null)
     try {
       const found = await searchOpenNutrition(q)
+      if (latestQueryRef.current !== q) return
       setResults(found)
     } catch (err) {
+      if (latestQueryRef.current !== q) return
       setSearchError(err instanceof Error ? err.message : "Search failed")
     } finally {
-      setSearching(false)
+      if (latestQueryRef.current === q) setSearching(false)
     }
+  }
+
+  function handleQueryChange(q: string) {
+    setQuery(q)
+    setJustAddedId(null)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => void runSearch(q), 250)
   }
 
   async function handleAddFood(food: FoodItem, source: "photo" | "search") {
@@ -166,7 +180,7 @@ export function FoodLog() {
             className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.92rem]"
             placeholder="Search foods"
             value={query}
-            onChange={(e) => void runSearch(e.target.value)}
+            onChange={(e) => handleQueryChange(e.target.value)}
           />
           {isLive && (
             <div className="text-[0.7rem] text-[color:var(--color-ink-faint)]">
