@@ -22,6 +22,8 @@
   --color-mind-bg: #e8e4f1;
   --color-supp: #3f8577;
   --color-supp-bg: #deeeea;
+  --color-move: #3f6fa8;
+  --color-move-bg: #dfe7f1;
 
   --font-display: "Lora", Georgia, serif;
   --font-body: "Karla", ui-sans-serif, system-ui, sans-serif;
@@ -50,6 +52,8 @@
     --color-mind-bg: #302b42;
     --color-supp: #7fc4b4;
     --color-supp-bg: #1e3733;
+    --color-move: #86aede;
+    --color-move-bg: #1e2a38;
   }
 }
 

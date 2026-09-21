@@ -8,9 +8,11 @@ import { useFiberSupplement } from "../hooks/useFiberSupplement"
 import { useFoodLogsToday } from "../hooks/useFoodLogsToday"
 import { useWellnessActivity } from "../hooks/useWellnessActivity"
 import { useSupplements } from "../hooks/useSupplements"
+import { useExerciseLogs } from "../hooks/useExerciseLogs"
 import { buildCaloriePlan } from "../lib/caloriePlan"
 
 const MIND_STRESS_TARGET = 2 // a couple of mindful moments a day — a goal, not a clinical benchmark
+const EXERCISE_WEEKLY_TARGET_MINUTES = 150 // CDC National DPP activity benchmark, same as the Exercise screen
 
 const quickAdd = [
   {
@@ -72,6 +74,7 @@ export function Home() {
   const foodLogs = useFoodLogsToday(selfMemberId)
   const wellness = useWellnessActivity(selfMemberId)
   const supplements = useSupplements(selfMemberId)
+  const exercise = useExerciseLogs(selfMemberId)
 
   const isLive = !!householdCtx
   const waterCups = isLive ? water.cupsToday : totals.waterCups
@@ -94,6 +97,7 @@ export function Home() {
   const mindStressCount = isLive ? wellness.today.length : 0
   const supplementsTaken = isLive ? supplements.takenCount : 0
   const supplementsTarget = isLive ? Math.max(supplements.active.length, 1) : 1
+  const exerciseWeekMinutes = isLive ? exercise.weekMinutes : 0
   const nextDoseLabel = isLive ? supplement.name : "Fiber supplement"
   const nextDoseTime = mockReminder.nextDoseTime
   const doseTakenToday = isLive ? supplement.takenToday : mockReminder.takenToday
@@ -156,22 +160,28 @@ export function Home() {
             colorVar="--color-water"
             bgVar="--color-water-bg"
           />
-          <div className="col-span-3 flex justify-center gap-8">
-            <ProgressRing
-              value={mindStressCount}
-              target={MIND_STRESS_TARGET}
-              label="Mind/Sleep"
-              colorVar="--color-supp"
-              bgVar="--color-supp-bg"
-            />
-            <ProgressRing
-              value={supplementsTaken}
-              target={supplementsTarget}
-              label="Supplements"
-              colorVar="--color-supp"
-              bgVar="--color-supp-bg"
-            />
-          </div>
+          <ProgressRing
+            value={mindStressCount}
+            target={MIND_STRESS_TARGET}
+            label="Mind/Sleep"
+            colorVar="--color-supp"
+            bgVar="--color-supp-bg"
+          />
+          <ProgressRing
+            value={supplementsTaken}
+            target={supplementsTarget}
+            label="Supplements"
+            colorVar="--color-supp"
+            bgVar="--color-supp-bg"
+          />
+          <ProgressRing
+            value={exerciseWeekMinutes}
+            target={EXERCISE_WEEKLY_TARGET_MINUTES}
+            label="Exercise/wk"
+            unit="m"
+            colorVar="--color-move"
+            bgVar="--color-move-bg"
+          />
         </div>
       </Card>
 
