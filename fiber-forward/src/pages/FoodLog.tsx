@@ -229,7 +229,8 @@ export function FoodLog() {
                       )}
                     </div>
                     <div className="mt-0.5 text-[0.72rem] text-[color:var(--color-ink-faint)]">
-                      Fiber {food.fiberG}g · Protein {food.proteinG}g · Carbs {food.carbG}g · Fat {food.fatG}g
+                      Per {food.portion} — Fiber {food.fiberG}g · Protein {food.proteinG}g · Carbs {food.carbG}g · Fat{" "}
+                      {food.fatG}g
                     </div>
                   </button>
                 )
@@ -253,7 +254,8 @@ export function FoodLog() {
                 <div>
                   <div className="text-[0.86rem] font-bold">{entry.name}</div>
                   <div className="mt-0.5 text-[0.72rem] text-[color:var(--color-ink-faint)]">
-                    {entry.calories_kcal} kcal · Fiber {entry.fiber_g}g · Protein {entry.protein_g}g
+                    Per {entry.portion} — {entry.calories_kcal} kcal · Fiber {entry.fiber_g}g · Protein{" "}
+                    {entry.protein_g}g
                   </div>
                 </div>
                 <button
