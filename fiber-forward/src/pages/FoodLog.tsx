@@ -7,8 +7,15 @@ import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useFoodLogsToday } from "../hooks/useFoodLogsToday"
 import type { FoodItem } from "../lib/types"
 
+// Standard Atwater factors. Carbs here means *total* carbohydrate (the
+// way nutrition labels report it), which already includes fiber — so
+// fiber isn't added again on top, only counted toward the fiber ring.
+function calcCalories(proteinG: number, carbG: number, fatG: number) {
+  return Math.round(proteinG * 4 + carbG * 4 + fatG * 9)
+}
+
 export function FoodLog() {
-  const [tab, setTab] = useState<"photo" | "search">("photo")
+  const [tab, setTab] = useState<"photo" | "search" | "manual">("photo")
   const mockAddFoodToLog = useAppStore((s) => s.addFoodToLog)
   const [added, setAdded] = useState(false)
 
@@ -31,6 +38,15 @@ export function FoodLog() {
   // responses don't always arrive in the order they were sent.
   const latestQueryRef = useRef("")
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const [manualName, setManualName] = useState("")
+  const [manualFiber, setManualFiber] = useState("")
+  const [manualProtein, setManualProtein] = useState("")
+  const [manualCarb, setManualCarb] = useState("")
+  const [manualFat, setManualFat] = useState("")
+  const [manualSaving, setManualSaving] = useState(false)
+  const [manualAdded, setManualAdded] = useState(false)
+  const manualCalories = calcCalories(Number(manualProtein) || 0, Number(manualCarb) || 0, Number(manualFat) || 0)
 
   async function runSearch(q: string) {
     latestQueryRef.current = q
@@ -63,7 +79,7 @@ export function FoodLog() {
     debounceRef.current = setTimeout(() => void runSearch(q), 250)
   }
 
-  async function handleAddFood(food: FoodItem, source: "photo" | "search") {
+  async function handleAddFood(food: FoodItem, source: "photo" | "search" | "manual") {
     if (source === "search" && (addingId || justAddedId === food.id)) return
     setAddError(null)
     if (source === "search") setAddingId(food.id)
@@ -79,6 +95,40 @@ export function FoodLog() {
       setAddError(err instanceof Error ? err.message : "Couldn't save that — try again.")
     } finally {
       if (source === "search") setAddingId(null)
+    }
+  }
+
+  async function handleAddManual() {
+    if (!manualName.trim()) return
+    setAddError(null)
+    setManualSaving(true)
+    const food: FoodItem = {
+      id: `manual-${Date.now()}`,
+      name: manualName.trim(),
+      portion: "as entered",
+      fiberG: Number(manualFiber) || 0,
+      proteinG: Number(manualProtein) || 0,
+      carbG: Number(manualCarb) || 0,
+      fatG: Number(manualFat) || 0,
+      caloriesKcal: manualCalories,
+    }
+    try {
+      if (isLive) {
+        await foodLogs.addFood(food, "manual")
+      } else {
+        mockAddFoodToLog(food)
+      }
+      setManualAdded(true)
+      setManualName("")
+      setManualFiber("")
+      setManualProtein("")
+      setManualCarb("")
+      setManualFat("")
+      setTimeout(() => setManualAdded(false), 2000)
+    } catch (err) {
+      setAddError(err instanceof Error ? err.message : "Couldn't save that — try again.")
+    } finally {
+      setManualSaving(false)
     }
   }
 
@@ -102,7 +152,7 @@ export function FoodLog() {
       </div>
 
       <div className="flex gap-1.5 rounded-xl bg-[color:var(--color-surface-2)] p-1">
-        {(["photo", "search"] as const).map((t) => (
+        {(["photo", "search", "manual"] as const).map((t) => (
           <button
             key={t}
             onClick={() => {
@@ -174,7 +224,7 @@ export function FoodLog() {
             {added ? "Added to today's log" : "Add to today's log"}
           </button>
         </>
-      ) : (
+      ) : tab === "search" ? (
         <>
           <input
             className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.92rem]"
@@ -238,6 +288,55 @@ export function FoodLog() {
             )}
           </Card>
         </>
+      ) : (
+        <>
+          <Card>
+            <div className="text-[0.8rem] text-[color:var(--color-ink-soft)]">
+              Can't find it in search? Enter what's on the label — we'll work out calories for you.
+            </div>
+            <div className="mt-3 flex flex-col gap-2.5">
+              <div>
+                <label className="text-[0.72rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
+                  Food name
+                </label>
+                <input
+                  value={manualName}
+                  onChange={(e) => setManualName(e.target.value)}
+                  placeholder="e.g. Mom's lentil curry"
+                  className="mt-1.5 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <NumberField label="Fiber (g)" value={manualFiber} onChange={setManualFiber} />
+                <NumberField label="Protein (g)" value={manualProtein} onChange={setManualProtein} />
+                <NumberField label="Total carbs (g)" value={manualCarb} onChange={setManualCarb} />
+                <NumberField label="Fat (g)" value={manualFat} onChange={setManualFat} />
+              </div>
+              <div className="text-[0.68rem] text-[color:var(--color-ink-faint)]">
+                Total carbs means the label's full "Total Carbohydrate" figure — it already includes fiber, so don't
+                add fiber on top.
+              </div>
+              <div className="rounded-xl bg-[color:var(--color-sage-bg)] p-3 text-center">
+                <div className="text-[0.68rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
+                  Calculated calories
+                </div>
+                <div className="mt-0.5 font-serif text-[1.4rem]">{manualCalories} kcal</div>
+              </div>
+              {manualAdded && (
+                <div className="text-center text-[0.8rem] font-bold text-[color:var(--color-sage)]">
+                  Added to today's log ✓
+                </div>
+              )}
+              <button
+                onClick={handleAddManual}
+                disabled={!manualName.trim() || manualSaving}
+                className="min-h-11 rounded-xl bg-[color:var(--color-sage)] px-4 py-3.5 text-[0.9rem] font-bold text-white disabled:opacity-60"
+              >
+                {manualSaving ? "Saving…" : "Add to today's log"}
+              </button>
+            </div>
+          </Card>
+        </>
       )}
 
       {isLive && foodLogs.todaysFoods.length > 0 && (
@@ -272,6 +371,34 @@ export function FoodLog() {
         </div>
       )}
     </Screen>
+  )
+}
+
+function NumberField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+}) {
+  return (
+    <div>
+      <label className="text-[0.72rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
+        {label}
+      </label>
+      <input
+        type="number"
+        min="0"
+        step="0.1"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="0"
+        className="mt-1.5 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
+      />
+    </div>
   )
 }
 

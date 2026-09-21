@@ -29,7 +29,7 @@ export function useFoodLogsToday(memberId: string | undefined) {
   })
 
   const addFood = useMutation({
-    mutationFn: async (input: { food: FoodItem; source: "photo" | "search" }) => {
+    mutationFn: async (input: { food: FoodItem; source: "photo" | "search" | "manual" }) => {
       if (!supabase || !memberId) return
       const { error } = await supabase.from("food_logs").insert({
         member_id: memberId,
@@ -72,7 +72,7 @@ export function useFoodLogsToday(memberId: string | undefined) {
     todaysFoods: rows,
     totals,
     isLoading: query.isLoading,
-    addFood: (food: FoodItem, source: "photo" | "search") => addFood.mutateAsync({ food, source }),
+    addFood: (food: FoodItem, source: "photo" | "search" | "manual") => addFood.mutateAsync({ food, source }),
     removeFood: (id: string) => removeFood.mutateAsync(id),
   }
 }
