@@ -352,7 +352,7 @@ export function GroceryScan() {
                 <div className="mt-2 flex flex-col gap-2.5">
                   {analysis.combinationTips.map((tip, i) => (
                     <div key={i} className="text-[0.85rem] leading-relaxed text-[color:var(--color-ink)]">
-                      <span className="font-bold">Looks like you're making {tip.dish} —</span> {tip.tip}
+                      {tip.message}
                     </div>
                   ))}
                 </div>
