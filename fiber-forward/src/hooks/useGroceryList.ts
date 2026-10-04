@@ -15,6 +15,7 @@ export interface ItemFlag {
 }
 
 export interface CombinationTip {
+  dish: string
   items: string[]
   tip: string
 }

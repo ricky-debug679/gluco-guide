@@ -54,13 +54,13 @@ Deno.serve(async (req) => {
 
 1. For each item that is notably unhealthy (high in added sugar, refined carbs, or sodium) or notably healthy (high fiber/protein, whole food), give a short one-sentence note. Skip neutral items with no strong signal.
 
-2. Look at the list AS A WHOLE for every distinct group of items that, together, suggest a specific (possibly less healthy) way they might be prepared or eaten — e.g. oil + potatoes suggests frying. Be systematic and exhaustive, not just first-match: a single list can describe more than one dish or component (for example fish + batter + oil is a fried-fish group, and potatoes + oil is a separate fried-potatoes group — both deserve their own tip even though they share "oil"; don't stop after finding the first one). If the list looks like a recognizable meal (e.g. fish and chips), it's fine to name that, but still give a separate practical tip for each component that could be made healthier, covering sauces/condiments too if they're part of the same meal. Give one short, specific, practical tip per group — a healthier prep method or a portion/quantity suggestion. Only include groups you're reasonably confident about, but do not under-report: if 3 distinct groups are plausible, return 3, not 1.
+2. Look at the list AS A WHOLE for every distinct group of items that, together, suggest a specific (possibly less healthy) way they might be prepared or eaten — e.g. oil + potatoes suggests frying. Be systematic and exhaustive, not just first-match: a single list can describe more than one dish or component (for example fish + batter + oil is a fried-fish group, and potatoes + oil is a separate fried-potatoes group — both deserve their own tip even though they share "oil"; don't stop after finding the first one). Give a separate practical tip for each component that could be made healthier, covering sauces/condiments too if they're part of the same meal. For each group, name the specific dish or recipe it looks like ("French fries", "fried fish", "tartar sauce"), like a friend recognizing what you're about to cook — not a label that just lists the raw ingredients back. Give one short, specific, practical tip per group — a healthier prep method or a portion/quantity suggestion. Only include groups you're reasonably confident about, but do not under-report: if 3 distinct groups are plausible, return 3, not 1.
 
 Grocery list:
 ${cleanItems.map((i) => `- ${i}`).join("\n")}
 
 Respond with ONLY valid JSON, no markdown fences, matching exactly this shape:
-{"itemFlags":[{"name":"<item as listed>","verdict":"caution"|"good","note":"<one short sentence>"}],"combinationTips":[{"items":["<item1>","<item2>"],"tip":"<one short, practical sentence>"}]}`
+{"itemFlags":[{"name":"<item as listed>","verdict":"caution"|"good","note":"<one short sentence>"}],"combinationTips":[{"dish":"<short recognizable dish/recipe name this group suggests, e.g. 'French fries'>","items":["<item1>","<item2>"],"tip":"<one short, practical sentence>"}]}`
 
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
