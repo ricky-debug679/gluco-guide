@@ -51,8 +51,10 @@ Deno.serve(async (req) => {
       .map((i) => i.trim())
 
     const prompt = `You are a nutrition assistant for a diabetes-prevention app. A user's grocery list is below. Do two things:
+
 1. For each item that is notably unhealthy (high in added sugar, refined carbs, or sodium) or notably healthy (high fiber/protein, whole food), give a short one-sentence note. Skip neutral items with no strong signal.
-2. Look at the list AS A WHOLE for combinations of items that suggest a specific (possibly less healthy) way they might be prepared together (e.g. oil + potatoes suggests frying), and give one short, specific, practical tip per combination you notice, such as a healthier prep method or a portion/quantity suggestion. Only include combinations you're reasonably confident about; it's fine to return zero.
+
+2. Look at the list AS A WHOLE for every distinct group of items that, together, suggest a specific (possibly less healthy) way they might be prepared or eaten — e.g. oil + potatoes suggests frying. Be systematic and exhaustive, not just first-match: a single list can describe more than one dish or component (for example fish + batter + oil is a fried-fish group, and potatoes + oil is a separate fried-potatoes group — both deserve their own tip even though they share "oil"; don't stop after finding the first one). If the list looks like a recognizable meal (e.g. fish and chips), it's fine to name that, but still give a separate practical tip for each component that could be made healthier, covering sauces/condiments too if they're part of the same meal. Give one short, specific, practical tip per group — a healthier prep method or a portion/quantity suggestion. Only include groups you're reasonably confident about, but do not under-report: if 3 distinct groups are plausible, return 3, not 1.
 
 Grocery list:
 ${cleanItems.map((i) => `- ${i}`).join("\n")}
@@ -69,7 +71,7 @@ Respond with ONLY valid JSON, no markdown fences, matching exactly this shape:
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1024,
+        max_tokens: 1536,
         messages: [{ role: "user", content: prompt }],
       }),
     })
