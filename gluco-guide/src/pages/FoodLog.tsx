@@ -2,7 +2,7 @@ import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Card, Eyebrow, Screen } from "../components/Screen"
 import { useAppStore } from "../store/useAppStore"
-import { mockFoodSearchResults } from "../lib/mockData"
+import { demoFoodSearchResults } from "../lib/demoData"
 import { searchOpenNutrition } from "../lib/opennutrition"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useFoodLogsToday } from "../hooks/useFoodLogsToday"
@@ -26,7 +26,7 @@ export function FoodLog() {
   const { t } = useTranslation()
   const NOT_SURE_ANSWER = t("foodLog.notSureAnswer")
   const [tab, setTab] = useState<"photo" | "search" | "manual">("photo")
-  const mockAddFoodToLog = useAppStore((s) => s.addFoodToLog)
+  const demoAddFoodToLog = useAppStore((s) => s.addFoodToLog)
 
   const householdCtx = useOptionalHousehold()
   const selfMemberId = householdCtx?.household.selfMember.id
@@ -34,7 +34,7 @@ export function FoodLog() {
   const foodLogs = useFoodLogsToday(selfMemberId)
 
   const [query, setQuery] = useState("lentil")
-  const [results, setResults] = useState<FoodItem[]>(mockFoodSearchResults)
+  const [results, setResults] = useState<FoodItem[]>(demoFoodSearchResults)
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [addError, setAddError] = useState<string | null>(null)
@@ -68,7 +68,7 @@ export function FoodLog() {
   async function runSearch(q: string) {
     latestQueryRef.current = q
     if (!isLive) {
-      setResults(mockFoodSearchResults.filter((f) => f.name.toLowerCase().includes(q.toLowerCase())))
+      setResults(demoFoodSearchResults.filter((f) => f.name.toLowerCase().includes(q.toLowerCase())))
       return
     }
     if (!q.trim()) {
@@ -104,7 +104,7 @@ export function FoodLog() {
       if (isLive) {
         await foodLogs.addFood(food, "search")
       } else {
-        mockAddFoodToLog(food)
+        demoAddFoodToLog(food)
       }
       setJustAddedId(food.id)
     } catch (err) {
@@ -177,7 +177,7 @@ export function FoodLog() {
       if (isLive) {
         await foodLogs.addFood(food, "photo")
       } else {
-        mockAddFoodToLog(food)
+        demoAddFoodToLog(food)
       }
       setMealAnalysis(null)
     } catch (err) {
@@ -210,7 +210,7 @@ export function FoodLog() {
       if (isLive) {
         await foodLogs.addFood(food, "manual")
       } else {
-        mockAddFoodToLog(food)
+        demoAddFoodToLog(food)
       }
       setManualAdded(true)
       setManualName("")

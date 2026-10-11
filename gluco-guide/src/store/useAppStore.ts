@@ -1,5 +1,6 @@
 import { create } from "zustand"
-import { fiberSupplementOptions, mockTargets, mockTotals } from "../lib/mockData"
+import { defaultTargets, fiberSupplementOptions } from "../lib/content"
+import { demoTotals } from "../lib/demoData"
 import type {
   FiberSupplementKind,
   FoodItem,
@@ -42,8 +43,8 @@ const currentSupplement = () => {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  targets: mockTargets,
-  totals: mockTotals,
+  targets: defaultTargets,
+  totals: demoTotals,
 
   activeLabKey: "glucose",
 

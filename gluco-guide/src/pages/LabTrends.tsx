@@ -2,28 +2,29 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Card, Eyebrow, Screen } from "../components/Screen"
 import { useAppStore } from "../store/useAppStore"
-import { mockLabMetrics } from "../lib/mockData"
+import { labMetrics } from "../lib/content"
+import { demoLabHistory } from "../lib/demoData"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useLabReadings } from "../hooks/useLabReadings"
 import { buildChart, describeTrend } from "../lib/labTrend"
 
 export function LabTrends() {
   const { t, i18n } = useTranslation()
-  const mockActiveKey = useAppStore((s) => s.activeLabKey)
-  const setMockActiveKey = useAppStore((s) => s.setActiveLabKey)
+  const demoActiveKey = useAppStore((s) => s.activeLabKey)
+  const setDemoActiveKey = useAppStore((s) => s.setActiveLabKey)
 
   const householdCtx = useOptionalHousehold()
   const isLive = !!householdCtx
   const selfMemberId = householdCtx?.household.selfMember.id
   const labs = useLabReadings(selfMemberId)
 
-  const [localActiveKey, setLocalActiveKey] = useState(mockActiveKey)
-  const activeKey = isLive ? localActiveKey : mockActiveKey
-  const setActiveKey = isLive ? setLocalActiveKey : setMockActiveKey
+  const [localActiveKey, setLocalActiveKey] = useState(demoActiveKey)
+  const activeKey = isLive ? localActiveKey : demoActiveKey
+  const setActiveKey = isLive ? setLocalActiveKey : setDemoActiveKey
 
-  const metricDef = mockLabMetrics.find((m) => m.key === activeKey)!
+  const metricDef = labMetrics.find((m) => m.key === activeKey)!
   const realReadings = labs.readingsByMetric[activeKey] ?? []
-  const readings = isLive ? realReadings : metricDef.readings
+  const readings = isLive ? realReadings : demoLabHistory[activeKey].readings
   const chart = buildChart(readings, metricDef.targetLow, metricDef.targetHigh)
   // "HbA1c" is an acronym; lowercasing it mid-sentence reads as a typo.
   const metricLabel = metricDef.key === "a1c" ? metricDef.shortLabel : metricDef.shortLabel.toLowerCase()
@@ -43,7 +44,7 @@ export function LabTrends() {
             : trendDescription.kind === "risen"
               ? t("labTrends.trend.risen", { metric: metricLabel, delta: trendDescription.delta })
               : t(trendDescription.inRange ? "labTrends.trend.steadyInRange" : "labTrends.trend.steady", { metric: metricLabel })
-    : metricDef.summary
+    : demoLabHistory[activeKey].summary
 
   const [showForm, setShowForm] = useState(false)
   const [value, setValue] = useState("")
@@ -75,7 +76,7 @@ export function LabTrends() {
       </div>
 
       <div className="flex gap-1.5">
-        {mockLabMetrics.map((m) => (
+        {labMetrics.map((m) => (
           <button
             key={m.key}
             onClick={() => setActiveKey(m.key)}

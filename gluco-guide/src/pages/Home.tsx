@@ -65,7 +65,7 @@ export function Home() {
   const navigate = useNavigate()
   const totals = useAppStore((s) => s.totals)
   const targets = useAppStore((s) => s.targets)
-  const mockReminder = useAppStore((s) => s.reminder)
+  const demoReminder = useAppStore((s) => s.reminder)
 
   const householdCtx = useOptionalHousehold()
   const selfMemberId = householdCtx?.household.selfMember.id
@@ -104,7 +104,7 @@ export function Home() {
   const supplementsTarget = isLive ? Math.max(supplements.active.length, 1) : 1
   const exerciseTodayMinutes = isLive ? exercise.todayMinutes : 0
   const nextDoseLabel = isLive ? supplement.name : t("home.fiberSupplement")
-  const doseTakenToday = isLive ? supplement.takenToday : mockReminder.takenToday
+  const doseTakenToday = isLive ? supplement.takenToday : demoReminder.takenToday
   // A brand-new live user who's never touched the picker gets shown psyllium
   // as a starting idea, not as something they chose — framed as a
   // suggestion until they actually tap something on Hydration (even
@@ -210,7 +210,7 @@ export function Home() {
             ? fiberG > 0
               ? t("home.encourageLogged")
               : t("home.encourageEmpty")
-            : t("home.encourageMock")}
+            : t("home.encourageDemo")}
         </div>
       </Card>
 

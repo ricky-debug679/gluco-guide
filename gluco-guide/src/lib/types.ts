@@ -40,8 +40,6 @@ export interface LabMetric {
   shortLabel: string
   targetLow: number
   targetHigh: number
-  readings: LabReading[]
-  summary: string
 }
 
 export type FiberSupplementKind = "psyllium" | "barley" | "acacia" | "custom"

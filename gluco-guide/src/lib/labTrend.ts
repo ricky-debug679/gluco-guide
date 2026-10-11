@@ -28,9 +28,7 @@ export function buildChart(readings: LabReading[], targetLow: number, targetHigh
 }
 
 /** Lower is better for every metric this app tracks (fasting glucose, 2-hour glucose, HbA1c).
- *  Returns structured data instead of a baked-in English sentence — this is the live, real-data
- *  narrative (not just mock/demo text), so the UI builds the actual localized sentence from it
- *  via translation keys, the same pattern used for the onboarding calorie-plan message. */
+ *  Structured rather than an English sentence so the UI can localize it via translation keys. */
 export type TrendDescription =
   | { kind: "none" }
   | { kind: "firstInRange" }

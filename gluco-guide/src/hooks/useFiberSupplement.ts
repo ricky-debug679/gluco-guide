@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "../lib/supabase"
-import { fiberSupplementOptions } from "../lib/mockData"
+import { fiberSupplementOptions } from "../lib/content"
 import { describeFunctionError } from "../lib/edgeFunctionError"
 import type { FiberSupplementKind } from "../lib/types"
 

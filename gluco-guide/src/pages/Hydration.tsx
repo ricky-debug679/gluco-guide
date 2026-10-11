@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Card, Eyebrow } from "../components/Screen"
 import { useAppStore, useCurrentSupplementInfo } from "../store/useAppStore"
-import { fiberSupplementOptions } from "../lib/mockData"
+import { fiberSupplementOptions } from "../lib/content"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useWaterToday } from "../hooks/useWaterToday"
 import { useFiberSupplement } from "../hooks/useFiberSupplement"
@@ -15,17 +15,17 @@ export function Hydration() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  // Mock-data path (no backend configured / no session)
-  const mockTotals = useAppStore((s) => s.totals)
-  const mockTargets = useAppStore((s) => s.targets)
-  const mockAddWaterCup = useAppStore((s) => s.addWaterCup)
-  const mockRemoveWaterCup = useAppStore((s) => s.removeWaterCup)
-  const mockReminder = useAppStore((s) => s.reminder)
-  const mockMarkDoseTaken = useAppStore((s) => s.markDoseTaken)
-  const mockSelectSupplement = useAppStore((s) => s.selectSupplement)
-  const mockSetCustomSupplementName = useAppStore((s) => s.setCustomSupplementName)
-  const mockSetCustomSupplementFiberG = useAppStore((s) => s.setCustomSupplementFiberG)
-  const mockSupplementInfo = useCurrentSupplementInfo()
+  // Demo-data path (no backend configured / no session)
+  const demoTotals = useAppStore((s) => s.totals)
+  const demoTargets = useAppStore((s) => s.targets)
+  const demoAddWaterCup = useAppStore((s) => s.addWaterCup)
+  const demoRemoveWaterCup = useAppStore((s) => s.removeWaterCup)
+  const demoReminder = useAppStore((s) => s.reminder)
+  const demoMarkDoseTaken = useAppStore((s) => s.markDoseTaken)
+  const demoSelectSupplement = useAppStore((s) => s.selectSupplement)
+  const demoSetCustomSupplementName = useAppStore((s) => s.setCustomSupplementName)
+  const demoSetCustomSupplementFiberG = useAppStore((s) => s.setCustomSupplementFiberG)
+  const demoSupplementInfo = useCurrentSupplementInfo()
 
   // Real-data path
   const householdCtx = useOptionalHousehold()
@@ -41,25 +41,25 @@ export function Hydration() {
 
   const isLive = !!householdCtx
 
-  const waterCups = isLive ? water.cupsToday : mockTotals.waterCups
-  const waterTarget = isLive ? WATER_TARGET : mockTargets.waterCups
-  const addCup = isLive ? water.addCup : mockAddWaterCup
-  const removeCup = isLive ? water.removeCup : mockRemoveWaterCup
+  const waterCups = isLive ? water.cupsToday : demoTotals.waterCups
+  const waterTarget = isLive ? WATER_TARGET : demoTargets.waterCups
+  const addCup = isLive ? water.addCup : demoAddWaterCup
+  const removeCup = isLive ? water.removeCup : demoRemoveWaterCup
 
-  const selectedKind = isLive ? supplement.kind : mockReminder.selectedKind
-  const supplementName = isLive ? supplement.name : mockSupplementInfo.name
-  const supplementMechanism = isLive ? supplement.mechanism : mockSupplementInfo.mechanism
-  const supplementTiming = isLive ? supplement.timingNote : mockSupplementInfo.timingNote
+  const selectedKind = isLive ? supplement.kind : demoReminder.selectedKind
+  const supplementName = isLive ? supplement.name : demoSupplementInfo.name
+  const supplementMechanism = isLive ? supplement.mechanism : demoSupplementInfo.mechanism
+  const supplementTiming = isLive ? supplement.timingNote : demoSupplementInfo.timingNote
   const supplementUsage = isLive ? supplement.customUsage : ""
-  const fiberPerDoseG = isLive ? supplement.fiberPerDoseG : mockSupplementInfo.fiberPerDoseG
-  const takenToday = isLive ? supplement.takenToday : mockReminder.takenToday
+  const fiberPerDoseG = isLive ? supplement.fiberPerDoseG : demoSupplementInfo.fiberPerDoseG
+  const takenToday = isLive ? supplement.takenToday : demoReminder.takenToday
   const hasPreference = isLive ? supplement.hasPreference : true
   const isSavingCustom = isLive && supplement.isSavingCustom
   const isRemoving = isLive && supplement.isRemoving
 
   function openCustomEditor() {
-    setCustomNameDraft(isLive ? supplement.customName : mockReminder.customName)
-    setCustomFiberDraft(isLive ? String(supplement.customFiberG ?? "") : String(mockReminder.customFiberG || ""))
+    setCustomNameDraft(isLive ? supplement.customName : demoReminder.customName)
+    setCustomFiberDraft(isLive ? String(supplement.customFiberG ?? "") : String(demoReminder.customFiberG || ""))
     setCustomError(null)
     setEditingCustom(true)
   }
@@ -67,7 +67,7 @@ export function Hydration() {
   async function handleSelectPreset(kind: Exclude<FiberSupplementKind, "custom">) {
     setEditingCustom(false)
     if (isLive) await supplement.select(kind)
-    else mockSelectSupplement(kind)
+    else demoSelectSupplement(kind)
   }
 
   async function handleSaveCustom() {
@@ -78,9 +78,9 @@ export function Hydration() {
       if (isLive) {
         await supplement.saveCustom(name, customFiberDraft ? Number(customFiberDraft) : null)
       } else {
-        mockSetCustomSupplementName(name)
-        mockSetCustomSupplementFiberG(Number(customFiberDraft) || 0)
-        mockSelectSupplement("custom", name)
+        demoSetCustomSupplementName(name)
+        demoSetCustomSupplementFiberG(Number(customFiberDraft) || 0)
+        demoSelectSupplement("custom", name)
       }
       setEditingCustom(false)
     } catch (err) {
@@ -101,7 +101,7 @@ export function Hydration() {
     setMarkError(null)
     try {
       if (isLive) await supplement.markTaken()
-      else mockMarkDoseTaken()
+      else demoMarkDoseTaken()
     } catch (err) {
       setMarkError(err instanceof Error ? err.message : t("common.genericError"))
     }

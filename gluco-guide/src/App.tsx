@@ -20,7 +20,7 @@ import { supabase } from "./lib/supabase"
 // onboarding is gated on the real profile actually being complete (height
 // set on the member row), proven by Supabase rather than in-memory UI
 // state, so it never re-traps a returning user who already finished it.
-// The mock-data fallback (no backend configured) still gates on the
+// The demo-data fallback (no backend configured) still gates on the
 // in-memory onboarding flag, since there's nothing else to check it
 // against.
 function AppRoutes({ isLive }: { isLive: boolean }) {
@@ -51,7 +51,7 @@ export function App() {
   const { session, loading } = useSession()
 
   // No backend configured yet (e.g. running before .env.local is set) —
-  // fall back to the mock-data experience rather than blocking on auth.
+  // fall back to the demo-data experience rather than blocking on auth.
   if (!supabase) return <AppRoutes isLive={false} />
 
   if (loading) {

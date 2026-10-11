@@ -25,12 +25,12 @@ export function Onboarding() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  // Mock-data path (no backend configured)
-  const mockOnboarding = useAppStore((s) => s.onboarding)
-  const setMockName = useAppStore((s) => s.onboardingSetName)
-  const setMockGoal = useAppStore((s) => s.onboardingSetGoal)
-  const advanceMock = useAppStore((s) => s.onboardingAdvance)
-  const completeMock = useAppStore((s) => s.onboardingComplete)
+  // Demo-data path (no backend configured)
+  const demoOnboarding = useAppStore((s) => s.onboarding)
+  const setDemoName = useAppStore((s) => s.onboardingSetName)
+  const setDemoGoal = useAppStore((s) => s.onboardingSetGoal)
+  const advanceDemo = useAppStore((s) => s.onboardingAdvance)
+  const completeDemo = useAppStore((s) => s.onboardingComplete)
 
   // Real-data path
   const householdCtx = useOptionalHousehold()
@@ -56,7 +56,7 @@ export function Onboarding() {
 
   const lastStep = isLive ? 3 : 2
 
-  const currentName = isLive ? name : mockOnboarding.name
+  const currentName = isLive ? name : demoOnboarding.name
   const canContinueName = currentName.trim().length > 0
 
   const canContinueAboutYou = isLive
@@ -76,7 +76,7 @@ export function Onboarding() {
 
   async function handleFinish() {
     if (!isLive || !sex || !activityLevel) {
-      completeMock()
+      completeDemo()
       navigate("/")
       return
     }
@@ -122,13 +122,13 @@ export function Onboarding() {
 
   function handleNext() {
     if (!isLive) {
-      // original mock flow, unchanged
+      // original demo flow, unchanged
       if (step === 2) {
-        completeMock()
+        completeDemo()
         navigate("/")
         return
       }
-      advanceMock()
+      advanceDemo()
       setStep((s) => Math.min(2, s + 1))
       return
     }
@@ -142,15 +142,15 @@ export function Onboarding() {
 
   function handleSkip() {
     if (!isLive) {
-      completeMock()
+      completeDemo()
       navigate("/")
       return
     }
     void handleFinish()
   }
 
-  const displayStep = isLive ? step : mockOnboarding.step
-  const displayGoalIndex = isLive ? goalIndex : mockOnboarding.goalIndex
+  const displayStep = isLive ? step : demoOnboarding.step
+  const displayGoalIndex = isLive ? goalIndex : demoOnboarding.goalIndex
 
   return (
     <div className="flex h-screen w-full justify-center bg-[color:var(--color-bg)]">
@@ -185,8 +185,8 @@ export function Onboarding() {
                 <input
                   className="mt-2 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
                   placeholder={t("onboarding.namePlaceholder")}
-                  value={isLive ? name : mockOnboarding.name}
-                  onChange={(e) => (isLive ? setName(e.target.value) : setMockName(e.target.value))}
+                  value={isLive ? name : demoOnboarding.name}
+                  onChange={(e) => (isLive ? setName(e.target.value) : setDemoName(e.target.value))}
                 />
               </div>
             </>
@@ -207,7 +207,7 @@ export function Onboarding() {
                 {goalKeys.map((key, i) => (
                   <button
                     key={key}
-                    onClick={() => (isLive ? setGoalIndex(i) : setMockGoal(i))}
+                    onClick={() => (isLive ? setGoalIndex(i) : setDemoGoal(i))}
                     className={`min-h-11 rounded-2xl border-[1.5px] px-4 py-3.5 text-left text-[0.9rem] font-bold ${
                       displayGoalIndex === i
                         ? "border-[color:var(--color-sage)] bg-[color:var(--color-sage-bg)] text-[color:var(--color-sage)]"
@@ -417,7 +417,7 @@ export function Onboarding() {
             </>
           )}
 
-          {!isLive && mockOnboarding.step === 2 && (
+          {!isLive && demoOnboarding.step === 2 && (
             <>
               <div>
                 <div className="text-[0.78rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
@@ -425,13 +425,13 @@ export function Onboarding() {
                 </div>
                 <h1 className="mt-2 text-[1.5rem] font-semibold">{t("onboarding.labsLabel")}</h1>
                 <div className="mt-2 text-[0.9rem] text-[color:var(--color-ink-soft)]">
-                  {t("onboarding.mockLabsSubtitle")}
+                  {t("onboarding.demoLabsSubtitle")}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                    {t("onboarding.mockFastingGlucoseLabel")}
+                    {t("onboarding.demoFastingGlucoseLabel")}
                   </label>
                   <input
                     className="mt-2 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
@@ -440,7 +440,7 @@ export function Onboarding() {
                 </div>
                 <div>
                   <label className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                    {t("onboarding.mock2hrGlucoseLabel")}
+                    {t("onboarding.demo2hrGlucoseLabel")}
                   </label>
                   <input
                     className="mt-2 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
@@ -449,7 +449,7 @@ export function Onboarding() {
                 </div>
                 <div>
                   <label className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                    {t("onboarding.mockHba1cLabel")}
+                    {t("onboarding.demoHba1cLabel")}
                   </label>
                   <input
                     className="mt-2 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
@@ -458,7 +458,7 @@ export function Onboarding() {
                 </div>
               </div>
               <div className="rounded-2xl bg-[color:var(--color-surface-2)] p-4 text-[0.82rem] text-[color:var(--color-ink-soft)]">
-                {t("onboarding.mockDisclaimer")}
+                {t("onboarding.demoDisclaimer")}
               </div>
             </>
           )}

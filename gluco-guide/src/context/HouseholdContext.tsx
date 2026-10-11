@@ -31,7 +31,7 @@ export function HouseholdProvider({ user, children }: { user: User; children: Re
   return <HouseholdContext.Provider value={{ user, household: data }}>{children}</HouseholdContext.Provider>
 }
 
-/** Returns null when there's no real backend/session — callers fall back to mock data. */
+/** Returns null when there's no real backend/session — callers fall back to demo data. */
 export function useOptionalHousehold() {
   return useContext(HouseholdContext)
 }

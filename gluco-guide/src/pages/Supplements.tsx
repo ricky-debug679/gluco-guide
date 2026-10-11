@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Card, Eyebrow } from "../components/Screen"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useSupplements } from "../hooks/useSupplements"
-import { supplementRecommendations } from "../lib/mockData"
+import { supplementRecommendations } from "../lib/content"
 import type { SupplementRecommendationKey } from "../lib/types"
 
 type VdChoice = "low" | "normal" | "unsure" | null
