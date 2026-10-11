@@ -61,6 +61,8 @@ export interface CaloriePlanInput {
   age: number
   sex: BiologicalSex
   activityLevel: ActivityLevel
+  /** From the user's weight goal, if they set one. */
+  targetWeightKg?: number | null
 }
 
 export interface CaloriePlan {
@@ -72,7 +74,7 @@ export interface CaloriePlan {
   targetCalories: number
   /** kg/week; negative = loss, positive = gain, 0 = maintaining. */
   weeklyChangeKg: number
-  /** Daily calorie reduction from maintenance; 0 when category is healthy/underweight. The UI builds the localized message from this rather than a baked-in English string. */
+  /** Daily calorie reduction from maintenance; 0 when maintaining. The UI builds the localized message from this rather than a baked-in English string. */
   dailyDeficit: number
 }
 
@@ -95,9 +97,9 @@ export function buildMacroTargets(plan: CaloriePlan, input: CaloriePlanInput): M
   const kcal = plan.targetCalories
   // Above a healthy BMI, base protein on the top of the healthy range so the
   // target doesn't climb with excess weight; more per kg while losing weight
-  // helps preserve muscle.
+  // (preserves muscle) or exercising most days.
   const referenceKg = Math.min(input.weightKg, plan.healthyWeightHighKg)
-  const gramsPerKg = plan.dailyDeficit > 0 ? 1.2 : 1.0
+  const gramsPerKg = plan.dailyDeficit > 0 || input.activityLevel === "active" ? 1.2 : 1.0
   const proteinG = Math.min(referenceKg * gramsPerKg, (kcal * 0.3) / 4)
 
   let fatG = (kcal * 0.3) / 9
@@ -123,37 +125,15 @@ export function buildCaloriePlan(input: CaloriePlanInput): CaloriePlan {
     bmr(input.weightKg, input.heightCm, input.age, input.sex) * ACTIVITY_MULTIPLIERS[input.activityLevel],
   )
 
-  if (category === "healthy") {
-    return {
-      bmi,
-      category,
-      healthyWeightLowKg: low,
-      healthyWeightHighKg: high,
-      maintenanceCalories,
-      targetCalories: maintenanceCalories,
-      weeklyChangeKg: 0,
-      dailyDeficit: 0,
-    }
-  }
-
-  if (category === "underweight") {
-    return {
-      bmi,
-      category,
-      healthyWeightLowKg: low,
-      healthyWeightHighKg: high,
-      maintenanceCalories,
-      targetCalories: maintenanceCalories,
-      weeklyChangeKg: 0,
-      dailyDeficit: 0,
-    }
-  }
-
-  // overweight or obese: one gradual, capped, safe deficit — not a crash diet.
-  const floor = MIN_SAFE_CALORIES[input.sex]
-  const targetCalories = Math.max(maintenanceCalories - 500, floor)
-  const actualDeficit = maintenanceCalories - targetCalories
-  const weeklyChangeKg = -(actualDeficit * 7) / 7700 // ~7,700 kcal per kg of body fat
+  // Gradual, capped deficits only — never a crash diet. Above a healthy BMI,
+  // ~1 lb/week; within it, ~0.5 lb/week toward a goal weight that stays in
+  // the healthy range. Underweight is never given a deficit.
+  const target = input.targetWeightKg
+  const goalWithinHealthyRange = category === "healthy" && !!target && target < input.weightKg && target >= low
+  const plannedDeficit = category === "overweight" || category === "obese" ? 500 : goalWithinHealthyRange ? 250 : 0
+  const floor = Math.min(maintenanceCalories, MIN_SAFE_CALORIES[input.sex])
+  const targetCalories = Math.max(maintenanceCalories - plannedDeficit, floor)
+  const dailyDeficit = maintenanceCalories - targetCalories
 
   return {
     bmi,
@@ -162,7 +142,7 @@ export function buildCaloriePlan(input: CaloriePlanInput): CaloriePlan {
     healthyWeightHighKg: high,
     maintenanceCalories,
     targetCalories,
-    weeklyChangeKg,
-    dailyDeficit: actualDeficit,
+    weeklyChangeKg: -(dailyDeficit * 7) / 7700, // ~7,700 kcal per kg of body fat
+    dailyDeficit,
   }
 }
