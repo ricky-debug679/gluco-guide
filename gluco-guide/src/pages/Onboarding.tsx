@@ -15,6 +15,12 @@ import {
 } from "../lib/caloriePlan"
 import { goalKeys } from "../lib/goals"
 
+// Accepts how people actually write lab results: "5.7%", "110 mg/dL", "5,7".
+function parseLabValue(raw: string): number | null {
+  const value = parseFloat(raw.replace(",", "."))
+  return Number.isFinite(value) && value > 0 ? value : null
+}
+
 export function Onboarding() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -87,32 +93,22 @@ export function Onboarding() {
         activityLevel,
       })
 
-      if (supabase && (fastingGlucose || glucose2h || hbA1c)) {
+      if (supabase) {
         const memberId = householdCtx!.household.selfMember.id
         const today = new Date().toISOString().slice(0, 10)
-        if (fastingGlucose) {
-          await supabase.from("biometric_readings").insert({
-            member_id: memberId,
-            metric_key: "glucose",
-            value: Number(fastingGlucose),
-            recorded_at: today,
-          })
-        }
-        if (glucose2h) {
-          await supabase.from("biometric_readings").insert({
-            member_id: memberId,
-            metric_key: "glucose_2h",
-            value: Number(glucose2h),
-            recorded_at: today,
-          })
-        }
-        if (hbA1c) {
-          await supabase.from("biometric_readings").insert({
-            member_id: memberId,
-            metric_key: "a1c",
-            value: Number(hbA1c),
-            recorded_at: today,
-          })
+        const readings = (
+          [
+            ["glucose", fastingGlucose],
+            ["glucose_2h", glucose2h],
+            ["a1c", hbA1c],
+          ] as const
+        ).flatMap(([metricKey, raw]) => {
+          const value = parseLabValue(raw)
+          return value === null ? [] : [{ member_id: memberId, metric_key: metricKey, value, recorded_at: today }]
+        })
+        if (readings.length > 0) {
+          const { error: labError } = await supabase.from("biometric_readings").insert(readings)
+          if (labError) throw labError
         }
       }
 
@@ -347,18 +343,21 @@ export function Onboarding() {
                 <div className="mt-2 grid grid-cols-2 gap-3">
                   <input
                     className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
+                    inputMode="decimal"
                     placeholder={t("onboarding.fastingGlucosePlaceholder")}
                     value={fastingGlucose}
                     onChange={(e) => setFastingGlucose(e.target.value)}
                   />
                   <input
                     className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
+                    inputMode="decimal"
                     placeholder={t("onboarding.glucose2hPlaceholder")}
                     value={glucose2h}
                     onChange={(e) => setGlucose2h(e.target.value)}
                   />
                   <input
                     className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
+                    inputMode="decimal"
                     placeholder={t("onboarding.hba1cPlaceholder")}
                     value={hbA1c}
                     onChange={(e) => setHbA1c(e.target.value)}
