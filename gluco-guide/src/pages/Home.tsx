@@ -194,15 +194,11 @@ export function Home() {
         </div>
       </Card>
 
-      <Card className="border-transparent bg-[color:var(--color-sage-bg)]">
-        <div className="text-[0.85rem] leading-relaxed text-[color:var(--color-ink)]">
-          {isLive
-            ? fiberG > 0
-              ? t("home.encourageLogged")
-              : t("home.encourageEmpty")
-            : t("home.encourageDemo")}
-        </div>
-      </Card>
+      {isLive && !foodLogs.isLoading && foodLogs.todaysFoods.length === 0 && (
+        <Card className="border-transparent bg-[color:var(--color-sage-bg)]">
+          <div className="text-[0.85rem] leading-relaxed text-[color:var(--color-ink)]">{t("home.encourageEmpty")}</div>
+        </Card>
+      )}
 
       <div>
         <Eyebrow>{t("home.quickAdd")}</Eyebrow>
