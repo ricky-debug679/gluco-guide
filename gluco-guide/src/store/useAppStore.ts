@@ -1,16 +1,8 @@
 import { create } from "zustand"
-import {
-  fiberSupplementOptions,
-  mockGroceryItems,
-  mockHousehold,
-  mockLabMetrics,
-  mockTargets,
-  mockTotals,
-} from "../lib/mockData"
+import { fiberSupplementOptions, mockTargets, mockTotals } from "../lib/mockData"
 import type {
   FiberSupplementKind,
   FoodItem,
-  HouseholdMember,
   LabMetricKey,
   NutrientTargets,
   NutrientTotals,
@@ -19,12 +11,8 @@ import type {
 } from "../lib/types"
 
 interface AppState {
-  household: HouseholdMember[]
   targets: NutrientTargets
   totals: NutrientTotals
-  todaysFoods: FoodItem[]
-
-  groceryIndex: number
 
   activeLabKey: LabMetricKey
 
@@ -36,7 +24,6 @@ interface AppState {
   addWaterCup: () => void
   removeWaterCup: () => void
   addFoodToLog: (food: FoodItem) => void
-  cycleGroceryItem: () => void
   setActiveLabKey: (key: LabMetricKey) => void
   markDoseTaken: () => void
   selectSupplement: (kind: FiberSupplementKind, customName?: string) => void
@@ -45,7 +32,6 @@ interface AppState {
 
   onboardingSetName: (name: string) => void
   onboardingSetGoal: (index: number) => void
-  onboardingSetLabs: (fastingGlucose: string, hbA1c: string) => void
   onboardingAdvance: () => void
   onboardingComplete: () => void
 }
@@ -56,12 +42,8 @@ const currentSupplement = () => {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  household: mockHousehold,
   targets: mockTargets,
   totals: mockTotals,
-  todaysFoods: [],
-
-  groceryIndex: 0,
 
   activeLabKey: "glucose",
 
@@ -76,8 +58,6 @@ export const useAppStore = create<AppState>((set) => ({
     step: 0,
     name: "Asha",
     goalIndex: null,
-    fastingGlucose: "",
-    hbA1c: "",
     done: false,
   },
 
@@ -93,7 +73,6 @@ export const useAppStore = create<AppState>((set) => ({
 
   addFoodToLog: (food) =>
     set((s) => ({
-      todaysFoods: [...s.todaysFoods, food],
       totals: {
         ...s.totals,
         fiberG: s.totals.fiberG + food.fiberG,
@@ -103,9 +82,6 @@ export const useAppStore = create<AppState>((set) => ({
         caloriesKcal: s.totals.caloriesKcal + food.caloriesKcal,
       },
     })),
-
-  cycleGroceryItem: () =>
-    set((s) => ({ groceryIndex: (s.groceryIndex + 1) % mockGroceryItems.length })),
 
   setActiveLabKey: (key) => set({ activeLabKey: key }),
 
@@ -142,9 +118,6 @@ export const useAppStore = create<AppState>((set) => ({
   onboardingSetGoal: (index) =>
     set((s) => ({ onboarding: { ...s.onboarding, goalIndex: index } })),
 
-  onboardingSetLabs: (fastingGlucose, hbA1c) =>
-    set((s) => ({ onboarding: { ...s.onboarding, fastingGlucose, hbA1c } })),
-
   onboardingAdvance: () =>
     set((s) => ({ onboarding: { ...s.onboarding, step: Math.min(2, s.onboarding.step + 1) } })),
 
@@ -164,5 +137,3 @@ export const useCurrentSupplementInfo = () => {
   const option = fiberSupplementOptions.find((o) => o.kind === reminder.selectedKind) ?? currentSupplement()
   return { name: option.name, mechanism: option.mechanism, fiberPerDoseG: option.fiberPerDoseG, timingNote: option.timingNote }
 }
-
-export { mockGroceryItems, mockLabMetrics, fiberSupplementOptions }

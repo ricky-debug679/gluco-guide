@@ -1,14 +1,3 @@
-export type AvatarColor = "sage" | "honey" | "berry"
-
-export interface HouseholdMember {
-  id: string
-  name: string
-  relationship: "self" | "family"
-  goal: string
-  statusNote: string
-  avatarColor: AvatarColor
-}
-
 export interface NutrientTotals {
   fiberG: number
   proteinG: number
@@ -36,27 +25,6 @@ export interface FoodItem {
   carbG: number
   fatG: number
   caloriesKcal: number
-}
-
-export interface GrocerySwap {
-  name: string
-  fiberG: number
-  proteinG: number
-  netCarbG: number
-}
-
-export interface GroceryItem {
-  id: string
-  brand: string
-  name: string
-  fiberG: number
-  proteinG: number
-  netCarbG: number
-  /** 0 = mostly refined carbs, 1 = mostly fiber & protein */
-  scoreFraction: number
-  blurb: string
-  pairSuggestion: string
-  swap: GrocerySwap
 }
 
 export type LabMetricKey = "glucose" | "glucose_2h" | "a1c"
@@ -130,7 +98,5 @@ export interface OnboardingState {
   step: number
   name: string
   goalIndex: number | null
-  fastingGlucose: string
-  hbA1c: string
   done: boolean
 }

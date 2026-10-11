@@ -1,39 +1,4 @@
-import type {
-  FiberSupplementOption,
-  FoodItem,
-  GroceryItem,
-  HouseholdMember,
-  LabMetric,
-  NutrientTargets,
-  NutrientTotals,
-} from "./types"
-
-export const mockHousehold: HouseholdMember[] = [
-  {
-    id: "asha",
-    name: "Asha",
-    relationship: "self",
-    goal: "General wellness",
-    statusNote: "You",
-    avatarColor: "sage",
-  },
-  {
-    id: "lakshmi",
-    name: "Lakshmi",
-    relationship: "family",
-    goal: "Managing diabetes",
-    statusNote: "Logged glucose this morning",
-    avatarColor: "honey",
-  },
-  {
-    id: "raj",
-    name: "Raj",
-    relationship: "family",
-    goal: "Reversing prediabetes",
-    statusNote: "5-day fiber streak",
-    avatarColor: "berry",
-  },
-]
+import type { FiberSupplementOption, FoodItem, LabMetric, NutrientTargets, NutrientTotals } from "./types"
 
 export const mockTargets: NutrientTargets = {
   fiberG: 30,
@@ -57,35 +22,6 @@ export const mockFoodSearchResults: FoodItem[] = [
   { id: "f1", name: "Lentil & Vegetable Soup", portion: "1 bowl", fiberG: 8, proteinG: 12, carbG: 26, fatG: 4, caloriesKcal: 210 },
   { id: "f2", name: "Red Lentil Dal, 1 cup", portion: "1 cup", fiberG: 10, proteinG: 18, carbG: 32, fatG: 6, caloriesKcal: 260 },
   { id: "f3", name: "Lentil Crackers, 12 pc", portion: "12 pc", fiberG: 4, proteinG: 5, carbG: 20, fatG: 3, caloriesKcal: 140 },
-]
-
-export const mockGroceryItems: GroceryItem[] = [
-  {
-    id: "bread",
-    brand: "Countryside Mills",
-    name: "Multigrain Sandwich Bread",
-    fiberG: 2,
-    proteinG: 4,
-    netCarbG: 21,
-    scoreFraction: 0.22,
-    blurb: "Leans carb-heavy today — a couple of easy swaps below would help.",
-    pairSuggestion:
-      "Add natural peanut butter or a boiled egg — the protein slows down the carb spike from the bread.",
-    swap: { name: "Sprouted Whole Grain Bread", fiberG: 5, proteinG: 8, netCarbG: 14 },
-  },
-  {
-    id: "oats",
-    brand: "Harvest Row",
-    name: "Steel-Cut Oats, 1/2 cup dry",
-    fiberG: 8,
-    proteinG: 6,
-    netCarbG: 18,
-    scoreFraction: 0.78,
-    blurb: "A strong pick — high fiber and slow-digesting carbs.",
-    pairSuggestion:
-      "Already well-balanced — a spoon of chia seeds or a side of Greek yogurt adds even more protein.",
-    swap: { name: "Sprouted Whole Grain Bread", fiberG: 5, proteinG: 8, netCarbG: 14 },
-  },
 ]
 
 export const mockLabMetrics: LabMetric[] = [
