@@ -16,6 +16,10 @@ export interface MemberRow {
   age: number | null
   biological_sex: BiologicalSex | null
   activity_level: ActivityLevel | null
+  target_weight_kg: number | null
+  goal_start_weight_kg: number | null
+  goal_set_at: string | null
+  goal_deadline: string | null
 }
 
 export interface HouseholdData {
@@ -54,7 +58,10 @@ async function bootstrapHousehold(user: User): Promise<HouseholdData> {
     // that no row exists, and the unique constraint is the safety net
     // against a race, so this never silently overwrites a display name
     // someone customized later.
-    const displayName = user.email?.split("@")[0] ?? "You"
+    // Placeholder only — never derived from the email address, since
+    // onboarding's name step overwrites this immediately for every real
+    // user before they ever see the Home screen.
+    const displayName = "Friend"
     const { data: inserted, error: insertError } = await supabase
       .from("members")
       .insert({
@@ -114,18 +121,38 @@ export function useCompleteProfile(memberId: string | undefined) {
   })
 }
 
-export function useAddFamilyMember(householdId: string | undefined) {
+export function useSetWeightGoal(memberId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { displayName: string; goal: string }) => {
-      if (!supabase || !householdId) throw new Error("No household yet")
-      const { error } = await supabase.from("members").insert({
-        household_id: householdId,
-        display_name: input.displayName,
-        goal: input.goal,
-        relationship: "family",
-        avatar_color: "honey",
-      })
+    mutationFn: async (input: { targetWeightKg: number; startWeightKg: number; durationDays: 7 | 30 }) => {
+      if (!supabase || !memberId) throw new Error("No profile to update yet")
+      const today = new Date()
+      const deadline = new Date(today)
+      deadline.setDate(deadline.getDate() + input.durationDays)
+      const { error } = await supabase
+        .from("members")
+        .update({
+          target_weight_kg: input.targetWeightKg,
+          goal_start_weight_kg: input.startWeightKg,
+          goal_set_at: today.toISOString().slice(0, 10),
+          goal_deadline: deadline.toISOString().slice(0, 10),
+        })
+        .eq("id", memberId)
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["household"] }),
+  })
+}
+
+export function useClearWeightGoal(memberId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      if (!supabase || !memberId) throw new Error("No profile to update yet")
+      const { error } = await supabase
+        .from("members")
+        .update({ target_weight_kg: null, goal_start_weight_kg: null, goal_set_at: null, goal_deadline: null })
+        .eq("id", memberId)
       if (error) throw error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["household"] }),
