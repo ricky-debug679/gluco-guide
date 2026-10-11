@@ -1,4 +1,4 @@
-import type { HistoryDay } from "../lib/history"
+import { parseLocalDate, type HistoryDay } from "../lib/history"
 
 interface HistoryChartProps {
   days: HistoryDay[]
@@ -14,14 +14,6 @@ interface HistoryChartProps {
   axisNoteLabel: string
   /** Builds the "23g ▲ above by 3g" style sentence shown above the chart for the selected day. */
   dayStatusText: (day: HistoryDay) => string
-}
-
-// "YYYY-MM-DD" parses as UTC midnight per spec, which can display as the
-// wrong calendar day once converted to local time — build the Date from its
-// parts instead so it's unambiguously local.
-function dateFromKey(key: string) {
-  const [y, m, d] = key.split("-").map(Number)
-  return new Date(y, m - 1, d)
 }
 
 // Rounds a chart's max value up to a readable step (nearest 2/5/10/50) so the
@@ -66,7 +58,7 @@ export function HistoryChart({
       y: MARKER_ROW_H + (CHART_HEIGHT - h),
       h,
       w: barWidth,
-      label: dateFromKey(d.date).toLocaleDateString(locale, { weekday: "narrow" }),
+      label: parseLocalDate(d.date).toLocaleDateString(locale, { weekday: "narrow" }),
       metGoal: d.value >= goal,
     }
   })
@@ -80,7 +72,7 @@ export function HistoryChart({
       {selectedDay && (
         <div className="mt-2.5 flex items-baseline justify-between rounded-lg bg-[color:var(--color-surface-2)] px-3 py-2">
           <div className="text-[0.8rem] font-bold">
-            {dateFromKey(selectedDay.date).toLocaleDateString(locale, { weekday: "short", month: "short", day: "numeric" })}
+            {parseLocalDate(selectedDay.date).toLocaleDateString(locale, { weekday: "short", month: "short", day: "numeric" })}
           </div>
           <div className="text-[0.8rem] font-bold" style={{ color: `var(${colorVar})` }}>
             {selectedDay.hasEntry ? dayStatusText(selectedDay) : noEntryLabel}
@@ -117,7 +109,7 @@ export function HistoryChart({
 
         {bars.map((b, i) => {
           const isSelected = b.date === activeDate
-          const dayLabel = dateFromKey(b.date).toLocaleDateString(locale, { weekday: "short", month: "short", day: "numeric" })
+          const dayLabel = parseLocalDate(b.date).toLocaleDateString(locale, { weekday: "short", month: "short", day: "numeric" })
           const barDetail = b.hasEntry ? `${b.value}${unit}` : noEntryLabel
           return (
             <g

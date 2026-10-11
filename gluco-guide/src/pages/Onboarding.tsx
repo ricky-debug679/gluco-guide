@@ -14,6 +14,7 @@ import {
   type BiologicalSex,
 } from "../lib/caloriePlan"
 import { goalKeys } from "../lib/goals"
+import { localDateKey } from "../lib/history"
 
 // Accepts how people actually write lab results: "5.7%", "110 mg/dL", "5,7".
 function parseLabValue(raw: string): number | null {
@@ -95,7 +96,7 @@ export function Onboarding() {
 
       if (supabase) {
         const memberId = householdCtx!.household.selfMember.id
-        const today = new Date().toISOString().slice(0, 10)
+        const today = localDateKey()
         const readings = (
           [
             ["glucose", fastingGlucose],

@@ -5,7 +5,7 @@ import { Card, Eyebrow, Screen } from "../components/Screen"
 import { HistoryChart } from "../components/HistoryChart"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { usePersonalTargets } from "../hooks/usePersonalTargets"
-import { buildHistoryDays, type HistoryDay } from "../lib/history"
+import { buildHistoryDays, parseLocalDate, type HistoryDay } from "../lib/history"
 import { useFoodLogHistory, type DayTotals } from "../hooks/useFoodLogHistory"
 import { useWaterHistory } from "../hooks/useWaterHistory"
 import { useExerciseHistory } from "../hooks/useExerciseHistory"
@@ -74,10 +74,7 @@ export function FoodLogHistory() {
   // bucket has at most one entry — just read its hours straight through.
   const sleepChartDays: HistoryDay[] = buildHistoryDays(
     sleep.entries,
-    (e) => {
-      const [y, m, d] = e.logged_at.split("-").map(Number)
-      return new Date(y, m - 1, d)
-    },
+    (e) => parseLocalDate(e.logged_at),
     (dayRows) => (dayRows.length > 0 ? Number(dayRows[0].hours) : 0),
   )
 

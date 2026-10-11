@@ -13,14 +13,20 @@ export function startOfDaysAgo(daysAgo: number) {
   return d
 }
 
-// Local calendar date, not UTC — Date#toISOString() converts to UTC first,
-// which silently shifts the date backward a day for any timezone ahead of
-// UTC. Reading the local getters directly avoids that entirely.
-export function localDateKey(d: Date) {
+// Local calendar date as "YYYY-MM-DD". Never use toISOString() for this: it
+// converts to UTC first, so in the US evening it already returns tomorrow.
+export function localDateKey(d: Date = new Date()) {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, "0")
   const day = String(d.getDate()).padStart(2, "0")
   return `${y}-${m}-${day}`
+}
+
+// new Date("YYYY-MM-DD") means UTC midnight, which is the previous evening in
+// the US; build the date from its parts so it stays on the local calendar day.
+export function parseLocalDate(key: string) {
+  const [y, m, d] = key.split("-").map(Number)
+  return new Date(y, m - 1, d)
 }
 
 // A fixed run of HISTORY_DAYS calendar days (oldest to today), including

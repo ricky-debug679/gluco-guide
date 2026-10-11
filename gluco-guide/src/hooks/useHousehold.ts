@@ -2,6 +2,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "../lib/supabase"
 import type { ActivityLevel, BiologicalSex } from "../lib/caloriePlan"
+import { localDateKey } from "../lib/history"
 
 export interface MemberRow {
   id: string
@@ -134,8 +135,8 @@ export function useSetWeightGoal(memberId: string | undefined) {
         .update({
           target_weight_kg: input.targetWeightKg,
           goal_start_weight_kg: input.startWeightKg,
-          goal_set_at: today.toISOString().slice(0, 10),
-          goal_deadline: deadline.toISOString().slice(0, 10),
+          goal_set_at: localDateKey(today),
+          goal_deadline: localDateKey(deadline),
         })
         .eq("id", memberId)
       if (error) throw error

@@ -1,12 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "../lib/supabase"
 import type { SleepEntry, SleepQuality } from "../lib/types"
-
-function daysAgoDate(days: number) {
-  const d = new Date()
-  d.setDate(d.getDate() - days)
-  return d.toISOString().slice(0, 10)
-}
+import { localDateKey, startOfDaysAgo } from "../lib/history"
 
 export function useSleepLogs(memberId: string | undefined) {
   const queryClient = useQueryClient()
@@ -20,7 +15,7 @@ export function useSleepLogs(memberId: string | undefined) {
         .from("sleep_logs")
         .select("id, logged_at, hours, quality")
         .eq("member_id", memberId)
-        .gte("logged_at", daysAgoDate(14))
+        .gte("logged_at", localDateKey(startOfDaysAgo(14)))
         .order("logged_at", { ascending: false })
       if (error) throw error
       return data as SleepEntry[]
@@ -48,9 +43,8 @@ export function useSleepLogs(memberId: string | undefined) {
   })
 
   const entries = query.data ?? []
-  const todayIso = new Date().toISOString().slice(0, 10)
   const latest = entries[0]
-  const loggedToday = latest?.logged_at === todayIso
+  const loggedToday = latest?.logged_at === localDateKey()
 
   return {
     entries,

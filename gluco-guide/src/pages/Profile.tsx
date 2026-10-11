@@ -17,6 +17,7 @@ import {
   type BiologicalSex,
 } from "../lib/caloriePlan"
 import { goalKeys } from "../lib/goals"
+import { parseLocalDate } from "../lib/history"
 
 const MS_PER_DAY = 86_400_000
 
@@ -78,7 +79,7 @@ export function Profile() {
         : 0
   const goalReached = goalTotalDeltaKg > 0 ? goalCurrentKg <= goalTargetKg : goalTotalDeltaKg < 0 ? goalCurrentKg >= goalTargetKg : true
   const goalDaysLeft = selfMember?.goal_deadline
-    ? Math.ceil((new Date(selfMember.goal_deadline).getTime() - Date.now()) / MS_PER_DAY)
+    ? Math.ceil((parseLocalDate(selfMember.goal_deadline).getTime() - Date.now()) / MS_PER_DAY)
     : 0
 
   async function handleSave() {

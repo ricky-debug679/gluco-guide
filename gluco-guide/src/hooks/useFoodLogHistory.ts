@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "../lib/supabase"
-
-const HISTORY_DAYS = 14
+import { HISTORY_DAYS, localDateKey, startOfDaysAgo } from "../lib/history"
 
 export interface FoodLogEntry {
   id: string
@@ -24,23 +23,6 @@ export interface DayTotals {
   entries: FoodLogEntry[]
 }
 
-function startOfDaysAgo(daysAgo: number) {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  d.setDate(d.getDate() - daysAgo)
-  return d
-}
-
-// Local calendar date, not UTC — Date#toISOString() converts to UTC first,
-// which silently shifts the date backward a day for any timezone ahead of
-// UTC (confirmed: a meal logged "today" was filed under yesterday). Reading
-// the local getters directly avoids that entirely.
-function localDateKey(d: Date) {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, "0")
-  const day = String(d.getDate()).padStart(2, "0")
-  return `${y}-${m}-${day}`
-}
 
 export function useFoodLogHistory(memberId: string | undefined) {
   const query = useQuery({

@@ -7,6 +7,7 @@ import { demoLabHistory } from "../lib/demoData"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useLabReadings } from "../hooks/useLabReadings"
 import { buildChart, describeTrend } from "../lib/labTrend"
+import { localDateKey, parseLocalDate } from "../lib/history"
 
 export function LabTrends() {
   const { t, i18n } = useTranslation()
@@ -48,7 +49,7 @@ export function LabTrends() {
 
   const [showForm, setShowForm] = useState(false)
   const [value, setValue] = useState("")
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(() => localDateKey())
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -112,7 +113,7 @@ export function LabTrends() {
           </svg>
           <div className="mt-0.5 flex justify-between px-1 text-[0.66rem] font-semibold text-[color:var(--color-ink-faint)]">
             {readings.map((r, i) => (
-              <span key={i}>{new Date(r.date).toLocaleDateString(i18n.language, { month: "short" })}</span>
+              <span key={i}>{parseLocalDate(r.date).toLocaleDateString(i18n.language, { month: "short" })}</span>
             ))}
           </div>
         </Card>

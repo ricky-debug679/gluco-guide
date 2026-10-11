@@ -6,6 +6,7 @@ import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useSleepLogs } from "../hooks/useSleepLogs"
 import { useWellnessActivity } from "../hooks/useWellnessActivity"
 import type { SleepQuality, WellnessActivityKind } from "../lib/types"
+import { localDateKey } from "../lib/history"
 
 const qualityKeys: SleepQuality[] = ["poor", "okay", "good", "great"]
 const activityKeys: Exclude<WellnessActivityKind, "custom">[] = [
@@ -53,7 +54,7 @@ export function Wellness() {
     setSleepSaving(true)
     setSleepError(null)
     try {
-      if (isLive) await sleep.addSleep(numeric, quality, new Date().toISOString().slice(0, 10))
+      if (isLive) await sleep.addSleep(numeric, quality, localDateKey())
       setShowSleepForm(false)
     } catch (err) {
       setSleepError(err instanceof Error ? err.message : t("common.genericError"))
