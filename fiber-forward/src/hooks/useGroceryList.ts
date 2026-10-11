@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
 import { supabase } from "../lib/supabase"
+import { describeFunctionError } from "../lib/edgeFunctionError"
 
 export interface GroceryListItem {
   id: string
@@ -69,12 +71,20 @@ export function useGroceryLists(householdId: string | undefined) {
       const { data, error } = await supabase
         .from("grocery_lists")
         .insert({ household_id: householdId, label: label ?? null })
-        .select("id")
+        .select("id, label, created_at")
         .single()
       if (error) throw error
-      return data.id as string
+      return data as { id: string; label: string | null; created_at: string }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    // Prepend directly rather than invalidate+refetch — under real network
+    // latency (e.g. a phone on a slow connection), a slightly-earlier
+    // refetch can resolve after a later one and clobber it. Writing the
+    // known-good result straight into the cache sidesteps that race
+    // entirely instead of hoping requests resolve in order.
+    onSuccess: (newList) => {
+      if (!newList) return
+      queryClient.setQueryData<GroceryListSummary[]>(queryKey, (old) => [{ ...newList, items: [] }, ...(old ?? [])])
+    },
   })
 
   const lists = query.data ?? []
@@ -83,58 +93,127 @@ export function useGroceryLists(householdId: string | undefined) {
     lists,
     activeList: lists[0] ?? null,
     isLoading: query.isLoading,
-    createList: (label?: string) => createList.mutateAsync(label),
+    createList: (label?: string) => createList.mutateAsync(label).then((l) => l?.id ?? null),
   }
 }
 
 export function useGroceryListItems(householdId: string | undefined) {
+  const { i18n } = useTranslation()
   const queryClient = useQueryClient()
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["grocery_lists", householdId] })
+  const queryKey = ["grocery_lists", householdId]
+
+  // All mutations below write their own known-good result straight into the
+  // query cache instead of invalidate+refetch. Under real network latency
+  // (a phone on a slow connection, not just a fast local dev server), two
+  // refetches triggered back-to-back can resolve out of order and the
+  // earlier one — now stale — overwrites the later, correct one, silently
+  // dropping whichever item was added in between. Writing directly avoids
+  // that race instead of relying on responses to arrive in order.
+  function patchList(listId: string, update: (items: GroceryListItem[]) => GroceryListItem[]) {
+    queryClient.setQueryData<GroceryListSummary[]>(queryKey, (old) =>
+      (old ?? []).map((l) => (l.id === listId ? { ...l, items: update(l.items) } : l)),
+    )
+  }
 
   const addItem = useMutation({
     mutationFn: async (input: { listId: string; name: string }) => {
-      if (!supabase) return
-      const { error } = await supabase.from("grocery_list_items").insert({ list_id: input.listId, name: input.name })
+      if (!supabase || !householdId) return null
+      const { data, error } = await supabase
+        .from("grocery_list_items")
+        .insert({ list_id: input.listId, household_id: householdId, name: input.name })
+        .select("id, name, checked, verdict, note")
+        .single()
       if (error) throw error
+      return { listId: input.listId, item: data as GroceryListItem }
     },
-    onSuccess: invalidate,
+    onSuccess: (result) => {
+      if (!result) return
+      patchList(result.listId, (items) => [...items, result.item])
+    },
   })
 
   const addManyItems = useMutation({
     mutationFn: async (input: { listId: string; names: string[] }) => {
-      if (!supabase || input.names.length === 0) return
-      const { error } = await supabase
+      if (!supabase || !householdId || input.names.length === 0) return null
+      const { data, error } = await supabase
         .from("grocery_list_items")
-        .insert(input.names.map((name) => ({ list_id: input.listId, name })))
+        .insert(input.names.map((name) => ({ list_id: input.listId, household_id: householdId, name })))
+        .select("id, name, checked, verdict, note")
       if (error) throw error
+      return { listId: input.listId, items: data as GroceryListItem[] }
     },
-    onSuccess: invalidate,
+    onSuccess: (result) => {
+      if (!result) return
+      patchList(result.listId, (items) => [...items, ...result.items])
+    },
+  })
+
+  // Used by photo scanning, which already gets a verdict+note per item from
+  // the same AI call that identified it — carries that straight onto the
+  // new rows instead of leaving them unanalyzed until a separate "Analyze
+  // my list" pass. "neutral" verdicts (no strong signal) are stored as no
+  // flag at all, same as analyze-grocery-list already does.
+  const addManyItemsWithVerdicts = useMutation({
+    mutationFn: async (input: {
+      listId: string
+      items: { name: string; verdict: "good" | "caution" | "neutral"; note: string }[]
+    }) => {
+      if (!supabase || !householdId || input.items.length === 0) return null
+      const { data, error } = await supabase
+        .from("grocery_list_items")
+        .insert(
+          input.items.map((i) => ({
+            list_id: input.listId,
+            household_id: householdId,
+            name: i.name,
+            verdict: i.verdict === "neutral" ? null : i.verdict,
+            note: i.verdict === "neutral" ? null : i.note,
+          })),
+        )
+        .select("id, name, checked, verdict, note")
+      if (error) throw error
+      return { listId: input.listId, items: data as GroceryListItem[] }
+    },
+    onSuccess: (result) => {
+      if (!result) return
+      patchList(result.listId, (items) => [...items, ...result.items])
+    },
   })
 
   const toggleChecked = useMutation({
-    mutationFn: async (input: { id: string; checked: boolean }) => {
-      if (!supabase) return
+    mutationFn: async (input: { listId: string; id: string; checked: boolean }) => {
+      if (!supabase) return null
       const { error } = await supabase
         .from("grocery_list_items")
         .update({ checked: input.checked })
         .eq("id", input.id)
       if (error) throw error
+      return input
     },
-    onSuccess: invalidate,
+    onSuccess: (result) => {
+      if (!result) return
+      patchList(result.listId, (items) =>
+        items.map((i) => (i.id === result.id ? { ...i, checked: result.checked } : i)),
+      )
+    },
   })
 
   const removeMany = useMutation({
-    mutationFn: async (ids: string[]) => {
-      if (!supabase || ids.length === 0) return
-      const { error } = await supabase.from("grocery_list_items").delete().in("id", ids)
+    mutationFn: async (input: { listId: string; ids: string[] }) => {
+      if (!supabase || input.ids.length === 0) return null
+      const { error } = await supabase.from("grocery_list_items").delete().in("id", input.ids)
       if (error) throw error
+      return input
     },
-    onSuccess: invalidate,
+    onSuccess: (result) => {
+      if (!result) return
+      patchList(result.listId, (items) => items.filter((i) => !result.ids.includes(i.id)))
+    },
   })
 
   const saveVerdicts = useMutation({
-    mutationFn: async (input: { items: GroceryListItem[]; flags: ItemFlag[] }) => {
-      if (!supabase) return
+    mutationFn: async (input: { listId: string; items: GroceryListItem[]; flags: ItemFlag[] }) => {
+      if (!supabase) return null
       const updates = input.items
         .map((item) => ({ item, flag: input.flags.find((f) => matchesFlag(item.name, f.name)) }))
         .filter((x): x is { item: GroceryListItem; flag: ItemFlag } => !!x.flag)
@@ -143,15 +222,26 @@ export function useGroceryListItems(householdId: string | undefined) {
           supabase!.from("grocery_list_items").update({ verdict: flag.verdict, note: flag.note }).eq("id", item.id),
         ),
       )
+      return { listId: input.listId, updates }
     },
-    onSuccess: invalidate,
+    onSuccess: (result) => {
+      if (!result) return
+      patchList(result.listId, (items) =>
+        items.map((i) => {
+          const u = result.updates.find((u) => u.item.id === i.id)
+          return u ? { ...i, verdict: u.flag.verdict, note: u.flag.note } : i
+        }),
+      )
+    },
   })
 
   const analyze = useMutation({
     mutationFn: async (items: string[]) => {
       if (!supabase) throw new Error("Not configured")
-      const { data, error } = await supabase.functions.invoke("analyze-grocery-list", { body: { items } })
-      if (error) throw error
+      const { data, error } = await supabase.functions.invoke("analyze-grocery-list", {
+        body: { items, language: i18n.language },
+      })
+      if (error) throw new Error(await describeFunctionError(error))
       if (data?.error) throw new Error(data.error)
       return data as GroceryListAnalysis
     },
@@ -160,9 +250,15 @@ export function useGroceryListItems(householdId: string | undefined) {
   return {
     addItem: (listId: string, name: string) => addItem.mutateAsync({ listId, name }),
     addManyItems: (listId: string, names: string[]) => addManyItems.mutateAsync({ listId, names }),
-    toggleChecked: (id: string, checked: boolean) => toggleChecked.mutateAsync({ id, checked }),
-    removeMany: (ids: string[]) => removeMany.mutateAsync(ids),
-    saveVerdicts: (items: GroceryListItem[], flags: ItemFlag[]) => saveVerdicts.mutateAsync({ items, flags }),
+    addManyItemsWithVerdicts: (
+      listId: string,
+      items: { name: string; verdict: "good" | "caution" | "neutral"; note: string }[],
+    ) => addManyItemsWithVerdicts.mutateAsync({ listId, items }),
+    toggleChecked: (listId: string, id: string, checked: boolean) =>
+      toggleChecked.mutateAsync({ listId, id, checked }),
+    removeMany: (listId: string, ids: string[]) => removeMany.mutateAsync({ listId, ids }),
+    saveVerdicts: (listId: string, items: GroceryListItem[], flags: ItemFlag[]) =>
+      saveVerdicts.mutateAsync({ listId, items, flags }),
     analyze: (items: string[]) => analyze.mutateAsync(items),
     analyzing: analyze.isPending,
   }
@@ -194,22 +290,36 @@ export function useGroceryFavorites(householdId: string | undefined) {
 
   const addFavorite = useMutation({
     mutationFn: async (name: string) => {
-      if (!supabase || !householdId) return
-      const { error } = await supabase
+      if (!supabase || !householdId) return null
+      const { data, error } = await supabase
         .from("grocery_favorites")
         .upsert({ household_id: householdId, name }, { onConflict: "household_id,name" })
+        .select("id, name")
+        .single()
       if (error) throw error
+      return data as GroceryFavorite
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: (newFavorite) => {
+      if (!newFavorite) return
+      queryClient.setQueryData<GroceryFavorite[]>(queryKey, (old) =>
+        [...(old ?? []).filter((f) => f.id !== newFavorite.id), newFavorite].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        ),
+      )
+    },
   })
 
   const removeFavorite = useMutation({
     mutationFn: async (id: string) => {
-      if (!supabase) return
+      if (!supabase) return null
       const { error } = await supabase.from("grocery_favorites").delete().eq("id", id)
       if (error) throw error
+      return id
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: (removedId) => {
+      if (!removedId) return
+      queryClient.setQueryData<GroceryFavorite[]>(queryKey, (old) => (old ?? []).filter((f) => f.id !== removedId))
+    },
   })
 
   return {

@@ -27,7 +27,7 @@ export interface GroceryTrendChart {
 
 /** Healthy-vs-caution counts per past trip, oldest first, for the trend chart. Only
  *  trips that were actually analyzed (have at least one verdict) are included. */
-export function buildGroceryTrendChart(lists: GroceryListSummary[]): GroceryTrendChart {
+export function buildGroceryTrendChart(lists: GroceryListSummary[], locale: string = "en"): GroceryTrendChart {
   const analyzed = [...lists]
     .filter((l) => l.items.some((i) => i.verdict))
     .reverse() // hook returns newest-first; a timeline reads oldest-to-newest left to right
@@ -35,7 +35,7 @@ export function buildGroceryTrendChart(lists: GroceryListSummary[]): GroceryTren
   if (analyzed.length === 0) return { bars: [], baseY: BASE_Y }
 
   const counts = analyzed.map((l) => ({
-    label: new Date(l.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+    label: new Date(l.created_at).toLocaleDateString(locale, { month: "short", day: "numeric" }),
     good: l.items.filter((i) => i.verdict === "good").length,
     caution: l.items.filter((i) => i.verdict === "caution").length,
   }))
