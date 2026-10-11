@@ -27,29 +27,29 @@ export function buildChart(readings: LabReading[], targetLow: number, targetHigh
   }
 }
 
-/** Lower is better for every metric this app tracks (glucose, HbA1c, LDL). */
-export function describeTrend(label: string, readings: LabReading[], targetHigh: number): string {
-  if (readings.length === 0) {
-    return `No ${label.toLowerCase()} readings yet — add your first one below to start tracking.`
-  }
+/** Lower is better for every metric this app tracks (fasting glucose, 2-hour glucose, HbA1c).
+ *  Returns structured data instead of a baked-in English sentence — this is the live, real-data
+ *  narrative (not just mock/demo text), so the UI builds the actual localized sentence from it
+ *  via translation keys, the same pattern used for the onboarding calorie-plan message. */
+export type TrendDescription =
+  | { kind: "none" }
+  | { kind: "firstInRange" }
+  | { kind: "firstLogged" }
+  | { kind: "dropped"; delta: number; inRange: boolean }
+  | { kind: "risen"; delta: number }
+  | { kind: "steady"; inRange: boolean }
+
+export function describeTrend(readings: LabReading[], targetHigh: number): TrendDescription {
+  if (readings.length === 0) return { kind: "none" }
   if (readings.length === 1) {
-    const v = readings[0].value
-    const inRange = v <= targetHigh
-    return inRange
-      ? `Your first ${label.toLowerCase()} reading is already inside your target range. Log another over time to see the trend.`
-      : `Your first ${label.toLowerCase()} reading is logged. Add another down the road to start seeing a trend.`
+    const inRange = readings[0].value <= targetHigh
+    return inRange ? { kind: "firstInRange" } : { kind: "firstLogged" }
   }
   const first = readings[0].value
   const last = readings[readings.length - 1].value
   const delta = Math.round((first - last) * 10) / 10
   const inRange = last <= targetHigh
-  if (delta > 0) {
-    return `Your ${label.toLowerCase()} has dropped ${delta} since your first reading — ${
-      inRange ? "inside your target range." : "trending in the right direction."
-    }`
-  }
-  if (delta < 0) {
-    return `Your ${label.toLowerCase()} has risen ${Math.abs(delta)} since your first reading — worth a conversation with your doctor.`
-  }
-  return `Your ${label.toLowerCase()} has held steady since your first reading${inRange ? ", inside your target range." : "."}`
+  if (delta > 0) return { kind: "dropped", delta, inRange }
+  if (delta < 0) return { kind: "risen", delta: Math.abs(delta) }
+  return { kind: "steady", inRange }
 }

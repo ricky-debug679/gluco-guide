@@ -89,3 +89,15 @@ button {
 input {
   font-family: inherit;
 }
+
+/* Used by FoodLogHistory's chart bars: the tap target spans the full chart
+   height for an easier touch target, so the browser's default focus ring
+   would wrap that whole tall box. The selected state already has its own
+   visible styling, so focus only needs a ring for keyboard navigation. */
+.fl-history-bar {
+  outline: none;
+}
+.fl-history-bar:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}

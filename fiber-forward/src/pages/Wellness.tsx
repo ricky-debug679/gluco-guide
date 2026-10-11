@@ -1,27 +1,23 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { Card, Eyebrow } from "../components/Screen"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useSleepLogs } from "../hooks/useSleepLogs"
 import { useWellnessActivity } from "../hooks/useWellnessActivity"
 import type { SleepQuality, WellnessActivityKind } from "../lib/types"
 
-const qualities: { key: SleepQuality; label: string }[] = [
-  { key: "poor", label: "Poor" },
-  { key: "okay", label: "Okay" },
-  { key: "good", label: "Good" },
-  { key: "great", label: "Great" },
-]
-
-const activities: { key: WellnessActivityKind; label: string }[] = [
-  { key: "meditation", label: "Meditation" },
-  { key: "mindfulness", label: "Mindfulness" },
-  { key: "journaling", label: "Journaling" },
-  { key: "gratitude", label: "Gratitude" },
-  { key: "breathing", label: "Breathing exercise" },
+const qualityKeys: SleepQuality[] = ["poor", "okay", "good", "great"]
+const activityKeys: Exclude<WellnessActivityKind, "custom">[] = [
+  "meditation",
+  "mindfulness",
+  "journaling",
+  "gratitude",
+  "breathing",
 ]
 
 export function Wellness() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const householdCtx = useOptionalHousehold()
   const isLive = !!householdCtx
@@ -60,7 +56,7 @@ export function Wellness() {
       if (isLive) await sleep.addSleep(numeric, quality, new Date().toISOString().slice(0, 10))
       setShowSleepForm(false)
     } catch (err) {
-      setSleepError(err instanceof Error ? err.message : "Couldn't save that — try again.")
+      setSleepError(err instanceof Error ? err.message : t("common.genericError"))
     } finally {
       setSleepSaving(false)
     }
@@ -76,7 +72,7 @@ export function Wellness() {
         setShowCustom(false)
       }
     } catch (err) {
-      setActivityError(err instanceof Error ? err.message : "Couldn't save that — try again.")
+      setActivityError(err instanceof Error ? err.message : t("common.genericError"))
     } finally {
       setLogging(null)
     }
@@ -86,35 +82,38 @@ export function Wellness() {
     <div className="flex h-screen w-full justify-center bg-[color:var(--color-bg)]">
       <div className="flex h-screen w-full max-w-md flex-col">
         <div className="flex items-center gap-2.5 px-5 pt-6">
-          <button onClick={() => navigate(-1)} aria-label="Back" className="text-[color:var(--color-ink-faint)]">
+          <button onClick={() => navigate(-1)} aria-label={t("common.back")} className="text-[color:var(--color-ink-faint)]">
             <svg width={20} height={20} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 6l-6 6 6 6" />
             </svg>
           </button>
-          <Eyebrow>Mind &amp; sleep</Eyebrow>
+          <Eyebrow>{t("wellness.eyebrow")}</Eyebrow>
         </div>
 
         <div className="flex flex-1 flex-col gap-3.5 overflow-y-auto px-5 pb-8 pt-4">
-          <h1 className="text-[1.4rem] font-semibold">Rest and reset</h1>
+          <h1 className="text-[1.4rem] font-semibold">{t("wellness.title")}</h1>
 
           <Card>
             <div className="flex items-baseline justify-between">
-              <div className="text-[0.92rem] font-bold">Sleep</div>
+              <div className="text-[0.92rem] font-bold">{t("wellness.sleep")}</div>
               {isLive && sleep.latest && (
                 <div className="text-[0.8rem] text-[color:var(--color-ink-soft)]">
-                  Last logged: {sleep.latest.hours}h · {sleep.latest.quality}
+                  {t("wellness.lastLogged", {
+                    hours: sleep.latest.hours,
+                    quality: sleep.latest.quality ? t(`wellness.qualities.${sleep.latest.quality}`) : "",
+                  })}
                 </div>
               )}
             </div>
             <div className="mt-1 text-[0.78rem] text-[color:var(--color-ink-soft)]">
-              Poor sleep makes blood sugar harder to manage — even a rough estimate helps you see the pattern.
+              {t("wellness.sleepNote")}
             </div>
 
             {showSleepForm ? (
               <div className="mt-3 flex flex-col gap-2.5">
                 <div>
                   <label className="text-[0.72rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
-                    Hours slept
+                    {t("wellness.hoursSlept")}
                   </label>
                   <input
                     autoFocus
@@ -127,17 +126,17 @@ export function Wellness() {
                   />
                 </div>
                 <div className="flex gap-1.5">
-                  {qualities.map((q) => (
+                  {qualityKeys.map((key) => (
                     <button
-                      key={q.key}
-                      onClick={() => setQuality(q.key)}
+                      key={key}
+                      onClick={() => setQuality(key)}
                       className={`min-h-10 flex-1 rounded-xl text-[0.8rem] font-bold ${
-                        quality === q.key
+                        quality === key
                           ? "bg-[color:var(--color-sage)] text-white"
                           : "bg-[color:var(--color-surface-2)] text-[color:var(--color-ink-faint)]"
                       }`}
                     >
-                      {q.label}
+                      {t(`wellness.qualities.${key}`)}
                     </button>
                   ))}
                 </div>
@@ -149,14 +148,14 @@ export function Wellness() {
                     onClick={() => setShowSleepForm(false)}
                     className="min-h-11 flex-1 rounded-xl bg-[color:var(--color-surface-2)] text-[0.85rem] font-bold text-[color:var(--color-ink-soft)]"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                   <button
                     onClick={handleSaveSleep}
                     disabled={!hours || sleepSaving}
                     className="min-h-11 flex-1 rounded-xl bg-[color:var(--color-sage)] text-[0.85rem] font-bold text-white disabled:opacity-60"
                   >
-                    {sleepSaving ? "Saving…" : "Save"}
+                    {sleepSaving ? t("common.saving") : t("common.save")}
                   </button>
                 </div>
               </div>
@@ -165,32 +164,32 @@ export function Wellness() {
                 onClick={openSleepForm}
                 className="mt-3 min-h-11 w-full rounded-xl bg-[color:var(--color-sage)] py-2.5 text-[0.85rem] font-bold text-white"
               >
-                {isLive && sleep.loggedToday ? "Edit today's entry" : "+ Log last night's sleep"}
+                {isLive && sleep.loggedToday ? t("wellness.editEntry") : t("wellness.logSleep")}
               </button>
             )}
           </Card>
 
           <Card>
-            <Eyebrow>Stress management</Eyebrow>
+            <Eyebrow>{t("wellness.stressManagement")}</Eyebrow>
             <div className="mt-1 text-[0.78rem] text-[color:var(--color-ink-soft)]">
-              Chronic stress raises blood sugar too — a few minutes of any of these genuinely helps.
+              {t("wellness.stressNote")}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
-              {activities.map((a) => (
+              {activityKeys.map((key) => (
                 <button
-                  key={a.key}
-                  onClick={() => handleLogActivity(a.key)}
-                  disabled={logging === a.key}
+                  key={key}
+                  onClick={() => handleLogActivity(key)}
+                  disabled={logging === key}
                   className="min-h-11 rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-3.5 text-[0.84rem] font-bold text-[color:var(--color-ink)] disabled:opacity-60"
                 >
-                  {logging === a.key ? "Logging…" : a.label}
+                  {logging === key ? t("wellness.logging") : t(`wellness.activities.${key}`)}
                 </button>
               ))}
               <button
                 onClick={() => setShowCustom((v) => !v)}
                 className="min-h-11 rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-3.5 text-[0.84rem] font-bold text-[color:var(--color-ink)]"
               >
-                Other
+                {t("wellness.other")}
               </button>
             </div>
 
@@ -200,7 +199,7 @@ export function Wellness() {
                   autoFocus
                   value={customLabel}
                   onChange={(e) => setCustomLabel(e.target.value)}
-                  placeholder="What did you do?"
+                  placeholder={t("wellness.customActivityPlaceholder")}
                   className="min-h-11 flex-1 rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
                 />
                 <button
@@ -208,7 +207,7 @@ export function Wellness() {
                   disabled={!customLabel.trim() || logging === "custom"}
                   className="min-h-11 rounded-xl bg-[color:var(--color-sage)] px-4 text-[0.85rem] font-bold text-white disabled:opacity-60"
                 >
-                  Log
+                  {t("wellness.log")}
                 </button>
               </div>
             )}
@@ -220,13 +219,13 @@ export function Wellness() {
             {isLive && wellness.today.length > 0 && (
               <div className="mt-3.5 flex flex-col gap-1.5 border-t border-[color:var(--color-line)] pt-3">
                 <div className="text-[0.72rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
-                  Today
+                  {t("wellness.today")}
                 </div>
                 {wellness.today.map((entry) => (
                   <div key={entry.id} className="text-[0.85rem] text-[color:var(--color-ink)]">
                     {entry.activity === "custom"
                       ? entry.custom_label
-                      : activities.find((a) => a.key === entry.activity)?.label}
+                      : t(`wellness.activities.${entry.activity}`, { defaultValue: entry.activity })}
                   </div>
                 ))}
               </div>

@@ -7,11 +7,9 @@ const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
   active: 1.55,
 }
 
-export const activityLabels: { key: ActivityLevel; label: string; hint: string }[] = [
-  { key: "sedentary", label: "Sedentary", hint: "Little to no exercise" },
-  { key: "light", label: "Lightly active", hint: "Light exercise 1–3 days/week" },
-  { key: "active", label: "Active", hint: "Exercise most days" },
-]
+// Labels/hints live in translation files (onboarding.activity.<key>) — this
+// just lists the keys so the UI knows which options to render.
+export const activityLevelKeys: ActivityLevel[] = ["sedentary", "light", "active"]
 
 export function lbsToKg(lbs: number) {
   return lbs * 0.453592
@@ -21,6 +19,12 @@ export function kgToLbs(kg: number) {
 }
 export function feetInchesToCm(feet: number, inches: number) {
   return (feet * 12 + inches) * 2.54
+}
+export function cmToFeetInches(cm: number) {
+  const totalInches = cm / 2.54
+  const feet = Math.floor(totalInches / 12)
+  const inches = Math.round(totalInches - feet * 12)
+  return { feet, inches }
 }
 
 export function calculateBmi(heightCm: number, weightKg: number): number {
@@ -68,7 +72,8 @@ export interface CaloriePlan {
   targetCalories: number
   /** kg/week; negative = loss, positive = gain, 0 = maintaining. */
   weeklyChangeKg: number
-  message: string
+  /** Daily calorie reduction from maintenance; 0 when category is healthy/underweight. The UI builds the localized message from this rather than a baked-in English string. */
+  dailyDeficit: number
 }
 
 // Never recommend below these, regardless of how large the computed
@@ -92,7 +97,7 @@ export function buildCaloriePlan(input: CaloriePlanInput): CaloriePlan {
       maintenanceCalories,
       targetCalories: maintenanceCalories,
       weeklyChangeKg: 0,
-      message: "Your BMI is already in the healthy range — this plan is set to maintenance calories to help you stay there, not lose more.",
+      dailyDeficit: 0,
     }
   }
 
@@ -105,7 +110,7 @@ export function buildCaloriePlan(input: CaloriePlanInput): CaloriePlan {
       maintenanceCalories,
       targetCalories: maintenanceCalories,
       weeklyChangeKg: 0,
-      message: "Your BMI is below the typical healthy range. This app won't suggest a calorie deficit here — talk to your doctor about a healthy weight gain plan tailored to you.",
+      dailyDeficit: 0,
     }
   }
 
@@ -123,6 +128,6 @@ export function buildCaloriePlan(input: CaloriePlanInput): CaloriePlan {
     maintenanceCalories,
     targetCalories,
     weeklyChangeKg,
-    message: `A gradual ${Math.round(actualDeficit)}-calorie-a-day reduction from your estimated maintenance is a safe pace — about ${Math.abs(weeklyChangeKg).toFixed(1)}kg (${Math.abs(weeklyChangeKg * 2.2046).toFixed(1)}lb) a week toward a healthier BMI.`,
+    dailyDeficit: actualDeficit,
   }
 }

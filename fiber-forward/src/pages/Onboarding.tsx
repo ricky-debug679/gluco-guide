@@ -1,26 +1,22 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { useAppStore } from "../store/useAppStore"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useCompleteProfile } from "../hooks/useHousehold"
 import { supabase } from "../lib/supabase"
 import {
-  activityLabels,
+  activityLevelKeys,
   buildCaloriePlan,
   feetInchesToCm,
   lbsToKg,
   type ActivityLevel,
   type BiologicalSex,
 } from "../lib/caloriePlan"
-
-const goals = [
-  "Reverse prediabetes",
-  "Prevent diabetes in my family",
-  "Support a family member",
-  "General wellness",
-]
+import { goalKeys } from "../lib/goals"
 
 export function Onboarding() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   // Mock-data path (no backend configured)
@@ -36,7 +32,9 @@ export function Onboarding() {
   const completeProfile = useCompleteProfile(householdCtx?.household.selfMember.id)
 
   const [step, setStep] = useState(0)
-  const [name, setName] = useState(householdCtx?.household.selfMember.display_name ?? "")
+  // Always starts blank — never pre-filled from the placeholder bootstrap
+  // name, so every user has to actually type their own name here.
+  const [name, setName] = useState("")
   const [goalIndex, setGoalIndex] = useState<number | null>(null)
   const [heightFeet, setHeightFeet] = useState("5")
   const [heightInches, setHeightInches] = useState("4")
@@ -45,11 +43,15 @@ export function Onboarding() {
   const [sex, setSex] = useState<BiologicalSex | null>(null)
   const [activityLevel, setActivityLevel] = useState<ActivityLevel | null>(null)
   const [fastingGlucose, setFastingGlucose] = useState("")
+  const [glucose2h, setGlucose2h] = useState("")
   const [hbA1c, setHbA1c] = useState("")
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const lastStep = isLive ? 3 : 2
+
+  const currentName = isLive ? name : mockOnboarding.name
+  const canContinueName = currentName.trim().length > 0
 
   const canContinueAboutYou = isLive
     ? Boolean(heightFeet && weightLbs && age && sex && activityLevel)
@@ -77,7 +79,7 @@ export function Onboarding() {
     try {
       await completeProfile.mutateAsync({
         displayName: name.trim() || householdCtx!.household.selfMember.display_name,
-        goal: goalIndex !== null ? goals[goalIndex] : "General wellness",
+        goal: goalIndex !== null ? goalKeys[goalIndex] : "generalWellness",
         heightCm: feetInchesToCm(Number(heightFeet), Number(heightInches) || 0),
         weightKg: lbsToKg(Number(weightLbs)),
         age: Number(age),
@@ -85,7 +87,7 @@ export function Onboarding() {
         activityLevel,
       })
 
-      if (supabase && (fastingGlucose || hbA1c)) {
+      if (supabase && (fastingGlucose || glucose2h || hbA1c)) {
         const memberId = householdCtx!.household.selfMember.id
         const today = new Date().toISOString().slice(0, 10)
         if (fastingGlucose) {
@@ -93,6 +95,14 @@ export function Onboarding() {
             member_id: memberId,
             metric_key: "glucose",
             value: Number(fastingGlucose),
+            recorded_at: today,
+          })
+        }
+        if (glucose2h) {
+          await supabase.from("biometric_readings").insert({
+            member_id: memberId,
+            metric_key: "glucose_2h",
+            value: Number(glucose2h),
             recorded_at: today,
           })
         }
@@ -108,7 +118,7 @@ export function Onboarding() {
 
       navigate("/")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save that — try again.")
+      setError(err instanceof Error ? err.message : t("onboarding.genericError"))
     } finally {
       setSaving(false)
     }
@@ -165,19 +175,20 @@ export function Onboarding() {
             <>
               <div>
                 <div className="text-[0.78rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                  Welcome
+                  {t("onboarding.welcome")}
                 </div>
-                <h1 className="mt-2 text-[1.7rem] font-semibold">Let's set up your plan.</h1>
+                <h1 className="mt-2 text-[1.7rem] font-semibold">{t("onboarding.title")}</h1>
                 <div className="mt-2 text-[0.92rem] text-[color:var(--color-ink-soft)]">
-                  A few quick questions so your targets actually fit you.
+                  {t("onboarding.subtitle")}
                 </div>
               </div>
               <div>
                 <label className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                  What should we call you?
+                  {t("onboarding.nameLabel")}
                 </label>
                 <input
                   className="mt-2 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
+                  placeholder={t("onboarding.namePlaceholder")}
                   value={isLive ? name : mockOnboarding.name}
                   onChange={(e) => (isLive ? setName(e.target.value) : setMockName(e.target.value))}
                 />
@@ -189,17 +200,17 @@ export function Onboarding() {
             <>
               <div>
                 <div className="text-[0.78rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                  Step 2 of {lastStep + 1}
+                  {t("onboarding.stepOf", { n: 2, total: lastStep + 1 })}
                 </div>
-                <h1 className="mt-2 text-[1.5rem] font-semibold">What brings you here?</h1>
+                <h1 className="mt-2 text-[1.5rem] font-semibold">{t("onboarding.goalsTitle")}</h1>
                 <div className="mt-2 text-[0.9rem] text-[color:var(--color-ink-soft)]">
-                  Pick what fits best — you can change this anytime.
+                  {t("onboarding.goalsSubtitle")}
                 </div>
               </div>
               <div className="flex flex-col gap-2.5">
-                {goals.map((goal, i) => (
+                {goalKeys.map((key, i) => (
                   <button
-                    key={goal}
+                    key={key}
                     onClick={() => (isLive ? setGoalIndex(i) : setMockGoal(i))}
                     className={`min-h-11 rounded-2xl border-[1.5px] px-4 py-3.5 text-left text-[0.9rem] font-bold ${
                       displayGoalIndex === i
@@ -207,7 +218,7 @@ export function Onboarding() {
                         : "border-[color:var(--color-line)] bg-[color:var(--color-surface)] text-[color:var(--color-ink-soft)]"
                     }`}
                   >
-                    {goal}
+                    {t(`onboarding.goals.${key}`)}
                   </button>
                 ))}
               </div>
@@ -218,18 +229,17 @@ export function Onboarding() {
             <>
               <div>
                 <div className="text-[0.78rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                  Step 3 of {lastStep + 1}
+                  {t("onboarding.stepOf", { n: 3, total: lastStep + 1 })}
                 </div>
-                <h1 className="mt-2 text-[1.5rem] font-semibold">About you</h1>
+                <h1 className="mt-2 text-[1.5rem] font-semibold">{t("onboarding.aboutYouTitle")}</h1>
                 <div className="mt-2 text-[0.9rem] text-[color:var(--color-ink-soft)]">
-                  This builds your BMI and a real calorie estimate — not just a guess. Age and sex are
-                  only used for that calculation.
+                  {t("onboarding.aboutYouSubtitle")}
                 </div>
               </div>
 
               <div>
                 <label className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                  Height
+                  {t("onboarding.heightLabel")}
                 </label>
                 <div className="mt-2 grid grid-cols-2 gap-3">
                   <div className="relative">
@@ -240,7 +250,7 @@ export function Onboarding() {
                       className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
                     />
                     <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[0.78rem] text-[color:var(--color-ink-faint)]">
-                      ft
+                      {t("onboarding.ft")}
                     </span>
                   </div>
                   <div className="relative">
@@ -251,7 +261,7 @@ export function Onboarding() {
                       className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
                     />
                     <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[0.78rem] text-[color:var(--color-ink-faint)]">
-                      in
+                      {t("onboarding.in")}
                     </span>
                   </div>
                 </div>
@@ -260,7 +270,7 @@ export function Onboarding() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                    Weight (lb)
+                    {t("onboarding.weightLabel")}
                   </label>
                   <input
                     type="number"
@@ -271,7 +281,7 @@ export function Onboarding() {
                 </div>
                 <div>
                   <label className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                    Age
+                    {t("onboarding.ageLabel")}
                   </label>
                   <input
                     type="number"
@@ -284,7 +294,7 @@ export function Onboarding() {
 
               <div>
                 <label className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                  Biological sex (for the calorie estimate)
+                  {t("onboarding.sexLabel")}
                 </label>
                 <div className="mt-2 flex gap-2.5">
                   {(["female", "male"] as BiologicalSex[]).map((s) => (
@@ -297,7 +307,7 @@ export function Onboarding() {
                           : "bg-[color:var(--color-surface-2)] text-[color:var(--color-ink-faint)]"
                       }`}
                     >
-                      {s}
+                      {t(s === "female" ? "onboarding.sexFemale" : "onboarding.sexMale")}
                     </button>
                   ))}
                 </div>
@@ -305,21 +315,23 @@ export function Onboarding() {
 
               <div>
                 <label className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                  Activity level
+                  {t("onboarding.activityLabel")}
                 </label>
                 <div className="mt-2 flex flex-col gap-2">
-                  {activityLabels.map((a) => (
+                  {activityLevelKeys.map((key) => (
                     <button
-                      key={a.key}
-                      onClick={() => setActivityLevel(a.key)}
+                      key={key}
+                      onClick={() => setActivityLevel(key)}
                       className={`min-h-11 rounded-xl border-[1.5px] px-3.5 py-2.5 text-left ${
-                        activityLevel === a.key
+                        activityLevel === key
                           ? "border-[color:var(--color-sage)] bg-[color:var(--color-sage-bg)]"
                           : "border-[color:var(--color-line)] bg-[color:var(--color-surface)]"
                       }`}
                     >
-                      <div className="text-[0.86rem] font-bold">{a.label}</div>
-                      <div className="text-[0.72rem] text-[color:var(--color-ink-faint)]">{a.hint}</div>
+                      <div className="text-[0.86rem] font-bold">{t(`onboarding.activity.${key}.label`)}</div>
+                      <div className="text-[0.72rem] text-[color:var(--color-ink-faint)]">
+                        {t(`onboarding.activity.${key}.hint`)}
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -327,18 +339,27 @@ export function Onboarding() {
 
               <div>
                 <label className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                  Recent labs? (optional)
+                  {t("onboarding.labsLabel")}
                 </label>
+                <div className="mt-1 text-[0.78rem] text-[color:var(--color-ink-faint)]">
+                  {t("onboarding.labsNote")}
+                </div>
                 <div className="mt-2 grid grid-cols-2 gap-3">
                   <input
                     className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
-                    placeholder="Glucose mg/dL"
+                    placeholder={t("onboarding.fastingGlucosePlaceholder")}
                     value={fastingGlucose}
                     onChange={(e) => setFastingGlucose(e.target.value)}
                   />
                   <input
                     className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
-                    placeholder="HbA1c %"
+                    placeholder={t("onboarding.glucose2hPlaceholder")}
+                    value={glucose2h}
+                    onChange={(e) => setGlucose2h(e.target.value)}
+                  />
+                  <input
+                    className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
+                    placeholder={t("onboarding.hba1cPlaceholder")}
                     value={hbA1c}
                     onChange={(e) => setHbA1c(e.target.value)}
                   />
@@ -351,38 +372,48 @@ export function Onboarding() {
             <>
               <div>
                 <div className="text-[0.78rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                  Step 4 of {lastStep + 1}
+                  {t("onboarding.stepOf", { n: 4, total: lastStep + 1 })}
                 </div>
-                <h1 className="mt-2 text-[1.5rem] font-semibold">Your plan</h1>
+                <h1 className="mt-2 text-[1.5rem] font-semibold">{t("onboarding.planTitle")}</h1>
               </div>
 
               <div className="rounded-2xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-4">
                 <div className="flex items-baseline justify-between">
                   <div className="text-[0.8rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
-                    Your BMI
+                    {t("onboarding.yourBmi")}
                   </div>
                   <div className="font-serif text-[1.6rem]">{plan.bmi.toFixed(1)}</div>
                 </div>
                 <div className="mt-1 text-[0.85rem] capitalize text-[color:var(--color-ink-soft)]">
-                  {plan.category === "healthy" ? "In the healthy range" : `Category: ${plan.category}`}
+                  {plan.category === "healthy"
+                    ? t("onboarding.categoryHealthy")
+                    : t("onboarding.categoryOther", { category: t(`onboarding.categories.${plan.category}`) })}
                 </div>
               </div>
 
               <div className="rounded-2xl bg-[color:var(--color-sage-bg)] p-4">
                 <div className="text-[0.8rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
-                  Daily calorie target
+                  {t("onboarding.dailyCalorieTarget")}
                 </div>
                 <div className="mt-1 font-serif text-[1.8rem]">{plan.targetCalories.toLocaleString()} kcal</div>
                 <div className="mt-1 text-[0.78rem] text-[color:var(--color-ink-faint)]">
-                  Estimated maintenance: {plan.maintenanceCalories.toLocaleString()} kcal
+                  {t("onboarding.estimatedMaintenance", { kcal: plan.maintenanceCalories.toLocaleString() })}
                 </div>
-                <div className="mt-2.5 text-[0.85rem] leading-relaxed">{plan.message}</div>
+                <div className="mt-2.5 text-[0.85rem] leading-relaxed">
+                  {plan.category === "healthy"
+                    ? t("onboarding.plan.messageHealthy")
+                    : plan.category === "underweight"
+                      ? t("onboarding.plan.messageUnderweight")
+                      : t("onboarding.plan.messageDeficit", {
+                          deficit: Math.round(plan.dailyDeficit),
+                          kg: Math.abs(plan.weeklyChangeKg).toFixed(1),
+                          lb: Math.abs(plan.weeklyChangeKg * 2.2046).toFixed(1),
+                        })}
+                </div>
               </div>
 
               <div className="rounded-2xl bg-[color:var(--color-surface-2)] p-4 text-[0.8rem] leading-relaxed text-[color:var(--color-ink-soft)]">
-                This is a general estimate assuming the activity level you picked — not a diagnosis.
-                Always confirm before changing your diet significantly, especially alongside diabetes
-                medication.
+                {t("onboarding.disclaimer")}
               </div>
             </>
           )}
@@ -391,37 +422,44 @@ export function Onboarding() {
             <>
               <div>
                 <div className="text-[0.78rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                  Step 3 of 3
+                  {t("onboarding.stepOf", { n: 3, total: 3 })}
                 </div>
-                <h1 className="mt-2 text-[1.5rem] font-semibold">Recent labs? (optional)</h1>
+                <h1 className="mt-2 text-[1.5rem] font-semibold">{t("onboarding.labsLabel")}</h1>
                 <div className="mt-2 text-[0.9rem] text-[color:var(--color-ink-soft)]">
-                  If you have a recent result handy, add it now — you can always do this later from
-                  Trends.
+                  {t("onboarding.mockLabsSubtitle")}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                    Fasting glucose
+                    {t("onboarding.mockFastingGlucoseLabel")}
                   </label>
                   <input
                     className="mt-2 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
-                    placeholder="mg/dL"
+                    placeholder={t("onboarding.mgdl")}
                   />
                 </div>
                 <div>
                   <label className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                    HbA1c
+                    {t("onboarding.mock2hrGlucoseLabel")}
                   </label>
                   <input
                     className="mt-2 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
-                    placeholder="%"
+                    placeholder={t("onboarding.mgdl")}
+                  />
+                </div>
+                <div>
+                  <label className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
+                    {t("onboarding.mockHba1cLabel")}
+                  </label>
+                  <input
+                    className="mt-2 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
+                    placeholder={t("onboarding.percent")}
                   />
                 </div>
               </div>
               <div className="rounded-2xl bg-[color:var(--color-surface-2)] p-4 text-[0.82rem] text-[color:var(--color-ink-soft)]">
-                This helps personalize your targets. Not a diagnosis — always confirm changes with your
-                doctor.
+                {t("onboarding.mockDisclaimer")}
               </div>
             </>
           )}
@@ -432,10 +470,14 @@ export function Onboarding() {
         <div className="flex flex-col gap-2.5 px-6 pb-7 pt-4">
           <button
             onClick={handleNext}
-            disabled={(isLive && displayStep === 2 && !canContinueAboutYou) || saving}
+            disabled={
+              (displayStep === 0 && !canContinueName) ||
+              (isLive && displayStep === 2 && !canContinueAboutYou) ||
+              saving
+            }
             className="min-h-11 rounded-xl bg-[color:var(--color-sage)] px-4 py-3.5 text-[0.92rem] font-bold text-white disabled:opacity-60"
           >
-            {saving ? "Saving…" : displayStep === lastStep ? "Get started" : "Continue"}
+            {saving ? t("onboarding.saving") : displayStep === lastStep ? t("onboarding.getStarted") : t("onboarding.continue")}
           </button>
           {!isLive && displayStep === lastStep && (
             <button
@@ -443,7 +485,7 @@ export function Onboarding() {
               disabled={saving}
               className="min-h-11 rounded-xl bg-transparent px-4 py-3.5 text-[0.92rem] font-semibold text-[color:var(--color-ink-faint)]"
             >
-              Skip for now
+              {t("onboarding.skipForNow")}
             </button>
           )}
         </div>

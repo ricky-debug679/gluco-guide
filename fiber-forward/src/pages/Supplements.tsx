@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { Card, Eyebrow } from "../components/Screen"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useSupplements } from "../hooks/useSupplements"
@@ -9,6 +10,7 @@ import type { SupplementRecommendationKey } from "../lib/types"
 type VdChoice = "low" | "normal" | "unsure" | null
 
 export function Supplements() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const householdCtx = useOptionalHousehold()
   const isLive = !!householdCtx
@@ -42,7 +44,7 @@ export function Supplements() {
       if (isLive) await supplements.addSupplement(name, dosageDraft, key)
       setExpanded(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save that — try again.")
+      setError(err instanceof Error ? err.message : t("common.genericError"))
     } finally {
       setSaving(false)
     }
@@ -58,7 +60,7 @@ export function Supplements() {
       setCustomDosage("")
       setShowCustom(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save that — try again.")
+      setError(err instanceof Error ? err.message : t("common.genericError"))
     } finally {
       setSaving(false)
     }
@@ -69,7 +71,7 @@ export function Supplements() {
     try {
       if (isLive) await supplements.toggleTaken(supplementId)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save that — try again.")
+      setError(err instanceof Error ? err.message : t("common.genericError"))
     }
   }
 
@@ -77,20 +79,20 @@ export function Supplements() {
     <div className="flex h-screen w-full justify-center bg-[color:var(--color-bg)]">
       <div className="flex h-screen w-full max-w-md flex-col">
         <div className="flex items-center gap-2.5 px-5 pt-6">
-          <button onClick={() => navigate(-1)} aria-label="Back" className="text-[color:var(--color-ink-faint)]">
+          <button onClick={() => navigate(-1)} aria-label={t("common.back")} className="text-[color:var(--color-ink-faint)]">
             <svg width={20} height={20} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 6l-6 6 6 6" />
             </svg>
           </button>
-          <Eyebrow>Supplements</Eyebrow>
+          <Eyebrow>{t("supplements.eyebrow")}</Eyebrow>
         </div>
 
         <div className="flex flex-1 flex-col gap-3.5 overflow-y-auto px-5 pb-8 pt-4">
-          <h1 className="text-[1.4rem] font-semibold">Track what you take</h1>
+          <h1 className="text-[1.4rem] font-semibold">{t("supplements.title")}</h1>
 
           {isLive && supplements.active.length > 0 && (
             <Card className="flex flex-col gap-2.5">
-              <Eyebrow>Tracking</Eyebrow>
+              <Eyebrow>{t("supplements.trackingLabel")}</Eyebrow>
               {supplements.active.map((s) => {
                 const taken = supplements.takenIds.has(s.id)
                 return (
@@ -107,11 +109,11 @@ export function Supplements() {
                           : "bg-[color:var(--color-sage)] text-white"
                       }`}
                     >
-                      {taken ? "Taken" : "Mark taken"}
+                      {taken ? t("supplements.taken") : t("supplements.markTaken")}
                     </button>
                     <button
                       onClick={() => supplements.stopTracking(s.id)}
-                      aria-label="Stop tracking"
+                      aria-label={t("supplements.stopTracking")}
                       className="text-[color:var(--color-ink-faint)]"
                     >
                       <svg width={16} height={16} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round">
@@ -128,7 +130,7 @@ export function Supplements() {
 
           {untracked.length > 0 && (
             <div>
-              <Eyebrow>Worth considering</Eyebrow>
+              <Eyebrow>{t("supplements.worthConsidering")}</Eyebrow>
               <div className="mt-2.5 flex flex-col gap-2.5">
                 {untracked.map((rec) => (
                   <Card key={rec.key}>
@@ -141,16 +143,16 @@ export function Supplements() {
                       <div className="mt-3 flex flex-col gap-2.5">
                         {rec.key === "vitamin_d" && vdChoice === null && (
                           <>
-                            <div className="text-[0.8rem] font-semibold">Do you know your recent vitamin D level?</div>
+                            <div className="text-[0.8rem] font-semibold">{t("supplements.vdQuestion")}</div>
                             <div className="flex flex-col gap-2">
                               <button
                                 onClick={() => {
                                   setVdChoice("low")
-                                  setDosageDraft("2,000 IU/day (as prescribed)")
+                                  setDosageDraft(t("supplements.lowDoseDefault"))
                                 }}
                                 className="min-h-11 rounded-xl bg-[color:var(--color-surface-2)] text-[0.84rem] font-bold"
                               >
-                                It's low
+                                {t("supplements.vdLow")}
                               </button>
                               <button
                                 onClick={() => {
@@ -159,13 +161,13 @@ export function Supplements() {
                                 }}
                                 className="min-h-11 rounded-xl bg-[color:var(--color-surface-2)] text-[0.84rem] font-bold"
                               >
-                                It's normal
+                                {t("supplements.vdNormal")}
                               </button>
                               <button
                                 onClick={() => setVdChoice("unsure")}
                                 className="min-h-11 rounded-xl bg-[color:var(--color-surface-2)] text-[0.84rem] font-bold"
                               >
-                                I don't know
+                                {t("supplements.vdUnsure")}
                               </button>
                             </div>
                           </>
@@ -173,8 +175,7 @@ export function Supplements() {
 
                         {rec.key === "vitamin_d" && vdChoice === "unsure" && (
                           <div className="rounded-xl bg-[color:var(--color-honey-bg)] p-3 text-[0.82rem] leading-relaxed">
-                            Ask your doctor for a quick 25-hydroxyvitamin D blood test — it's simple and common, and
-                            it'll tell you the right dose instead of guessing.
+                            {t("supplements.vdUnsureNote")}
                             <button
                               onClick={() => {
                                 setVdChoice("normal")
@@ -182,7 +183,7 @@ export function Supplements() {
                               }}
                               className="mt-2 block font-bold text-[color:var(--color-sage)]"
                             >
-                              Track anyway without knowing my level →
+                              {t("supplements.trackAnyway")}
                             </button>
                           </div>
                         )}
@@ -191,13 +192,12 @@ export function Supplements() {
                           <>
                             {rec.key === "vitamin_d" && vdChoice === "low" && (
                               <div className="rounded-xl bg-[color:var(--color-honey-bg)] p-3 text-[0.8rem] leading-relaxed">
-                                Use the dose your doctor prescribed for a low level, not the general maintenance
-                                amount.
+                                {t("supplements.vdLowNote")}
                               </div>
                             )}
                             <div>
                               <label className="text-[0.72rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
-                                Dosage
+                                {t("supplements.dosage")}
                               </label>
                               <input
                                 value={dosageDraft}
@@ -210,14 +210,14 @@ export function Supplements() {
                                 onClick={() => setExpanded(null)}
                                 className="min-h-11 flex-1 rounded-xl bg-[color:var(--color-surface-2)] text-[0.85rem] font-bold text-[color:var(--color-ink-soft)]"
                               >
-                                Cancel
+                                {t("common.cancel")}
                               </button>
                               <button
                                 onClick={() => confirmTrack(rec.key, rec.name)}
                                 disabled={saving}
                                 className="min-h-11 flex-1 rounded-xl bg-[color:var(--color-sage)] text-[0.85rem] font-bold text-white disabled:opacity-60"
                               >
-                                {saving ? "Saving…" : "Start tracking"}
+                                {saving ? t("common.saving") : t("supplements.startTracking")}
                               </button>
                             </div>
                           </>
@@ -228,7 +228,7 @@ export function Supplements() {
                         onClick={() => openRecommendation(rec.key, rec.typicalDosage)}
                         className="mt-3 min-h-11 w-full rounded-xl bg-[color:var(--color-surface-2)] text-[0.84rem] font-bold text-[color:var(--color-sage)]"
                       >
-                        + Track this
+                        {t("supplements.trackThis")}
                       </button>
                     )}
                   </Card>
@@ -243,13 +243,13 @@ export function Supplements() {
                 autoFocus
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
-                placeholder="Supplement name"
+                placeholder={t("supplements.customNamePlaceholder")}
                 className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
               />
               <input
                 value={customDosage}
                 onChange={(e) => setCustomDosage(e.target.value)}
-                placeholder="Dosage (optional)"
+                placeholder={t("supplements.customDosagePlaceholder")}
                 className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
               />
               <div className="flex gap-2.5">
@@ -257,14 +257,14 @@ export function Supplements() {
                   onClick={() => setShowCustom(false)}
                   className="min-h-11 flex-1 rounded-xl bg-[color:var(--color-surface-2)] text-[0.85rem] font-bold text-[color:var(--color-ink-soft)]"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   onClick={handleAddCustom}
                   disabled={!customName.trim() || saving}
                   className="min-h-11 flex-1 rounded-xl bg-[color:var(--color-sage)] text-[0.85rem] font-bold text-white disabled:opacity-60"
                 >
-                  Add
+                  {t("common.add")}
                 </button>
               </div>
             </Card>
@@ -273,7 +273,7 @@ export function Supplements() {
               onClick={() => setShowCustom(true)}
               className="min-h-11 w-full rounded-xl bg-[color:var(--color-surface-2)] py-3 text-[0.85rem] font-bold text-[color:var(--color-ink-soft)]"
             >
-              + Track something else
+              {t("supplements.trackSomethingElse")}
             </button>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Card, Eyebrow, Screen } from "../components/Screen"
 import { useAppStore } from "../store/useAppStore"
 import { mockLabMetrics } from "../lib/mockData"
@@ -7,6 +8,7 @@ import { useLabReadings } from "../hooks/useLabReadings"
 import { buildChart, describeTrend } from "../lib/labTrend"
 
 export function LabTrends() {
+  const { t, i18n } = useTranslation()
   const mockActiveKey = useAppStore((s) => s.activeLabKey)
   const setMockActiveKey = useAppStore((s) => s.setActiveLabKey)
 
@@ -23,7 +25,24 @@ export function LabTrends() {
   const realReadings = labs.readingsByMetric[activeKey] ?? []
   const readings = isLive ? realReadings : metricDef.readings
   const chart = buildChart(readings, metricDef.targetLow, metricDef.targetHigh)
-  const summary = isLive ? describeTrend(metricDef.shortLabel, readings, metricDef.targetHigh) : metricDef.summary
+  const metricLabel = metricDef.shortLabel.toLowerCase()
+  const trendDescription = describeTrend(readings, metricDef.targetHigh)
+  const summary = isLive
+    ? trendDescription.kind === "none"
+      ? t("labTrends.trend.none", { metric: metricLabel })
+      : trendDescription.kind === "firstInRange"
+        ? t("labTrends.trend.firstInRange", { metric: metricLabel })
+        : trendDescription.kind === "firstLogged"
+          ? t("labTrends.trend.firstLogged", { metric: metricLabel })
+          : trendDescription.kind === "dropped"
+            ? t(trendDescription.inRange ? "labTrends.trend.droppedInRange" : "labTrends.trend.droppedTrending", {
+                metric: metricLabel,
+                delta: trendDescription.delta,
+              })
+            : trendDescription.kind === "risen"
+              ? t("labTrends.trend.risen", { metric: metricLabel, delta: trendDescription.delta })
+              : t(trendDescription.inRange ? "labTrends.trend.steadyInRange" : "labTrends.trend.steady", { metric: metricLabel })
+    : metricDef.summary
 
   const [showForm, setShowForm] = useState(false)
   const [value, setValue] = useState("")
@@ -41,7 +60,7 @@ export function LabTrends() {
       setValue("")
       setShowForm(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save that — try again.")
+      setError(err instanceof Error ? err.message : t("common.genericError"))
     } finally {
       setSaving(false)
     }
@@ -50,8 +69,8 @@ export function LabTrends() {
   return (
     <Screen>
       <div>
-        <Eyebrow>Lab trends</Eyebrow>
-        <h1 className="mt-1.5 text-[1.4rem] font-semibold">Your progress over time</h1>
+        <Eyebrow>{t("labTrends.eyebrow")}</Eyebrow>
+        <h1 className="mt-1.5 text-[1.4rem] font-semibold">{t("labTrends.title")}</h1>
       </div>
 
       <div className="flex gap-1.5">
@@ -91,7 +110,7 @@ export function LabTrends() {
           </svg>
           <div className="mt-0.5 flex justify-between px-1 text-[0.66rem] font-semibold text-[color:var(--color-ink-faint)]">
             {readings.map((r, i) => (
-              <span key={i}>{new Date(r.date).toLocaleDateString(undefined, { month: "short" })}</span>
+              <span key={i}>{new Date(r.date).toLocaleDateString(i18n.language, { month: "short" })}</span>
             ))}
           </div>
         </Card>
@@ -108,7 +127,7 @@ export function LabTrends() {
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
                   <label className="text-[0.72rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
-                    {metricDef.shortLabel} value
+                    {t("labTrends.valueLabel", { metric: metricDef.shortLabel })}
                   </label>
                   <input
                     autoFocus
@@ -121,7 +140,7 @@ export function LabTrends() {
                 </div>
                 <div>
                   <label className="text-[0.72rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
-                    Date
+                    {t("labTrends.dateLabel")}
                   </label>
                   <input
                     type="date"
@@ -139,14 +158,14 @@ export function LabTrends() {
                   onClick={() => setShowForm(false)}
                   className="min-h-11 flex-1 rounded-xl bg-[color:var(--color-surface-2)] text-[0.85rem] font-bold text-[color:var(--color-ink-soft)]"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   onClick={handleAddReading}
                   disabled={!value || saving}
                   className="min-h-11 flex-1 rounded-xl bg-[color:var(--color-sage)] text-[0.85rem] font-bold text-white disabled:opacity-60"
                 >
-                  {saving ? "Saving…" : "Save reading"}
+                  {saving ? t("common.saving") : t("labTrends.saveReading")}
                 </button>
               </div>
             </Card>
@@ -155,15 +174,14 @@ export function LabTrends() {
               onClick={() => setShowForm(true)}
               className="min-h-11 w-full rounded-xl bg-[color:var(--color-surface-2)] py-3 text-[0.85rem] font-bold text-[color:var(--color-ink-soft)]"
             >
-              + Add a {metricDef.shortLabel.toLowerCase()} reading
+              {t("labTrends.addReading", { metric: metricDef.shortLabel.toLowerCase() })}
             </button>
           )}
         </>
       )}
 
       <div className="text-[0.72rem] leading-relaxed text-[color:var(--color-ink-faint)]">
-        Target range reflects CDC National Diabetes Prevention Program benchmarks — not a diagnosis. Always
-        confirm changes with your doctor.
+        {t("labTrends.disclaimer")}
       </div>
     </Screen>
   )
