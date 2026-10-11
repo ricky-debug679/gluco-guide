@@ -126,7 +126,8 @@ export const mockLabMetrics: LabMetric[] = [
     label: "HbA1c (%)",
     shortLabel: "HbA1c",
     targetLow: 4,
-    targetHigh: 5.7,
+    // ADA: normal is below 5.7%; 5.7% is where prediabetes starts.
+    targetHigh: 5.6,
     readings: [
       { date: "2026-03-02", value: 6.3 },
       { date: "2026-05-04", value: 6.2 },

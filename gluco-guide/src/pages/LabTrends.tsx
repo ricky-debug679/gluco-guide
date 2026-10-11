@@ -25,7 +25,8 @@ export function LabTrends() {
   const realReadings = labs.readingsByMetric[activeKey] ?? []
   const readings = isLive ? realReadings : metricDef.readings
   const chart = buildChart(readings, metricDef.targetLow, metricDef.targetHigh)
-  const metricLabel = metricDef.shortLabel.toLowerCase()
+  // "HbA1c" is an acronym; lowercasing it mid-sentence reads as a typo.
+  const metricLabel = metricDef.key === "a1c" ? metricDef.shortLabel : metricDef.shortLabel.toLowerCase()
   const trendDescription = describeTrend(readings, metricDef.targetHigh)
   const summary = isLive
     ? trendDescription.kind === "none"
@@ -174,7 +175,7 @@ export function LabTrends() {
               onClick={() => setShowForm(true)}
               className="min-h-11 w-full rounded-xl bg-[color:var(--color-surface-2)] py-3 text-[0.85rem] font-bold text-[color:var(--color-ink-soft)]"
             >
-              {t("labTrends.addReading", { metric: metricDef.shortLabel.toLowerCase() })}
+              {t("labTrends.addReading", { metric: metricLabel })}
             </button>
           )}
         </>
