@@ -20,7 +20,7 @@ export function useSleepLogs(memberId: string | undefined) {
         .from("sleep_logs")
         .select("id, logged_at, hours, quality")
         .eq("member_id", memberId)
-        .gte("logged_at", daysAgoDate(7))
+        .gte("logged_at", daysAgoDate(14))
         .order("logged_at", { ascending: false })
       if (error) throw error
       return data as SleepEntry[]

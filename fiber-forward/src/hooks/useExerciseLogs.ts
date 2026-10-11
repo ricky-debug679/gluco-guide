@@ -7,15 +7,6 @@ function startOfTodayIso() {
   return d.toISOString()
 }
 
-function startOfWeekIso() {
-  const d = new Date()
-  const day = d.getDay() // 0 = Sunday
-  const diff = day === 0 ? 6 : day - 1 // treat Monday as start of week
-  d.setDate(d.getDate() - diff)
-  d.setHours(0, 0, 0, 0)
-  return d.toISOString()
-}
-
 export function useExerciseLogs(memberId: string | undefined) {
   const queryClient = useQueryClient()
   const queryKey = ["exercise_logs", memberId]
@@ -28,7 +19,7 @@ export function useExerciseLogs(memberId: string | undefined) {
         .from("exercise_logs")
         .select("id, activity, duration_minutes, logged_at")
         .eq("member_id", memberId)
-        .gte("logged_at", startOfWeekIso())
+        .gte("logged_at", startOfTodayIso())
         .order("logged_at", { ascending: false })
       if (error) throw error
       return data
@@ -50,15 +41,10 @@ export function useExerciseLogs(memberId: string | undefined) {
   })
 
   const rows = query.data ?? []
-  const todayStart = startOfTodayIso()
-  const todayRows = rows.filter((r) => r.logged_at >= todayStart)
-  const weekMinutes = rows.reduce((sum, r) => sum + r.duration_minutes, 0)
-  const todayMinutes = todayRows.reduce((sum, r) => sum + r.duration_minutes, 0)
+  const todayMinutes = rows.reduce((sum, r) => sum + r.duration_minutes, 0)
 
   return {
-    thisWeek: rows,
-    today: todayRows,
-    weekMinutes,
+    today: rows,
     todayMinutes,
     isLoading: query.isLoading,
     addExercise: (activity: string, minutes: number) => addExercise.mutateAsync({ activity, minutes }),
