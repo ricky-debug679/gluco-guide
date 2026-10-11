@@ -2,14 +2,14 @@ import { Navigate, Route, Routes } from "react-router-dom"
 import { Onboarding } from "./pages/Onboarding"
 import { Home } from "./pages/Home"
 import { FoodLog } from "./pages/FoodLog"
+import { FoodLogHistory } from "./pages/FoodLogHistory"
 import { GroceryScan } from "./pages/GroceryScan"
 import { LabTrends } from "./pages/LabTrends"
 import { Hydration } from "./pages/Hydration"
 import { Exercise } from "./pages/Exercise"
 import { Wellness } from "./pages/Wellness"
 import { Supplements } from "./pages/Supplements"
-import { Family } from "./pages/Family"
-import { You } from "./pages/You"
+import { Profile } from "./pages/Profile"
 import { Auth } from "./pages/Auth"
 import { useAppStore } from "./store/useAppStore"
 import { useSession } from "./hooks/useSession"
@@ -34,14 +34,14 @@ function AppRoutes({ isLive }: { isLive: boolean }) {
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/" element={showOnboardingGate ? <Navigate to="/onboarding" replace /> : <Home />} />
       <Route path="/log" element={<FoodLog />} />
+      <Route path="/log-history" element={<FoodLogHistory />} />
       <Route path="/scan" element={<GroceryScan />} />
       <Route path="/trends" element={<LabTrends />} />
       <Route path="/hydration" element={<Hydration />} />
       <Route path="/exercise" element={<Exercise />} />
       <Route path="/wellness" element={<Wellness />} />
       <Route path="/supplements" element={<Supplements />} />
-      <Route path="/family" element={<Family />} />
-      <Route path="/you" element={<You />} />
+      <Route path="/profile" element={<Profile />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
