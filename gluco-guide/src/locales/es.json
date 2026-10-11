@@ -434,7 +434,7 @@
     "vdUnsureNote": "Pide a tu médico un análisis rápido de 25-hidroxivitamina D en sangre — es simple y común, y te dirá la dosis correcta en lugar de adivinar.",
     "trackAnyway": "Seguir de todos modos sin saber mi nivel →",
     "vdLowNote": "Usa la dosis que tu médico recetó para un nivel bajo, no la dosis general de mantenimiento.",
-    "lowDoseDefault": "2,000 UI/día (según lo recetado)",
+    "lowDoseDefault": "2.000 UI/día (según lo recetado)",
     "dosage": "Dosis",
     "startTracking": "Empezar a seguir",
     "trackThis": "+ Seguir esto",

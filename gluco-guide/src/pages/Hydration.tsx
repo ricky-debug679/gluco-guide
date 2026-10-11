@@ -50,7 +50,8 @@ export function Hydration() {
   const supplementName = isLive ? supplement.name : demoSupplementInfo.name
   const supplementMechanism = isLive ? supplement.mechanism : demoSupplementInfo.mechanism
   const supplementTiming = isLive ? supplement.timingNote : demoSupplementInfo.timingNote
-  const supplementUsage = isLive ? supplement.customUsage : ""
+  // Researched usage belongs to a custom product; a saved one must not show under a preset.
+  const supplementUsage = isLive && supplement.kind === "custom" ? supplement.customUsage : ""
   const fiberPerDoseG = isLive ? supplement.fiberPerDoseG : demoSupplementInfo.fiberPerDoseG
   const takenToday = isLive ? supplement.takenToday : demoReminder.takenToday
   const hasPreference = isLive ? supplement.hasPreference : true

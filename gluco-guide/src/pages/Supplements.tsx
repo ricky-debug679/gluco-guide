@@ -5,12 +5,13 @@ import { Card, Eyebrow } from "../components/Screen"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useSupplements } from "../hooks/useSupplements"
 import { supplementRecommendationKeys } from "../lib/content"
+import { supportedLanguages } from "../lib/i18n"
 import type { SupplementRecommendationKey } from "../lib/types"
 
 type VdChoice = "low" | "normal" | "unsure" | null
 
 export function Supplements() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const householdCtx = useOptionalHousehold()
   const isLive = !!householdCtx
@@ -26,6 +27,18 @@ export function Supplements() {
   const [showCustom, setShowCustom] = useState(false)
   const [customName, setCustomName] = useState("")
   const [customDosage, setCustomDosage] = useState("")
+
+  // A dosage saved from one of our own suggestions (in whatever language was
+  // active then) is shown in the current language; anything typed stays as typed.
+  function displayDosage(key: SupplementRecommendationKey | null, dosage: string) {
+    if (!key) return dosage
+    for (const { code } of supportedLanguages) {
+      const tIn = i18n.getFixedT(code)
+      if (dosage === tIn(`supplementRecs.${key}.dosage`)) return t(`supplementRecs.${key}.dosage`)
+      if (key === "vitamin_d" && dosage === tIn("supplements.lowDoseDefault")) return t("supplements.lowDoseDefault")
+    }
+    return dosage
+  }
 
   const trackedKeys = new Set(supplements.active.map((s) => s.recommendation_key).filter(Boolean))
   const untracked = supplementRecommendationKeys
@@ -108,7 +121,11 @@ export function Supplements() {
                       <div className="text-[0.86rem] font-bold">
                         {s.recommendation_key ? t(`supplementRecs.${s.recommendation_key}.name`) : s.name}
                       </div>
-                      {s.dosage && <div className="text-[0.72rem] text-[color:var(--color-ink-faint)]">{s.dosage}</div>}
+                      {s.dosage && (
+                        <div className="text-[0.72rem] text-[color:var(--color-ink-faint)]">
+                          {displayDosage(s.recommendation_key, s.dosage)}
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() => handleToggle(s.id)}
