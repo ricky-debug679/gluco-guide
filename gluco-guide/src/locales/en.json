@@ -24,7 +24,14 @@
     "sendResetLink": "Send reset link",
     "sending": "Sending…",
     "resetEmailSent": "If an account exists for that email, a reset link is on its way — check your inbox.",
-    "backToSignIn": "Back to sign in"
+    "backToSignIn": "Back to sign in",
+    "setNewPasswordTitle": "Set a new password",
+    "setNewPasswordSubtitle": "Choose a new password for your account. You'll sign in with it next.",
+    "saveNewPassword": "Save new password",
+    "cancelReset": "Cancel",
+    "passwordResetDone": "Your password has been updated. Sign in with your new password.",
+    "resetLinkInvalid": "That reset link has expired or was already used. Request a new one below.",
+    "genericError": "Something went wrong. Please try again."
   },
   "profile": {
     "eyebrow": "Profile",

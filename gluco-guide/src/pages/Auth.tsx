@@ -1,16 +1,23 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { supabase } from "../lib/supabase"
+import { supabase, takeAuthLinkError } from "../lib/supabase"
 import { LanguageSwitcher } from "../components/LanguageSwitcher"
 
-export function Auth() {
+export function Auth({ passwordJustReset = false }: { passwordJustReset?: boolean }) {
   const { t } = useTranslation()
   const [mode, setMode] = useState<"in" | "up" | "forgot">("in")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(() => (passwordJustReset ? t("auth.passwordResetDone") : null))
   const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    if (takeAuthLinkError()) {
+      setMode("forgot")
+      setError(t("auth.resetLinkInvalid"))
+    }
+  }, [t])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -34,7 +41,7 @@ export function Auth() {
         if (error) throw error
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong")
+      setError(err instanceof Error ? err.message : t("auth.genericError"))
     } finally {
       setBusy(false)
     }

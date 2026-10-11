@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { Navigate, Route, Routes } from "react-router-dom"
 import { Onboarding } from "./pages/Onboarding"
 import { Home } from "./pages/Home"
@@ -11,6 +12,7 @@ import { Wellness } from "./pages/Wellness"
 import { Supplements } from "./pages/Supplements"
 import { Profile } from "./pages/Profile"
 import { Auth } from "./pages/Auth"
+import { ResetPassword } from "./pages/ResetPassword"
 import { useAppStore } from "./store/useAppStore"
 import { useSession } from "./hooks/useSession"
 import { HouseholdProvider, useOptionalHousehold } from "./context/HouseholdContext"
@@ -48,7 +50,12 @@ function AppRoutes({ isLive }: { isLive: boolean }) {
 }
 
 export function App() {
-  const { session, loading } = useSession()
+  const { session, loading, recovering } = useSession()
+  const [passwordJustReset, setPasswordJustReset] = useState(false)
+
+  useEffect(() => {
+    if (session && !recovering) setPasswordJustReset(false)
+  }, [session, recovering])
 
   // No backend configured yet (e.g. running before .env.local is set) —
   // fall back to the demo-data experience rather than blocking on auth.
@@ -62,7 +69,11 @@ export function App() {
     )
   }
 
-  if (!session) return <Auth />
+  if (!session) return <Auth passwordJustReset={passwordJustReset} />
+
+  // Signing out after the reset clears the recovery flag, landing on Auth.
+  if (recovering) return <ResetPassword onSaved={() => setPasswordJustReset(true)} />
+
 
   return (
     <HouseholdProvider user={session.user}>

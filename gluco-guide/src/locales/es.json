@@ -24,7 +24,14 @@
     "sendResetLink": "Enviar enlace",
     "sending": "Enviando…",
     "resetEmailSent": "Si existe una cuenta con ese correo, un enlace para restablecer la contraseña está en camino — revisa tu bandeja de entrada.",
-    "backToSignIn": "Volver a iniciar sesión"
+    "backToSignIn": "Volver a iniciar sesión",
+    "setNewPasswordTitle": "Crea una nueva contraseña",
+    "setNewPasswordSubtitle": "Elige una nueva contraseña para tu cuenta. La usarás para iniciar sesión.",
+    "saveNewPassword": "Guardar nueva contraseña",
+    "cancelReset": "Cancelar",
+    "passwordResetDone": "Tu contraseña se actualizó. Inicia sesión con tu nueva contraseña.",
+    "resetLinkInvalid": "Ese enlace de restablecimiento caducó o ya se usó. Solicita uno nuevo abajo.",
+    "genericError": "Algo salió mal. Inténtalo de nuevo."
   },
   "profile": {
     "eyebrow": "Perfil",
