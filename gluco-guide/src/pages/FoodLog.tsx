@@ -9,6 +9,7 @@ import { useFoodLogsToday } from "../hooks/useFoodLogsToday"
 import { useMealPhotoAnalysis, useMealPhotoRefinement, type MealPhotoAnalysis } from "../hooks/useMealPhotoAnalysis"
 import { PhotoCaptureButton } from "../components/PhotoCapture"
 import type { FoodItem } from "../lib/types"
+import { round1 } from "../lib/format"
 
 // Standard Atwater factors. Carbs here means *total* carbohydrate (the
 // way nutrition labels report it), which already includes fiber — so
@@ -29,7 +30,7 @@ type AmountUnit = "g" | "oz" | "serving"
 
 function scaleFood(food: FoodItem, amount: number, unit: AmountUnit): FoodItem {
   const factor = unit === "serving" ? amount : ((unit === "oz" ? amount * GRAMS_PER_OUNCE : amount) / 100)
-  const scale = (n: number) => Math.round(n * factor * 10) / 10
+  const scale = (n: number) => round1(n * factor)
   return {
     ...food,
     portion: unit === "serving" ? `${amount} × ${food.portion}` : `${amount} ${unit}`,
@@ -428,16 +429,16 @@ export function FoodLog() {
                 </div>
 
                 <div className="mt-3 flex gap-2">
-                  <Stat label={t("foodLog.stats.fiber")} value={`${mealAnalysis.estimatedMacros.fiberG}g`} colorVar="--color-sage" />
-                  <Stat label={t("foodLog.stats.protein")} value={`${mealAnalysis.estimatedMacros.proteinG}g`} colorVar="--color-honey" />
+                  <Stat label={t("foodLog.stats.fiber")} value={`${round1(mealAnalysis.estimatedMacros.fiberG)}g`} colorVar="--color-sage" />
+                  <Stat label={t("foodLog.stats.protein")} value={`${round1(mealAnalysis.estimatedMacros.proteinG)}g`} colorVar="--color-honey" />
                   <Stat
                     label={t("foodLog.stats.netCarbs")}
-                    value={`${Math.max(0, mealAnalysis.estimatedMacros.carbG - mealAnalysis.estimatedMacros.fiberG)}g`}
+                    value={`${round1(Math.max(0, mealAnalysis.estimatedMacros.carbG - mealAnalysis.estimatedMacros.fiberG))}g`}
                     colorVar="--color-berry"
                   />
-                  <Stat label={t("foodLog.stats.fat")} value={`${mealAnalysis.estimatedMacros.fatG}g`} colorVar="--color-fat" />
+                  <Stat label={t("foodLog.stats.fat")} value={`${round1(mealAnalysis.estimatedMacros.fatG)}g`} colorVar="--color-fat" />
                 </div>
-                <div className="mt-2 text-center font-serif text-[1.3rem]">{mealAnalysis.estimatedMacros.caloriesKcal} kcal</div>
+                <div className="mt-2 text-center font-serif text-[1.3rem]">{round1(mealAnalysis.estimatedMacros.caloriesKcal)} kcal</div>
                 <div className="mt-1 text-center text-[0.62rem] text-[color:var(--color-ink-faint)]">
                   {t("common.aiEstimateDisclaimer")}
                 </div>
@@ -540,16 +541,16 @@ export function FoodLog() {
                         {isAdded ? (
                           <div className="shrink-0 text-[0.8rem] font-bold text-[color:var(--color-sage)]">{t("foodLog.added")}</div>
                         ) : (
-                          <div className="shrink-0 text-[0.8rem] font-bold text-[color:var(--color-ink-soft)]">{`${food.caloriesKcal} kcal`}</div>
+                          <div className="shrink-0 text-[0.8rem] font-bold text-[color:var(--color-ink-soft)]">{`${round1(food.caloriesKcal)} kcal`}</div>
                         )}
                       </div>
                       <div className="mt-0.5 text-[0.72rem] text-[color:var(--color-ink-faint)]">
                         {t("foodLog.resultDetail", {
                           portion: food.portion,
-                          fiber: food.fiberG,
-                          protein: food.proteinG,
-                          carb: food.carbG,
-                          fat: food.fatG,
+                          fiber: round1(food.fiberG),
+                          protein: round1(food.proteinG),
+                          carb: round1(food.carbG),
+                          fat: round1(food.fatG),
                         })}
                       </div>
                     </button>
@@ -676,9 +677,9 @@ export function FoodLog() {
                   <div className="mt-0.5 text-[0.72rem] text-[color:var(--color-ink-faint)]">
                     {t("foodLog.todaysLogDetail", {
                       portion: entry.portion,
-                      kcal: entry.calories_kcal,
-                      fiber: entry.fiber_g,
-                      protein: entry.protein_g,
+                      kcal: round1(Number(entry.calories_kcal ?? 0)),
+                      fiber: round1(Number(entry.fiber_g)),
+                      protein: round1(Number(entry.protein_g)),
                     })}
                   </div>
                 </div>

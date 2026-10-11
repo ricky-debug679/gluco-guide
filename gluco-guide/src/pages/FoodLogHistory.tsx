@@ -5,6 +5,7 @@ import { Card, Eyebrow, Screen } from "../components/Screen"
 import { HistoryChart } from "../components/HistoryChart"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { usePersonalTargets } from "../hooks/usePersonalTargets"
+import { round1 } from "../lib/format"
 import { buildHistoryDays, parseLocalDate, type HistoryDay } from "../lib/history"
 import { useFoodLogHistory, type DayTotals } from "../hooks/useFoodLogHistory"
 import { useWaterHistory } from "../hooks/useWaterHistory"
@@ -89,10 +90,10 @@ export function FoodLogHistory() {
   function dayStatusText(goal: number, unit: string) {
     return (day: HistoryDay) =>
       t("foodLogHistory.dayStatus", {
-        value: day.value,
+        value: round1(day.value),
         unit,
         arrow: day.value >= goal ? "▲" : "▼",
-        diff: Math.abs(day.value - goal),
+        diff: round1(Math.abs(day.value - goal)),
         status: t(day.value >= goal ? "foodLogHistory.above" : "foodLogHistory.below"),
       })
   }
@@ -100,7 +101,7 @@ export function FoodLogHistory() {
   // --- AI summary aggregation ---
   const foodLoggedDays = foodHistory.days.filter((d) => d.entries.length > 0)
   const avgOverLoggedDays = (values: number[]) =>
-    values.length > 0 ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0
+    values.length > 0 ? round1(values.reduce((s, v) => s + v, 0) / values.length) : 0
 
   const waterLoggedDays = waterHistory.days.filter((d) => d.hasEntry)
   const exerciseActiveDays = exerciseHistory.days.filter((d) => d.hasEntry)

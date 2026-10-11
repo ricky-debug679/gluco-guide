@@ -1,3 +1,5 @@
+import { round1 } from "./format"
+
 export interface HistoryDay {
   date: string
   value: number
@@ -50,7 +52,7 @@ export function buildHistoryDays<T>(
   }
   return Array.from(byDate.entries()).map(([date, dayRows]) => ({
     date,
-    value: reduceDay(dayRows),
+    value: round1(reduceDay(dayRows)),
     hasEntry: dayRows.length > 0,
   }))
 }

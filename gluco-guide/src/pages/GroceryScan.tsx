@@ -11,6 +11,7 @@ import {
 } from "../hooks/useGroceryList"
 import { useFoodPhotoAnalysis, type FoodPhotoItem } from "../hooks/useFoodPhotoAnalysis"
 import { buildGroceryTrendChart } from "../lib/groceryTrend"
+import { round1 } from "../lib/format"
 import { PhotoCaptureButton } from "../components/PhotoCapture"
 
 function computeScoreFraction(fiberG: number, proteinG: number, netCarbG: number) {
@@ -320,10 +321,10 @@ export function GroceryScan() {
                       </div>
 
                       <div className="mt-3 flex gap-2">
-                        <MiniStat label={t("groceryScan.stats.fiber")} value={`${fiberG}g`} colorVar="--color-sage" />
-                        <MiniStat label={t("groceryScan.stats.protein")} value={`${proteinG}g`} colorVar="--color-honey" />
-                        <MiniStat label={t("groceryScan.stats.netCarbs")} value={`${netCarbG}g`} colorVar="--color-berry" />
-                        <MiniStat label={t("groceryScan.stats.fat")} value={`${macros?.fatG ?? 0}g`} colorVar="--color-fat" />
+                        <MiniStat label={t("groceryScan.stats.fiber")} value={`${round1(fiberG)}g`} colorVar="--color-sage" />
+                        <MiniStat label={t("groceryScan.stats.protein")} value={`${round1(proteinG)}g`} colorVar="--color-honey" />
+                        <MiniStat label={t("groceryScan.stats.netCarbs")} value={`${round1(netCarbG)}g`} colorVar="--color-berry" />
+                        <MiniStat label={t("groceryScan.stats.fat")} value={`${round1(macros?.fatG ?? 0)}g`} colorVar="--color-fat" />
                       </div>
                       <div className="mt-1.5 text-[0.62rem] text-[color:var(--color-ink-faint)]">
                         {t("common.aiEstimateDisclaimer")}

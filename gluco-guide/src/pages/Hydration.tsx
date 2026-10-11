@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Card, Eyebrow } from "../components/Screen"
 import { useAppStore, useCurrentSupplementInfo } from "../store/useAppStore"
 import { fiberSupplementOptions } from "../lib/content"
+import { round1 } from "../lib/format"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useWaterToday } from "../hooks/useWaterToday"
 import { useFiberSupplement } from "../hooks/useFiberSupplement"
@@ -193,7 +194,7 @@ export function Hydration() {
             )}
             {fiberPerDoseG > 0 && (
               <div className="mt-2.5 text-[0.76rem] text-[color:var(--color-sage)]">
-                {t("hydration.addsFiber", { grams: fiberPerDoseG })}
+                {t("hydration.addsFiber", { grams: round1(fiberPerDoseG) })}
               </div>
             )}
             {markError && (

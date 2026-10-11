@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next"
+import { round1 } from "../lib/format"
 
 interface ProgressRingProps {
   value: number
@@ -51,7 +52,7 @@ export function ProgressRing({ value, target, label, unit = "", colorVar, bgVar 
           style={{ transition: "stroke-dashoffset 0.35s ease" }}
         />
         <text x={39} y={35} textAnchor="middle" fontFamily="Lora, serif" fontSize={15} fill="var(--color-ink)">
-          {value}
+          {round1(value)}
           {unit}
         </text>
         <text
@@ -62,7 +63,7 @@ export function ProgressRing({ value, target, label, unit = "", colorVar, bgVar 
           fontSize={9}
           fill="var(--color-ink-faint)"
         >
-          {t("units.ofTarget", { target: `${target}${unit}` })}
+          {t("units.ofTarget", { target: `${round1(target)}${unit}` })}
         </text>
       </svg>
       <div className="text-[0.76rem] font-bold text-[color:var(--color-ink-soft)]">{label}</div>

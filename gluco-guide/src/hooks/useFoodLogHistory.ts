@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "../lib/supabase"
 import { HISTORY_DAYS, localDateKey, startOfDaysAgo } from "../lib/history"
+import { round1 } from "../lib/format"
 
 export interface FoodLogEntry {
   id: string
@@ -60,6 +61,12 @@ export function useFoodLogHistory(memberId: string | undefined) {
     bucket.carbG += Number(row.carb_g)
     bucket.caloriesKcal += Number(row.calories_kcal ?? 0)
     bucket.entries.push(row)
+  }
+  for (const d of days) {
+    d.fiberG = round1(d.fiberG)
+    d.proteinG = round1(d.proteinG)
+    d.carbG = round1(d.carbG)
+    d.caloriesKcal = round1(d.caloriesKcal)
   }
 
   return {

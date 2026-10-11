@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "../lib/supabase"
 import type { FoodItem } from "../lib/types"
+import { round1 } from "../lib/format"
 
 function startOfTodayIso() {
   const d = new Date()
@@ -57,7 +58,7 @@ export function useFoodLogsToday(memberId: string | undefined) {
   })
 
   const rows = query.data ?? []
-  const totals = rows.reduce(
+  const sums = rows.reduce(
     (acc, r) => ({
       fiberG: acc.fiberG + Number(r.fiber_g),
       proteinG: acc.proteinG + Number(r.protein_g),
@@ -67,6 +68,13 @@ export function useFoodLogsToday(memberId: string | undefined) {
     }),
     { fiberG: 0, proteinG: 0, carbG: 0, fatG: 0, caloriesKcal: 0 },
   )
+  const totals = {
+    fiberG: round1(sums.fiberG),
+    proteinG: round1(sums.proteinG),
+    carbG: round1(sums.carbG),
+    fatG: round1(sums.fatG),
+    caloriesKcal: round1(sums.caloriesKcal),
+  }
 
   return {
     todaysFoods: rows,
