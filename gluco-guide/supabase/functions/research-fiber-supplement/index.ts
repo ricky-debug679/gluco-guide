@@ -23,10 +23,31 @@ function json(body: unknown, status = 200) {
 // The client sends its active i18next language code; map to a name the
 // model can act on directly rather than passing a bare ISO code.
 const LANGUAGE_NAMES: Record<string, string> = { en: "English", es: "Spanish", zh: "Chinese", hi: "Hindi" }
+// Stated first: appended at the end, the model sometimes answered in
+// English and then wrote a second, translated answer.
 function languageInstruction(code: unknown): string {
   const name = typeof code === "string" ? LANGUAGE_NAMES[code] : undefined
   if (!name || name === "English") return ""
-  return `\n\nRespond in ${name}: write "description", "usage", and "timing" in ${name}. Keep the JSON field names exactly as specified in English.`
+  return `Respond in ${name}: write "description", "usage", and "timing" in ${name}. Keep the JSON field names exactly as specified in English.\n\n`
+}
+function languageReminder(code: unknown): string {
+  const name = typeof code === "string" ? LANGUAGE_NAMES[code] : undefined
+  if (!name || name === "English") return ""
+  return `\n\nWrite those text values in ${name}, and output only that one JSON object.`
+}
+
+// Take the first complete JSON object, ignoring anything the model adds after it.
+function firstJsonObject(text: string): unknown {
+  const start = text.indexOf("{")
+  if (start === -1) return null
+  for (let end = text.indexOf("}", start); end !== -1; end = text.indexOf("}", end + 1)) {
+    try {
+      return JSON.parse(text.slice(start, end + 1))
+    } catch {
+      // not complete yet; try the next closing brace
+    }
+  }
+  return null
 }
 
 Deno.serve(async (req) => {
@@ -51,7 +72,7 @@ Deno.serve(async (req) => {
     if (!name) return json({ error: "No product name given." }, 400)
     const fiberGrams = typeof body?.fiberGrams === "number" && body.fiberGrams > 0 ? body.fiberGrams : null
 
-    const prompt = `You are a nutrition assistant for a diabetes-prevention app. The person tracks a fiber supplement and just told you what they take: "${name}"${fiberGrams ? ` (they say it has ${fiberGrams}g of fiber per dose)` : ""}.
+    const prompt = `${languageInstruction(body?.language)}You are a nutrition assistant for a diabetes-prevention app. The person tracks a fiber supplement and just told you what they take: "${name}"${fiberGrams ? ` (they say it has ${fiberGrams}g of fiber per dose)` : ""}.
 
 If this is a real, recognizable fiber supplement product or a well-known fiber type (e.g. a specific brand, or something generic like "psyllium husk capsules" or "chia seeds"), use what you actually know about it. If the name is too vague, made up, or not something you can identify with real confidence, say so honestly in the description rather than inventing specifics — fall back to general soluble-fiber guidance instead.
 
@@ -65,7 +86,7 @@ ${fiberGrams ? "" : `4. "estimatedFiberPerDoseG" — your best-effort estimate o
 Keep every sentence short, plain, warm, and direct — no jargon, no filler, no emoji, no hyphens or dashes of any kind (no -, no –, no —). Think label text, not a paragraph.
 
 Respond with ONLY valid JSON, no markdown fences, matching exactly this shape:
-{"description":"<one sentence>","usage":"<one sentence>","timing":"<one sentence>","estimatedFiberPerDoseG":${fiberGrams ? "null" : "<number>"}}${languageInstruction(body?.language)}`
+{"description":"<one sentence>","usage":"<one sentence>","timing":"<one sentence>","estimatedFiberPerDoseG":${fiberGrams ? "null" : "<number>"}}${languageReminder(body?.language)}`
 
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -98,18 +119,8 @@ Respond with ONLY valid JSON, no markdown fences, matching exactly this shape:
         502,
       )
     }
-    const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim()
-
-    const firstBrace = cleaned.indexOf("{")
-    const lastBrace = cleaned.lastIndexOf("}")
-    const jsonSlice = firstBrace !== -1 && lastBrace > firstBrace ? cleaned.slice(firstBrace, lastBrace + 1) : cleaned
-
-    let parsed
-    try {
-      parsed = JSON.parse(jsonSlice)
-    } catch {
-      return json({ error: `Couldn't parse the AI's response. Raw: ${cleaned.slice(0, 300)}` }, 502)
-    }
+    const parsed = firstJsonObject(text)
+    if (!parsed) return json({ error: `Couldn't parse the AI's response. Raw: ${text.slice(0, 300)}` }, 502)
 
     return json(parsed)
   } catch (err) {

@@ -24,10 +24,32 @@ function json(body: unknown, status = 200) {
 // The client sends its active i18next language code; map to a name the
 // model can act on directly rather than passing a bare ISO code.
 const LANGUAGE_NAMES: Record<string, string> = { en: "English", es: "Spanish", zh: "Chinese", hi: "Hindi" }
+// Stated first: appended at the end, the model sometimes answered in
+// English and then wrote a second, translated answer.
 function languageInstruction(code: unknown): string {
   const name = typeof code === "string" ? LANGUAGE_NAMES[code] : undefined
   if (!name || name === "English") return ""
-  return `\n\nRespond in ${name}: write "mealName", "portionEstimate", every ingredient "name"/"note", "insight", "nextTimeSuggestion", and the clarifying question's "question"/"options" (if present) in ${name}. Keep the JSON field names exactly as specified in English.`
+  return `Respond in ${name}: write "mealName", "portionEstimate", every ingredient "name"/"note", "insight", "nextTimeSuggestion", and the clarifying question's "question"/"options" (if present) in ${name}. Keep the JSON field names exactly as specified in English.\n\n`
+}
+function languageReminder(code: unknown): string {
+  const name = typeof code === "string" ? LANGUAGE_NAMES[code] : undefined
+  if (!name || name === "English") return ""
+  return `\n\nWrite those text values in ${name}, and output only that one JSON object.`
+}
+
+// Take the first complete JSON object, ignoring any explanation the model
+// adds before or after it.
+function firstJsonObject(text: string): unknown {
+  const start = text.indexOf("{")
+  if (start === -1) return null
+  for (let end = text.indexOf("}", start); end !== -1; end = text.indexOf("}", end + 1)) {
+    try {
+      return JSON.parse(text.slice(start, end + 1))
+    } catch {
+      // not complete yet; try the next closing brace
+    }
+  }
+  return null
 }
 
 Deno.serve(async (req) => {
@@ -53,7 +75,7 @@ Deno.serve(async (req) => {
     if (!match) return json({ error: "No photo given." }, 400)
     const [, mediaType, base64] = match
 
-    const prompt = `You are a nutrition assistant for a diabetes-prevention app, looking at a photo someone took of a meal they're about to eat or are currently eating. Treat this as ONE meal/plate to analyze as a whole — even if it has several components on it — not a set of separate grocery products.
+    const prompt = `${languageInstruction(body?.language)}You are a nutrition assistant for a diabetes-prevention app, looking at a photo someone took of a meal they're about to eat or are currently eating. Treat this as ONE meal/plate to analyze as a whole — even if it has several components on it — not a set of separate grocery products.
 
 1. Name the dish as specifically as you can from what's actually visible (e.g. "Grilled chicken, white rice, and fried plantains" not just "dinner plate"). If any legible text is in frame (a takeout label, a menu card), use it to inform the name.
 2. Estimate the portion size concretely from visual cues — plate/bowl size, how full it is, comparative size of components (e.g. "~1.5 cups rice, a 4oz chicken breast, a dinner-plate-sized serving overall").
@@ -67,7 +89,7 @@ Deno.serve(async (req) => {
    - Do NOT ask about garnish, minor seasoning, or anything that wouldn't meaningfully change the macros or dietary classification — leave it null for the large majority of photos where the dish is clear enough. Your "estimatedMacros" should still be your single best guess either way (used as a fallback if the person doesn't answer).
 
 Respond with ONLY valid JSON, no markdown fences, matching exactly this shape:
-{"mealName":"<the dish, as specifically as you can tell>","portionEstimate":"<concrete portion description>","ingredients":[{"name":"<ingredient>","caution":true|false,"note":"<short reason if caution, empty string otherwise>"}],"estimatedMacros":{"caloriesKcal":<number>,"proteinG":<number>,"carbG":<number>,"fatG":<number>,"fiberG":<number>},"verdict":"good"|"caution"|"neutral","insight":"<2-3 sentences>","nextTimeSuggestion":"<one specific, concrete swap for next time>","clarifyingQuestion":{"question":"<short question>","options":["<candidate answer 1>","<candidate answer 2>"]}|null}${languageInstruction(body?.language)}`
+{"mealName":"<the dish, as specifically as you can tell>","portionEstimate":"<concrete portion description>","ingredients":[{"name":"<ingredient>","caution":true|false,"note":"<short reason if caution, empty string otherwise>"}],"estimatedMacros":{"caloriesKcal":<number>,"proteinG":<number>,"carbG":<number>,"fatG":<number>,"fiberG":<number>},"verdict":"good"|"caution"|"neutral","insight":"<2-3 sentences>","nextTimeSuggestion":"<one specific, concrete swap for next time>","clarifyingQuestion":{"question":"<short question>","options":["<candidate answer 1>","<candidate answer 2>"]}|null}${languageReminder(body?.language)}`
 
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -118,23 +140,8 @@ Respond with ONLY valid JSON, no markdown fences, matching exactly this shape:
         502,
       )
     }
-    const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim()
-
-    // The clarifying-question instruction invites the model to reason about
-    // ambiguity, which sometimes makes it wrap the JSON in a sentence or two
-    // of explanation despite the "ONLY valid JSON" instruction — slicing to
-    // the outermost {...} strips that even when markdown-fence stripping
-    // alone doesn't catch it.
-    const firstBrace = cleaned.indexOf("{")
-    const lastBrace = cleaned.lastIndexOf("}")
-    const jsonSlice = firstBrace !== -1 && lastBrace > firstBrace ? cleaned.slice(firstBrace, lastBrace + 1) : cleaned
-
-    let parsed
-    try {
-      parsed = JSON.parse(jsonSlice)
-    } catch {
-      return json({ error: `Couldn't parse the AI's response. Raw: ${cleaned.slice(0, 300)}` }, 502)
-    }
+    const parsed = firstJsonObject(text)
+    if (!parsed) return json({ error: `Couldn't parse the AI's response. Raw: ${text.slice(0, 300)}` }, 502)
 
     return json(parsed)
   } catch (err) {

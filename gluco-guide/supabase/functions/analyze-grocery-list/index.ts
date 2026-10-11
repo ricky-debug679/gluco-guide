@@ -31,7 +31,28 @@ function languageInstruction(code: unknown): string {
   // user's original list client-side by substring comparison — translating
   // them would silently break that matching, so only the narrative text
   // (note/message) should change language, never the item names themselves.
-  return `\n\nRespond in ${name}: translate "note" and "message" text into ${name}. Do NOT translate "name" or "items" values — echo those back exactly as given in the original grocery list, since the app matches your analysis back to the list by that exact text.`
+  // Stated first: appended at the end, the model sometimes answered in
+  // English and then wrote a second, translated answer.
+  return `Respond in ${name}: translate "note" and "message" text into ${name}. Do NOT translate "name" or "items" values — echo those back exactly as given in the original grocery list, since the app matches your analysis back to the list by that exact text.\n\n`
+}
+function languageReminder(code: unknown): string {
+  const name = typeof code === "string" ? LANGUAGE_NAMES[code] : undefined
+  if (!name || name === "English") return ""
+  return `\n\nWrite "note" and "message" in ${name}, keep item names exactly as listed, and output only that one JSON object.`
+}
+
+// Take the first complete JSON object, ignoring anything the model adds after it.
+function firstJsonObject(text: string): unknown {
+  const start = text.indexOf("{")
+  if (start === -1) return null
+  for (let end = text.indexOf("}", start); end !== -1; end = text.indexOf("}", end + 1)) {
+    try {
+      return JSON.parse(text.slice(start, end + 1))
+    } catch {
+      // not complete yet; try the next closing brace
+    }
+  }
+  return null
 }
 
 Deno.serve(async (req) => {
@@ -65,7 +86,7 @@ Deno.serve(async (req) => {
       .slice(0, 40)
       .map((i) => i.trim())
 
-    const prompt = `You are a nutrition assistant for a diabetes-prevention app. A user's grocery list is below. Do two things:
+    const prompt = `${languageInstruction(body?.language)}You are a nutrition assistant for a diabetes-prevention app. A user's grocery list is below. Do two things:
 
 1. For each item that is notably unhealthy (high in added sugar, refined carbs, or sodium) or notably healthy (high fiber/protein, whole food), give a short note (one sentence, two if needed). Skip neutral items with no strong signal. For a caution item that's a sweet, baked good, dessert, or snack — where a homemade version is a realistic swap (not for something like soda or chips, where it isn't) — name one specific, genuinely appealing high-protein, naturally-sweetened homemade alternative as part of the note (e.g. for "cake": "Store-bought cake is usually loaded with refined sugar and flour — a Greek yogurt and almond flour mug cake sweetened with mashed banana or dates gives you real protein and fiber instead."). Be concrete about the actual swap, not just "try making it at home instead."
 
@@ -77,7 +98,7 @@ Grocery list:
 ${cleanItems.map((i) => `- ${i}`).join("\n")}
 
 Respond with ONLY valid JSON, no markdown fences, matching exactly this shape:
-{"itemFlags":[{"name":"<item as listed>","verdict":"caution"|"good","note":"<one short sentence>"}],"combinationTips":[{"items":["<item1>","<item2>"],"message":"<one natural, conversational sentence that names what they're likely cooking and gives the tip>"}]}${languageInstruction(body?.language)}`
+{"itemFlags":[{"name":"<item as listed>","verdict":"caution"|"good","note":"<one short sentence>"}],"combinationTips":[{"items":["<item1>","<item2>"],"message":"<one natural, conversational sentence that names what they're likely cooking and gives the tip>"}]}${languageReminder(body?.language)}`
 
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -98,15 +119,13 @@ Respond with ONLY valid JSON, no markdown fences, matching exactly this shape:
     }
 
     const aiData = await aiRes.json()
-    const text: string = aiData.content?.[0]?.text ?? ""
-    const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim()
-
-    let parsed
-    try {
-      parsed = JSON.parse(cleaned)
-    } catch {
-      return json({ error: "Couldn't parse the AI's response." }, 502)
-    }
+    const contentBlocks: { type?: string; text?: string }[] = Array.isArray(aiData.content) ? aiData.content : []
+    const text = contentBlocks
+      .filter((b) => b.type === "text" && typeof b.text === "string")
+      .map((b) => b.text)
+      .join("")
+    const parsed = firstJsonObject(text)
+    if (!parsed) return json({ error: `Couldn't parse the AI's response. Raw: ${text.slice(0, 300)}` }, 502)
 
     return json(parsed)
   } catch (err) {

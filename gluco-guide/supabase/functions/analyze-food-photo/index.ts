@@ -23,10 +23,31 @@ function json(body: unknown, status = 200) {
 // The client sends its active i18next language code; map to a name the
 // model can act on directly rather than passing a bare ISO code.
 const LANGUAGE_NAMES: Record<string, string> = { en: "English", es: "Spanish", zh: "Chinese", hi: "Hindi" }
+// Stated first: appended at the end, the model sometimes answered in
+// English and then wrote a second, translated answer.
 function languageInstruction(code: unknown): string {
   const name = typeof code === "string" ? LANGUAGE_NAMES[code] : undefined
   if (!name || name === "English") return ""
-  return `\n\nRespond in ${name}: write "name" and "insight" in ${name} (if you're already translating non-English packaging text per the instructions above, translate into ${name} instead of English). Keep the JSON field names exactly as specified in English.`
+  return `Respond in ${name}: write "name" and "insight" in ${name} (where the instructions below say to translate non-English packaging text into English, translate it into ${name} instead). Keep the JSON field names exactly as specified in English.\n\n`
+}
+function languageReminder(code: unknown): string {
+  const name = typeof code === "string" ? LANGUAGE_NAMES[code] : undefined
+  if (!name || name === "English") return ""
+  return `\n\nWrite those text values in ${name}, and output only that one JSON object.`
+}
+
+// Take the first complete JSON object, ignoring anything the model adds after it.
+function firstJsonObject(text: string): unknown {
+  const start = text.indexOf("{")
+  if (start === -1) return null
+  for (let end = text.indexOf("}", start); end !== -1; end = text.indexOf("}", end + 1)) {
+    try {
+      return JSON.parse(text.slice(start, end + 1))
+    } catch {
+      // not complete yet; try the next closing brace
+    }
+  }
+  return null
 }
 
 Deno.serve(async (req) => {
@@ -52,7 +73,7 @@ Deno.serve(async (req) => {
     if (!match) return json({ error: "No photo given." }, 400)
     const [, mediaType, base64] = match
 
-    const prompt = `You are a nutrition assistant for a diabetes-prevention app, looking at a photo someone took while grocery shopping. The photo may show a single food/product, or several at once (e.g. items on a shelf, in a cart, or spread on a counter) — don't assume there's only one.
+    const prompt = `${languageInstruction(body?.language)}You are a nutrition assistant for a diabetes-prevention app, looking at a photo someone took while grocery shopping. The photo may show a single food/product, or several at once (e.g. items on a shelf, in a cart, or spread on a counter) — don't assume there's only one.
 
 For EACH distinct food or product you can clearly identify in the photo:
 1. Identify it with the fullest, most specific name you can actually read or determine. If there is ANY legible text on the packaging, your name must be based on what that text literally says — never guess the product from its color, shape, or general packaging style when there's text available that tells you directly, and never let a package's visual style (e.g. "this looks like a typical Asian candy wrapper") steer the identification instead of the words actually printed on it. This applies in every language, not just English: if the visible text isn't in English, read it character by character and translate it accurately — do not substitute a vaguely-similar-sounding or stylistically-plausible guess for an actual translation. When you do translate non-English text, give the name as "<original text> (<English translation>)" so the translation can be double-checked against the photo. If a brand, variety, flavor, or size is also visible, include all of it (e.g. "Cheerios Honey Nut, Family Size" not just "cereal"; "Honeycrisp apple" not just "apple"). Only fall back to a generic visual description (e.g. "red apple, variety unclear") when there is genuinely no legible text at all to read.
@@ -62,7 +83,7 @@ For EACH distinct food or product you can clearly identify in the photo:
 List every distinct item you can clearly identify — if 3 separate products are visible, return 3, not 1. If genuinely only one food/product is in frame, return a single item.
 
 Respond with ONLY valid JSON, no markdown fences, matching exactly this shape:
-{"items":[{"name":"<the food or product, as specifically as you can tell>","verdict":"good"|"caution"|"neutral","insight":"<2-3 sentences explaining the blood-sugar impact, grounded in what you could see or a clearly-reasonable estimate>","estimatedMacros":{"caloriesKcal":<number>,"proteinG":<number>,"carbG":<number>,"fatG":<number>,"fiberG":<number>}}]}${languageInstruction(body?.language)}`
+{"items":[{"name":"<the food or product, as specifically as you can tell>","verdict":"good"|"caution"|"neutral","insight":"<2-3 sentences explaining the blood-sugar impact, grounded in what you could see or a clearly-reasonable estimate>","estimatedMacros":{"caloriesKcal":<number>,"proteinG":<number>,"carbG":<number>,"fatG":<number>,"fiberG":<number>}}]}${languageReminder(body?.language)}`
 
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -98,15 +119,13 @@ Respond with ONLY valid JSON, no markdown fences, matching exactly this shape:
     }
 
     const aiData = await aiRes.json()
-    const text: string = aiData.content?.[0]?.text ?? ""
-    const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim()
-
-    let parsed
-    try {
-      parsed = JSON.parse(cleaned)
-    } catch {
-      return json({ error: "Couldn't parse the AI's response." }, 502)
-    }
+    const contentBlocks: { type?: string; text?: string }[] = Array.isArray(aiData.content) ? aiData.content : []
+    const text = contentBlocks
+      .filter((b) => b.type === "text" && typeof b.text === "string")
+      .map((b) => b.text)
+      .join("")
+    const parsed = firstJsonObject(text)
+    if (!parsed) return json({ error: `Couldn't parse the AI's response. Raw: ${text.slice(0, 300)}` }, 502)
 
     return json(parsed)
   } catch (err) {

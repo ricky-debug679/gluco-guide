@@ -23,10 +23,31 @@ function json(body: unknown, status = 200) {
 // The client sends its active i18next language code; map to a name the
 // model can act on directly rather than passing a bare ISO code.
 const LANGUAGE_NAMES: Record<string, string> = { en: "English", es: "Spanish", zh: "Chinese", hi: "Hindi" }
+// Stated first: appended at the end, the model sometimes answered in
+// English and then wrote a second, translated answer.
 function languageInstruction(code: unknown): string {
   const name = typeof code === "string" ? LANGUAGE_NAMES[code] : undefined
   if (!name || name === "English") return ""
-  return `\n\nRespond in ${name}: write "doingWell" and "improve" in ${name}. Keep the JSON field names exactly as specified in English.`
+  return `Respond in ${name}: write "doingWell" and "improve" in ${name}. Keep the JSON field names exactly as specified in English.\n\n`
+}
+function languageReminder(code: unknown): string {
+  const name = typeof code === "string" ? LANGUAGE_NAMES[code] : undefined
+  if (!name || name === "English") return ""
+  return `\n\nWrite those text values in ${name}, and output only that one JSON object.`
+}
+
+// Take the first complete JSON object, ignoring anything the model adds after it.
+function firstJsonObject(text: string): unknown {
+  const start = text.indexOf("{")
+  if (start === -1) return null
+  for (let end = text.indexOf("}", start); end !== -1; end = text.indexOf("}", end + 1)) {
+    try {
+      return JSON.parse(text.slice(start, end + 1))
+    } catch {
+      // not complete yet; try the next closing brace
+    }
+  }
+  return null
 }
 
 Deno.serve(async (req) => {
@@ -53,7 +74,7 @@ Deno.serve(async (req) => {
     const sleep = body?.sleep ?? {}
     const supplements = body?.supplements ?? {}
 
-    const prompt = `You are a supportive, empathetic coach for a diabetes-prevention app, looking at someone's last 14 days of logged activity across five areas: food, water, exercise, sleep, and supplements. Based ONLY on the real numbers below (never invent facts not given here), write a short, warm, plain-language progress summary that touches on EVERY one of the five areas — don't skip any of them. Write like you genuinely care about this person reaching their health goal, not like you're grading them.
+    const prompt = `${languageInstruction(body?.language)}You are a supportive, empathetic coach for a diabetes-prevention app, looking at someone's last 14 days of logged activity across five areas: food, water, exercise, sleep, and supplements. Based ONLY on the real numbers below (never invent facts not given here), write a short, warm, plain-language progress summary that touches on EVERY one of the five areas — don't skip any of them. Write like you genuinely care about this person reaching their health goal, not like you're grading them.
 
 Food: logged ${food.daysLogged ?? 0}/14 days. Averages on logged days — fiber ${food.avgFiberG ?? 0}g (target ${food.fiberTarget ?? 0}g/day), protein ${food.avgProteinG ?? 0}g (target ${food.proteinTarget ?? 0}g/day), carbs ${food.avgCarbG ?? 0}g (target ${food.carbTarget ?? 0}g/day), calories ${food.avgCaloriesKcal ?? 0} (target ${food.calorieTarget ?? 0}/day).
 Water: logged ${water.daysLogged ?? 0}/14 days. On logged days, averaged ${water.avgCupsOnLoggedDays ?? 0} cups (target ${water.target ?? 8} cups/day).
@@ -72,7 +93,7 @@ Then write two things:
 Keep each passage brief enough to read in a few seconds per area it covers — short words, no jargon, no filler phrases like "it's worth noting," no emoji, no bullet points or lists, just natural sentences. Talk like a caring friend who believes in them, not a report. Never use a hyphen or dash of any kind (no -, no –, no —) anywhere in either passage; write plain connected sentences instead (e.g. "even though you're busy" rather than "though busy—").
 
 Respond with ONLY valid JSON, no markdown fences, matching exactly this shape:
-{"doingWell":"<a sentence or two covering every area going well>","improve":"<a sentence or two covering every area needing attention>"}${languageInstruction(body?.language)}`
+{"doingWell":"<a sentence or two covering every area going well>","improve":"<a sentence or two covering every area needing attention>"}${languageReminder(body?.language)}`
 
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -105,18 +126,8 @@ Respond with ONLY valid JSON, no markdown fences, matching exactly this shape:
         502,
       )
     }
-    const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim()
-
-    const firstBrace = cleaned.indexOf("{")
-    const lastBrace = cleaned.lastIndexOf("}")
-    const jsonSlice = firstBrace !== -1 && lastBrace > firstBrace ? cleaned.slice(firstBrace, lastBrace + 1) : cleaned
-
-    let parsed
-    try {
-      parsed = JSON.parse(jsonSlice)
-    } catch {
-      return json({ error: `Couldn't parse the AI's response. Raw: ${cleaned.slice(0, 300)}` }, 502)
-    }
+    const parsed = firstJsonObject(text)
+    if (!parsed) return json({ error: `Couldn't parse the AI's response. Raw: ${text.slice(0, 300)}` }, 502)
 
     return json(parsed)
   } catch (err) {
