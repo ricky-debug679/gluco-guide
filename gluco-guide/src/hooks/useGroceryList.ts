@@ -1,7 +1,12 @@
+import { useEffect, useRef } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { supabase } from "../lib/supabase"
 import { describeFunctionError } from "../lib/edgeFunctionError"
+import { translateTexts } from "../lib/translateTexts"
+
+// Matches the translate-texts function's per-request limit.
+const MAX_NOTES_PER_TRANSLATION = 60
 
 export interface GroceryListItem {
   id: string
@@ -9,6 +14,8 @@ export interface GroceryListItem {
   checked: boolean
   verdict: "good" | "caution" | null
   note: string | null
+  /** Language the AI note was written in; null for notes saved before this was tracked. */
+  note_language: string | null
 }
 
 export interface GroceryListSummary {
@@ -42,6 +49,7 @@ function matchesFlag(itemName: string, flagName: string) {
 
 /** All of a household's grocery trips, newest first. lists[0] is "today's" active list. */
 export function useGroceryLists(householdId: string | undefined) {
+  const { i18n } = useTranslation()
   const queryClient = useQueryClient()
   const queryKey = ["grocery_lists", householdId]
 
@@ -51,7 +59,7 @@ export function useGroceryLists(householdId: string | undefined) {
       if (!supabase || !householdId) return [] as GroceryListSummary[]
       const { data, error } = await supabase
         .from("grocery_lists")
-        .select("id, label, created_at, grocery_list_items(id, name, checked, verdict, note)")
+        .select("id, label, created_at, grocery_list_items(id, name, checked, verdict, note, note_language)")
         .eq("household_id", householdId)
         .order("created_at", { ascending: false })
       if (error) throw error
@@ -89,6 +97,45 @@ export function useGroceryLists(householdId: string | undefined) {
 
   const lists = query.data ?? []
 
+  // AI notes are saved in the language they were written in; translate any
+  // that don't match the current language and save the translation.
+  const language = i18n.language
+  const staleNotes = lists
+    .flatMap((l) => l.items.filter((i) => i.note && i.note_language !== language))
+    .slice(0, MAX_NOTES_PER_TRANSLATION)
+  const staleKey = staleNotes.map((i) => i.id).join(",")
+  const translationAttempts = useRef(new Set<string>())
+  useEffect(() => {
+    const todo = staleNotes.filter((i) => !translationAttempts.current.has(`${i.id}:${language}`))
+    if (todo.length === 0 || !supabase) return
+    for (const i of todo) translationAttempts.current.add(`${i.id}:${language}`)
+    translateTexts(
+      todo.map((i) => i.note ?? ""),
+      language,
+    )
+      .then(async (translated) => {
+        const results = await Promise.all(
+          todo.map((item, idx) =>
+            supabase!
+              .from("grocery_list_items")
+              .update({ note: translated[idx], note_language: language })
+              .eq("id", item.id),
+          ),
+        )
+        const saved = new Map(todo.flatMap((item, idx) => (results[idx].error ? [] : [[item.id, translated[idx]] as const])))
+        queryClient.setQueryData<GroceryListSummary[]>(queryKey, (old) =>
+          (old ?? []).map((l) => ({
+            ...l,
+            items: l.items.map((i) => (saved.has(i.id) ? { ...i, note: saved.get(i.id)!, note_language: language } : i)),
+          })),
+        )
+      })
+      .catch(() => {
+        // Keep showing the saved notes; this retries the next time the language changes.
+      })
+    // staleKey stands in for staleNotes, which is rebuilt every render.
+  }, [staleKey, language])
+
   return {
     lists,
     activeList: lists[0] ?? null,
@@ -121,7 +168,7 @@ export function useGroceryListItems(householdId: string | undefined) {
       const { data, error } = await supabase
         .from("grocery_list_items")
         .insert({ list_id: input.listId, household_id: householdId, name: input.name })
-        .select("id, name, checked, verdict, note")
+        .select("id, name, checked, verdict, note, note_language")
         .single()
       if (error) throw error
       return { listId: input.listId, item: data as GroceryListItem }
@@ -138,7 +185,7 @@ export function useGroceryListItems(householdId: string | undefined) {
       const { data, error } = await supabase
         .from("grocery_list_items")
         .insert(input.names.map((name) => ({ list_id: input.listId, household_id: householdId, name })))
-        .select("id, name, checked, verdict, note")
+        .select("id, name, checked, verdict, note, note_language")
       if (error) throw error
       return { listId: input.listId, items: data as GroceryListItem[] }
     },
@@ -157,6 +204,7 @@ export function useGroceryListItems(householdId: string | undefined) {
     mutationFn: async (input: {
       listId: string
       items: { name: string; verdict: "good" | "caution" | "neutral"; note: string }[]
+      noteLanguage: string
     }) => {
       if (!supabase || !householdId || input.items.length === 0) return null
       const { data, error } = await supabase
@@ -168,9 +216,10 @@ export function useGroceryListItems(householdId: string | undefined) {
             name: i.name,
             verdict: i.verdict === "neutral" ? null : i.verdict,
             note: i.verdict === "neutral" ? null : i.note,
+            note_language: input.noteLanguage,
           })),
         )
-        .select("id, name, checked, verdict, note")
+        .select("id, name, checked, verdict, note, note_language")
       if (error) throw error
       return { listId: input.listId, items: data as GroceryListItem[] }
     },
@@ -219,7 +268,10 @@ export function useGroceryListItems(householdId: string | undefined) {
         .filter((x): x is { item: GroceryListItem; flag: ItemFlag } => !!x.flag)
       await Promise.all(
         updates.map(({ item, flag }) =>
-          supabase!.from("grocery_list_items").update({ verdict: flag.verdict, note: flag.note }).eq("id", item.id),
+          supabase!
+            .from("grocery_list_items")
+            .update({ verdict: flag.verdict, note: flag.note, note_language: i18n.language })
+            .eq("id", item.id),
         ),
       )
       return { listId: input.listId, updates }
@@ -229,7 +281,7 @@ export function useGroceryListItems(householdId: string | undefined) {
       patchList(result.listId, (items) =>
         items.map((i) => {
           const u = result.updates.find((u) => u.item.id === i.id)
-          return u ? { ...i, verdict: u.flag.verdict, note: u.flag.note } : i
+          return u ? { ...i, verdict: u.flag.verdict, note: u.flag.note, note_language: i18n.language } : i
         }),
       )
     },
@@ -250,10 +302,12 @@ export function useGroceryListItems(householdId: string | undefined) {
   return {
     addItem: (listId: string, name: string) => addItem.mutateAsync({ listId, name }),
     addManyItems: (listId: string, names: string[]) => addManyItems.mutateAsync({ listId, names }),
+    /** `noteLanguage` is the language the notes were written in (the scan's), not necessarily the current one. */
     addManyItemsWithVerdicts: (
       listId: string,
       items: { name: string; verdict: "good" | "caution" | "neutral"; note: string }[],
-    ) => addManyItemsWithVerdicts.mutateAsync({ listId, items }),
+      noteLanguage: string,
+    ) => addManyItemsWithVerdicts.mutateAsync({ listId, items, noteLanguage }),
     toggleChecked: (listId: string, id: string, checked: boolean) =>
       toggleChecked.mutateAsync({ listId, id, checked }),
     removeMany: (listId: string, ids: string[]) => removeMany.mutateAsync({ listId, ids }),

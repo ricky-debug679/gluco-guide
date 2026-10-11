@@ -1,6 +1,8 @@
+import { useEffect, useRef } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { supabase } from "../lib/supabase"
+import { translateTexts } from "../lib/translateTexts"
 import { fiberSupplementOptions } from "../lib/content"
 import { describeFunctionError } from "../lib/edgeFunctionError"
 import type { FiberSupplementKind } from "../lib/types"
@@ -19,7 +21,8 @@ export interface FiberSupplementResearch {
 }
 
 export function useFiberSupplement(memberId: string | undefined) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language = i18n.language
   const queryClient = useQueryClient()
   const settingsKey = ["fiber_supplement_settings", memberId]
   const logsKey = ["fiber_supplement_logs", memberId]
@@ -81,7 +84,7 @@ export function useFiberSupplement(memberId: string | undefined) {
     mutationFn: async (input: { name: string; fiberGrams: number | null }) => {
       if (!supabase || !memberId) throw new Error("Not configured")
       const { data, error } = await supabase.functions.invoke("research-fiber-supplement", {
-        body: { name: input.name, fiberGrams: input.fiberGrams, language: "en" },
+        body: { name: input.name, fiberGrams: input.fiberGrams, language },
       })
       if (error) throw new Error(await describeFunctionError(error))
       if (data?.error) throw new Error(data.error)
@@ -96,6 +99,7 @@ export function useFiberSupplement(memberId: string | undefined) {
           custom_description: research.description,
           custom_usage: research.usage,
           custom_timing: research.timing,
+          content_language: language,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "member_id" },
@@ -113,6 +117,34 @@ export function useFiberSupplement(memberId: string | undefined) {
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: settingsKey }),
   })
+
+  // Researched text for a custom product is saved in the language it was
+  // written in; when the user's language differs, translate it once and save
+  // the translation, so it follows them across languages.
+  const settings = settingsQuery.data
+  const researchNeedsTranslation =
+    settings?.kind === "custom" &&
+    settings.content_language !== language &&
+    !!(settings.custom_description || settings.custom_usage || settings.custom_timing)
+  const translationAttempt = useRef<string | null>(null)
+  useEffect(() => {
+    if (!researchNeedsTranslation || !supabase || !memberId) return
+    const attempt = `${memberId}:${language}`
+    if (translationAttempt.current === attempt) return
+    translationAttempt.current = attempt
+    const fields = [settings.custom_description ?? "", settings.custom_usage ?? "", settings.custom_timing ?? ""]
+    translateTexts(fields, language)
+      .then(async ([description, usage, timing]) => {
+        const { error } = await supabase!
+          .from("fiber_supplement_settings")
+          .update({ custom_description: description, custom_usage: usage, custom_timing: timing, content_language: language })
+          .eq("member_id", memberId)
+        if (!error) queryClient.invalidateQueries({ queryKey: ["fiber_supplement_settings", memberId] })
+      })
+      .catch(() => {
+        // Keep showing the saved text; this retries the next time the language changes.
+      })
+  }, [researchNeedsTranslation, language, memberId, settings, queryClient])
 
   const kind = (settingsQuery.data?.kind as FiberSupplementKind | undefined) ?? "psyllium"
   const customName = settingsQuery.data?.custom_name ?? ""

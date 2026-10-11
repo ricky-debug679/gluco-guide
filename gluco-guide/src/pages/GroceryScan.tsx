@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Card, Eyebrow } from "../components/Screen"
@@ -12,6 +12,7 @@ import {
 import { useFoodPhotoAnalysis, type FoodPhotoItem } from "../hooks/useFoodPhotoAnalysis"
 import { buildGroceryTrendChart } from "../lib/groceryTrend"
 import { round1 } from "../lib/format"
+import { translateTexts } from "../lib/translateTexts"
 import { PhotoCaptureButton } from "../components/PhotoCapture"
 
 function computeScoreFraction(fiberG: number, proteinG: number, netCarbG: number) {
@@ -45,6 +46,11 @@ export function GroceryScan() {
   const [newFavoriteName, setNewFavoriteName] = useState("")
   const [listError, setListError] = useState<string | null>(null)
   const [analysis, setAnalysis] = useState<GroceryListAnalysis | null>(null)
+  // Languages the on-screen AI results were written in, so a language switch
+  // can translate them instead of leaving them in the old one.
+  const [analysisLanguage, setAnalysisLanguage] = useState(i18n.language)
+  const [photoLanguage, setPhotoLanguage] = useState(i18n.language)
+  const tipsTranslationAttempt = useRef<string | null>(null)
 
   const activeList = groceryLists.activeList
   const activeItems = activeList?.items ?? []
@@ -70,6 +76,7 @@ export function GroceryScan() {
         return
       }
       setPhotoItems(result.items)
+      setPhotoLanguage(i18n.language)
     } catch (err) {
       setPhotoError(err instanceof Error ? err.message : t("groceryScan.photoAnalyzeFailed"))
     } finally {
@@ -87,6 +94,7 @@ export function GroceryScan() {
         await groceryItems.addManyItemsWithVerdicts(
           listId,
           photoItems.map((i) => ({ name: i.name, verdict: i.verdict, note: i.insight })),
+          photoLanguage,
         )
       }
       setPhotoItems(null)
@@ -101,6 +109,28 @@ export function GroceryScan() {
     setPhotoItems(null)
     setPhotoError(null)
   }
+
+  const tips = analysis?.combinationTips ?? []
+  useEffect(() => {
+    if (tips.length === 0 || analysisLanguage === i18n.language) return
+    const attempt = `${i18n.language}:${tips.map((tip) => tip.message).join("|")}`
+    if (tipsTranslationAttempt.current === attempt) return
+    tipsTranslationAttempt.current = attempt
+    const target = i18n.language
+    translateTexts(
+      tips.map((tip) => tip.message),
+      target,
+    )
+      .then((messages) => {
+        setAnalysis((current) =>
+          current ? { ...current, combinationTips: current.combinationTips.map((tip, i) => ({ ...tip, message: messages[i] ?? tip.message })) } : current,
+        )
+        setAnalysisLanguage(target)
+      })
+      .catch(() => {
+        // Keep showing the tips as they are.
+      })
+  }, [tips, analysisLanguage, i18n.language])
 
   async function ensureActiveList(): Promise<string | null> {
     if (activeList) return activeList.id
@@ -165,6 +195,7 @@ export function GroceryScan() {
     try {
       const result = await groceryItems.analyze(activeItems.map((i) => i.name))
       setAnalysis(result)
+      setAnalysisLanguage(i18n.language)
       if (activeList) await groceryItems.saveVerdicts(activeList.id, activeItems, result.itemFlags)
     } catch (err) {
       setListError(err instanceof Error ? err.message : t("groceryScan.analyzeFailed"))
