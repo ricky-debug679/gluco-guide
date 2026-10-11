@@ -24,14 +24,13 @@ function toFoodItem(row: OpenNutritionRow): FoodItem {
   }
 }
 
+// The trigram index only narrows searches of 3+ characters; shorter ones
+// would scan all ~326k foods and can hit the database's statement timeout.
+const MIN_QUERY_LENGTH = 3
+
 export async function searchOpenNutrition(query: string): Promise<FoodItem[]> {
-  if (!supabase || !query.trim()) return []
-  const { data, error } = await supabase
-    .from("opennutrition_foods")
-    .select("id, name, calories_kcal, protein_g, carb_g, fat_g, fiber_g")
-    .ilike("name", `%${query.trim()}%`)
-    .order("name", { ascending: true })
-    .limit(15)
+  if (!supabase || query.trim().length < MIN_QUERY_LENGTH) return []
+  const { data, error } = await supabase.rpc("search_foods", { q: query.trim(), max_results: 15 })
   if (error) throw error
   return (data as OpenNutritionRow[]).map(toFoodItem)
 }
