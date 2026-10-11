@@ -59,12 +59,13 @@ Deno.serve(async (req) => {
     if (texts.length === 0) return json({ texts: [] })
     if (texts.length > MAX_TEXTS) return json({ error: `At most ${MAX_TEXTS} texts per request.` }, 400)
 
-    const prompt = `Translate each string in the JSON array below into ${language}.
+    const prompt = `Every string in the JSON array below must end up written entirely in ${language}. The strings may be in English, Spanish, Chinese, Hindi, or another language; translate each one that is not already fully in ${language}.
 
 Rules:
 Keep the meaning, tone, and length of each string; translate, do not rewrite or add advice.
-If a string is already in ${language}, return it unchanged. Return empty strings unchanged.
-Keep numbers, units, product names, and brand names as they are.
+Write natural, fully translated ${language}: do not leave English or other foreign words in place (no mixing languages), except brand names and product names, which stay exactly as written.
+Keep numbers as they are, but translate unit words (for example "ounces", "cups", "teaspoon") into ${language}.
+A string that is already entirely in ${language} is returned unchanged. Empty strings stay empty.
 Return exactly ${texts.length} strings, in the same order.
 
 Strings:
