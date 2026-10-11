@@ -1,6 +1,5 @@
 import type { ReactNode } from "react"
 import { BottomNav } from "./BottomNav"
-import { VoiceCommandButton } from "./VoiceCommandButton"
 
 interface ScreenProps {
   children: ReactNode
@@ -14,7 +13,6 @@ export function Screen({ children, withNav = true }: ScreenProps) {
         <div className={`flex flex-1 flex-col gap-4 overflow-y-auto px-5 pt-6 ${withNav ? "pb-24" : "pb-8"}`}>
           {children}
         </div>
-        {withNav && <VoiceCommandButton />}
         {withNav && <BottomNav />}
       </div>
     </div>
