@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
 import { supabase } from "../lib/supabase"
 import { fiberSupplementOptions } from "../lib/content"
 import { describeFunctionError } from "../lib/edgeFunctionError"
@@ -18,6 +19,7 @@ export interface FiberSupplementResearch {
 }
 
 export function useFiberSupplement(memberId: string | undefined) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const settingsKey = ["fiber_supplement_settings", memberId]
   const logsKey = ["fiber_supplement_logs", memberId]
@@ -118,15 +120,21 @@ export function useFiberSupplement(memberId: string | undefined) {
   const customDescription = settingsQuery.data?.custom_description ?? ""
   const customUsage = settingsQuery.data?.custom_usage ?? ""
   const customTiming = settingsQuery.data?.custom_timing ?? ""
+  const preset = fiberSupplementOptions.find((o) => o.kind === kind) ?? fiberSupplementOptions[0]
   const info =
     kind === "custom"
       ? {
-          name: customName || "Your fiber supplement",
-          mechanism: customDescription || "Tell us what you take so we can keep your reminder accurate.",
+          name: customName || t("fiberOptions.custom.name"),
+          mechanism: customDescription || t("fiberOptions.custom.mechanism"),
           fiberPerDoseG: customFiberG ?? 0,
-          timingNote: customTiming || "Check the product's own label for when to take it.",
+          timingNote: customTiming || t("fiberOptions.custom.timing"),
         }
-      : (fiberSupplementOptions.find((o) => o.kind === kind) ?? fiberSupplementOptions[0])
+      : {
+          name: t(`fiberOptions.${preset.kind}.name`),
+          mechanism: t(`fiberOptions.${preset.kind}.mechanism`),
+          fiberPerDoseG: preset.fiberPerDoseG,
+          timingNote: t(`fiberOptions.${preset.kind}.timing`),
+        }
 
   // Marking a dose "taken" also logs its fiber toward today's food total (and
   // the Home ring, which just sums food_logs) — undone the same way if the
@@ -160,8 +168,8 @@ export function useFiberSupplement(memberId: string | undefined) {
         if (info.fiberPerDoseG > 0) {
           const { error: foodError } = await supabase.from("food_logs").insert({
             member_id: memberId,
-            name: `${info.name} (fiber supplement)`,
-            portion: "1 dose",
+            name: t("fiberOptions.loggedFoodName", { name: info.name }),
+            portion: t("fiberOptions.oneDose"),
             fiber_g: info.fiberPerDoseG,
             protein_g: 0,
             carb_g: 0,

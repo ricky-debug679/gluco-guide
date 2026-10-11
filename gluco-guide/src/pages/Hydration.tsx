@@ -228,7 +228,7 @@ export function Hydration() {
                 return (
                   <button
                     key={opt.kind}
-                    onClick={() => void handleSelectPreset(opt.kind as Exclude<FiberSupplementKind, "custom">)}
+                    onClick={() => void handleSelectPreset(opt.kind)}
                     className={`rounded-2xl border-[1.5px] p-3.5 text-left ${
                       selected
                         ? "border-[color:var(--color-sage)] bg-[color:var(--color-sage-bg)]"
@@ -236,7 +236,7 @@ export function Hydration() {
                     }`}
                   >
                     <div className="flex items-center gap-2 text-[0.86rem] font-bold">
-                      {opt.name}
+                      {t(`fiberOptions.${opt.kind}.name`)}
                       <span className="text-[0.68rem] font-semibold text-[color:var(--color-ink-faint)]">
                         {t("hydration.perDose", { grams: opt.fiberPerDoseG })}
                       </span>
@@ -250,7 +250,7 @@ export function Hydration() {
                       )}
                     </div>
                     <div className="mt-1 text-[0.78rem] leading-relaxed text-[color:var(--color-ink-soft)]">
-                      {opt.mechanism}
+                      {t(`fiberOptions.${opt.kind}.mechanism`)}
                     </div>
                   </button>
                 )

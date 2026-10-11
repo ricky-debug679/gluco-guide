@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Card, Eyebrow } from "../components/Screen"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useSupplements } from "../hooks/useSupplements"
-import { supplementRecommendations } from "../lib/content"
+import { supplementRecommendationKeys } from "../lib/content"
 import type { SupplementRecommendationKey } from "../lib/types"
 
 type VdChoice = "low" | "normal" | "unsure" | null
@@ -28,7 +28,14 @@ export function Supplements() {
   const [customDosage, setCustomDosage] = useState("")
 
   const trackedKeys = new Set(supplements.active.map((s) => s.recommendation_key).filter(Boolean))
-  const untracked = supplementRecommendations.filter((r) => !trackedKeys.has(r.key))
+  const untracked = supplementRecommendationKeys
+    .filter((key) => !trackedKeys.has(key))
+    .map((key) => ({
+      key,
+      name: t(`supplementRecs.${key}.name`),
+      mechanism: t(`supplementRecs.${key}.mechanism`),
+      typicalDosage: t(`supplementRecs.${key}.dosage`),
+    }))
 
   function openRecommendation(key: SupplementRecommendationKey, defaultDosage: string) {
     setExpanded(key)
@@ -98,7 +105,9 @@ export function Supplements() {
                 return (
                   <div key={s.id} className="flex items-center gap-3 rounded-xl border border-[color:var(--color-line)] p-3">
                     <div className="flex-1">
-                      <div className="text-[0.86rem] font-bold">{s.name}</div>
+                      <div className="text-[0.86rem] font-bold">
+                        {s.recommendation_key ? t(`supplementRecs.${s.recommendation_key}.name`) : s.name}
+                      </div>
                       {s.dosage && <div className="text-[0.72rem] text-[color:var(--color-ink-faint)]">{s.dosage}</div>}
                     </div>
                     <button

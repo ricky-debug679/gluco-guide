@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 interface ProgressRingProps {
   value: number
   target: number
@@ -27,6 +29,7 @@ const RADIUS = 34
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 
 export function ProgressRing({ value, target, label, unit = "", colorVar, bgVar }: ProgressRingProps) {
+  const { t } = useTranslation()
   const fraction = target > 0 ? Math.min(1, value / target) : 0
   const dashOffset = CIRCUMFERENCE * (1 - fraction)
 
@@ -59,8 +62,7 @@ export function ProgressRing({ value, target, label, unit = "", colorVar, bgVar 
           fontSize={9}
           fill="var(--color-ink-faint)"
         >
-          of {target}
-          {unit}
+          {t("units.ofTarget", { target: `${target}${unit}` })}
         </text>
       </svg>
       <div className="text-[0.76rem] font-bold text-[color:var(--color-ink-soft)]">{label}</div>

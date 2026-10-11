@@ -36,8 +36,6 @@ export interface LabReading {
 
 export interface LabMetric {
   key: LabMetricKey
-  label: string
-  shortLabel: string
   targetLow: number
   targetHigh: number
 }
@@ -45,13 +43,9 @@ export interface LabMetric {
 export type FiberSupplementKind = "psyllium" | "barley" | "acacia" | "custom"
 
 export interface FiberSupplementOption {
-  kind: FiberSupplementKind
-  name: string
-  mechanism: string
+  kind: Exclude<FiberSupplementKind, "custom">
   /** Typical fiber grams per dose, for a real starting number a serving label would show. */
   fiberPerDoseG: number
-  /** Short, real guidance on when to take it relative to meals (e.g. "30 min before a meal, with water"). */
-  timingNote: string
 }
 
 export interface ReminderState {

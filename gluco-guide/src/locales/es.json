@@ -441,5 +441,80 @@
     "customNamePlaceholder": "Nombre del suplemento",
     "customDosagePlaceholder": "Dosis (opcional)",
     "trackSomethingElse": "+ Seguir algo más"
+  },
+  "fiberOptions": {
+    "psyllium": {
+      "name": "Cáscara de psyllium",
+      "mechanism": "Forma un gel espeso en el intestino que hace más lenta la entrada del azúcar en la sangre; su uso regular se asocia con una mejor sensibilidad a la insulina.",
+      "timing": "Tómalo con un vaso grande de agua, unos 30 minutos antes de comer. El agua es importante porque el psyllium se gelifica rápido."
+    },
+    "barley": {
+      "name": "Betaglucano de cebada",
+      "mechanism": "Se une a los ácidos biliares en el intestino, y el hígado los repone usando el colesterol LDL de la sangre; se ha demostrado que ayuda a bajar el LDL con el tiempo.",
+      "timing": "Tómalo con una comida, mezclado con los alimentos: actúa junto con la digestión, no antes."
+    },
+    "acacia": {
+      "name": "Fibra de acacia",
+      "mechanism": "Una fibra soluble más suave, que causa menos hinchazón que el psyllium; es un buen punto de partida si al principio el psyllium te resulta demasiado.",
+      "timing": "Es lo bastante suave para tomarla a cualquier hora, mezclada con comida o bebida; no necesita un horario estricto."
+    },
+    "custom": {
+      "name": "Tu suplemento de fibra",
+      "mechanism": "Cuéntanos qué tomas para que tu recordatorio sea preciso.",
+      "timing": "Revisa la etiqueta del producto para saber cuándo tomarlo."
+    },
+    "loggedFoodName": "{{name}} (suplemento de fibra)",
+    "oneDose": "1 dosis"
+  },
+  "supplementRecs": {
+    "vitamin_d": {
+      "name": "Vitamina D",
+      "mechanism": "La vitamina D baja se asocia fuertemente con una mayor resistencia a la insulina, y la deficiencia es común, sobre todo con poca exposición al sol.",
+      "dosage": "1.000–2.000 UI/día (mantenimiento)"
+    },
+    "magnesium": {
+      "name": "Magnesio",
+      "mechanism": "Participa directamente en cómo tus células responden a la insulina; el magnesio bajo es común en la diabetes tipo 2 y la prediabetes.",
+      "dosage": "300–400 mg/día"
+    },
+    "chromium": {
+      "name": "Cromo",
+      "mechanism": "Ayuda a que la insulina funcione mejor; algunos estudios relacionan el cromo bajo con un peor control de la glucosa.",
+      "dosage": "200 mcg/día"
+    },
+    "zinc": {
+      "name": "Zinc",
+      "mechanism": "Tu cuerpo lo necesita para producir y almacenar insulina correctamente.",
+      "dosage": "15 mg/día"
+    },
+    "b1": {
+      "name": "B1 (tiamina)",
+      "mechanism": "Las personas con diabetes tienen más probabilidad de tener la tiamina baja, y esta es importante para la salud de los nervios, una preocupación común en la diabetes.",
+      "dosage": "100 mg/día"
+    }
+  },
+  "labMetrics": {
+    "glucose": {
+      "label": "Glucosa en ayunas (mg/dL)",
+      "short": "Glucosa en ayunas",
+      "inSentence": "glucosa en ayunas"
+    },
+    "glucose_2h": {
+      "label": "Glucosa a las 2 horas, PTOG (mg/dL)",
+      "short": "Glucosa 2 h",
+      "inSentence": "glucosa a las 2 horas"
+    },
+    "a1c": {
+      "label": "HbA1c (%)",
+      "short": "HbA1c",
+      "inSentence": "HbA1c"
+    }
+  },
+  "units": {
+    "cups": "vasos",
+    "minutes": "min",
+    "minutesShort": "min",
+    "hours": "h",
+    "ofTarget": "de {{target}}"
   }
 }

@@ -437,5 +437,80 @@
     "customNamePlaceholder": "补充剂名称",
     "customDosagePlaceholder": "剂量（可选）",
     "trackSomethingElse": "+ 追踪其他项目"
+  },
+  "fiberOptions": {
+    "psyllium": {
+      "name": "车前子壳",
+      "mechanism": "在肠道中形成浓稠的凝胶，减缓糖分进入血液的速度；规律服用与更好的胰岛素敏感性相关。",
+      "timing": "用一大杯水送服，约在饭前30分钟。水量很重要，因为车前子壳会很快变成凝胶。"
+    },
+    "barley": {
+      "name": "大麦β葡聚糖",
+      "mechanism": "在肠道中与胆汁酸结合，肝脏会利用血液中的低密度脂蛋白胆固醇来补充胆汁酸；研究表明长期服用有助于降低低密度脂蛋白。",
+      "timing": "随餐服用，混入食物中：它在消化过程中发挥作用，而不是提前起效。"
+    },
+    "acacia": {
+      "name": "金合欢纤维",
+      "mechanism": "一种更温和的可溶性纤维，比车前子壳更少引起腹胀；如果一开始觉得车前子壳太强烈，可以先从它开始。",
+      "timing": "足够温和，一天中任何时间都可以服用，混入食物或饮品中，无需严格的服用时间。"
+    },
+    "custom": {
+      "name": "你的纤维补充剂",
+      "mechanism": "告诉我们你服用的是什么，这样提醒才能更准确。",
+      "timing": "请查看产品标签上建议的服用时间。"
+    },
+    "loggedFoodName": "{{name}}（纤维补充剂）",
+    "oneDose": "1 份"
+  },
+  "supplementRecs": {
+    "vitamin_d": {
+      "name": "维生素D",
+      "mechanism": "维生素D水平低与胰岛素抵抗加重密切相关，而且缺乏很常见，尤其是晒太阳较少的人。",
+      "dosage": "每天1,000–2,000国际单位（维持剂量）"
+    },
+    "magnesium": {
+      "name": "镁",
+      "mechanism": "直接参与细胞对胰岛素的反应；2型糖尿病和糖尿病前期人群常见镁偏低。",
+      "dosage": "每天300–400毫克"
+    },
+    "chromium": {
+      "name": "铬",
+      "mechanism": "帮助胰岛素更有效地发挥作用；一些研究将铬偏低与较差的血糖控制联系起来。",
+      "dosage": "每天200微克"
+    },
+    "zinc": {
+      "name": "锌",
+      "mechanism": "身体正常生成和储存胰岛素所必需。",
+      "dosage": "每天15毫克"
+    },
+    "b1": {
+      "name": "维生素B1（硫胺素）",
+      "mechanism": "糖尿病患者更容易缺乏硫胺素，而硫胺素对神经健康很重要，这是糖尿病常见的问题。",
+      "dosage": "每天100毫克"
+    }
+  },
+  "labMetrics": {
+    "glucose": {
+      "label": "空腹血糖 (mg/dL)",
+      "short": "空腹血糖",
+      "inSentence": "空腹血糖"
+    },
+    "glucose_2h": {
+      "label": "餐后2小时血糖，OGTT (mg/dL)",
+      "short": "2小时血糖",
+      "inSentence": "2小时血糖"
+    },
+    "a1c": {
+      "label": "糖化血红蛋白 HbA1c (%)",
+      "short": "HbA1c",
+      "inSentence": "HbA1c"
+    }
+  },
+  "units": {
+    "cups": "杯",
+    "minutes": "分钟",
+    "minutesShort": "分",
+    "hours": "小时",
+    "ofTarget": "目标 {{target}}"
   }
 }

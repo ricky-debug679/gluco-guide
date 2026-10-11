@@ -47,6 +47,9 @@ export function FoodLogHistory() {
   const sleep = useSleepLogs(selfMemberId)
   const supplementHistory = useSupplementHistory(selfMemberId)
   const targets = usePersonalTargets()
+  const cupsUnit = ` ${t("units.cups")}`
+  const minutesUnit = ` ${t("units.minutes")}`
+  const hoursUnit = ` ${t("units.hours")}`
   const calorieTarget = targets.caloriesKcal
 
   const goalsByMetric: Record<FoodMetricKey, number> = {
@@ -247,13 +250,13 @@ export function FoodLogHistory() {
                   {t("foodLogHistory.last14Days", { metric: t("foodLogHistory.areaWater") })}
                 </div>
                 <div className="text-[0.68rem] text-[color:var(--color-ink-faint)]">
-                  {t("foodLogHistory.goalPerDay", { goal: WATER_TARGET_CUPS, unit: " cups" })}
+                  {t("foodLogHistory.goalPerDay", { goal: WATER_TARGET_CUPS, unit: cupsUnit })}
                 </div>
               </div>
               <HistoryChart
                 days={waterHistory.days}
                 goal={WATER_TARGET_CUPS}
-                unit=" cups"
+                unit={cupsUnit}
                 colorVar="--color-water"
                 locale={i18n.language}
                 selectedDate={selectedDate}
@@ -262,7 +265,7 @@ export function FoodLogHistory() {
                 metGoalLabel={metGoalLabel}
                 belowGoalLabel={belowGoalLabel}
                 axisNoteLabel={axisNoteLabel}
-                dayStatusText={dayStatusText(WATER_TARGET_CUPS, " cups")}
+                dayStatusText={dayStatusText(WATER_TARGET_CUPS, cupsUnit)}
               />
             </Card>
           )}
@@ -274,13 +277,13 @@ export function FoodLogHistory() {
                   {t("foodLogHistory.last14Days", { metric: t("foodLogHistory.areaExercise") })}
                 </div>
                 <div className="text-[0.68rem] text-[color:var(--color-ink-faint)]">
-                  {t("foodLogHistory.goalPerDay", { goal: EXERCISE_DAILY_TARGET_MINUTES, unit: " min" })}
+                  {t("foodLogHistory.goalPerDay", { goal: EXERCISE_DAILY_TARGET_MINUTES, unit: minutesUnit })}
                 </div>
               </div>
               <HistoryChart
                 days={exerciseHistory.days}
                 goal={EXERCISE_DAILY_TARGET_MINUTES}
-                unit=" min"
+                unit={minutesUnit}
                 colorVar="--color-move"
                 locale={i18n.language}
                 selectedDate={selectedDate}
@@ -289,7 +292,7 @@ export function FoodLogHistory() {
                 metGoalLabel={metGoalLabel}
                 belowGoalLabel={belowGoalLabel}
                 axisNoteLabel={axisNoteLabel}
-                dayStatusText={dayStatusText(EXERCISE_DAILY_TARGET_MINUTES, " min")}
+                dayStatusText={dayStatusText(EXERCISE_DAILY_TARGET_MINUTES, minutesUnit)}
               />
             </Card>
           )}
@@ -301,13 +304,13 @@ export function FoodLogHistory() {
                   {t("foodLogHistory.last14Days", { metric: t("foodLogHistory.areaSleep") })}
                 </div>
                 <div className="text-[0.68rem] text-[color:var(--color-ink-faint)]">
-                  {t("foodLogHistory.goalPerDay", { goal: SLEEP_REFERENCE_HOURS, unit: " h" })}
+                  {t("foodLogHistory.goalPerDay", { goal: SLEEP_REFERENCE_HOURS, unit: hoursUnit })}
                 </div>
               </div>
               <HistoryChart
                 days={sleepChartDays}
                 goal={SLEEP_REFERENCE_HOURS}
-                unit=" h"
+                unit={hoursUnit}
                 colorVar="--color-supp"
                 locale={i18n.language}
                 selectedDate={selectedDate}
@@ -316,7 +319,7 @@ export function FoodLogHistory() {
                 metGoalLabel={metGoalLabel}
                 belowGoalLabel={belowGoalLabel}
                 axisNoteLabel={axisNoteLabel}
-                dayStatusText={dayStatusText(SLEEP_REFERENCE_HOURS, " h")}
+                dayStatusText={dayStatusText(SLEEP_REFERENCE_HOURS, hoursUnit)}
               />
             </Card>
           )}

@@ -220,7 +220,7 @@ export function Home() {
             value={exerciseTodayMinutes}
             target={EXERCISE_DAILY_TARGET_MINUTES}
             label={t("home.rings.exerciseDay")}
-            unit="m"
+            unit={t("units.minutesShort")}
             colorVar="--color-move"
             bgVar="--color-move-bg"
           />

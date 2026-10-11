@@ -27,8 +27,8 @@ export function LabTrends() {
   const realReadings = labs.readingsByMetric[activeKey] ?? []
   const readings = isLive ? realReadings : demoLabHistory[activeKey].readings
   const chart = buildChart(readings, metricDef.targetLow, metricDef.targetHigh)
-  // "HbA1c" is an acronym; lowercasing it mid-sentence reads as a typo.
-  const metricLabel = metricDef.key === "a1c" ? metricDef.shortLabel : metricDef.shortLabel.toLowerCase()
+  const metricLabel = t(`labMetrics.${activeKey}.inSentence`)
+  const metricShort = t(`labMetrics.${activeKey}.short`)
   const trendDescription = describeTrend(readings, metricDef.targetHigh)
   const summary = isLive
     ? trendDescription.kind === "none"
@@ -87,14 +87,14 @@ export function LabTrends() {
                 : "bg-[color:var(--color-surface-2)] text-[color:var(--color-ink-faint)]"
             }`}
           >
-            {m.shortLabel}
+            {t(`labMetrics.${m.key}.short`)}
           </button>
         ))}
       </div>
 
       {chart.points.length > 0 && (
         <Card>
-          <div className="text-[0.78rem] font-bold text-[color:var(--color-ink-faint)]">{metricDef.label}</div>
+          <div className="text-[0.78rem] font-bold text-[color:var(--color-ink-faint)]">{t(`labMetrics.${activeKey}.label`)}</div>
           <svg width="100%" viewBox="0 0 310 150" className="mt-2">
             <rect x={0} y={chart.bandTop} width={310} height={chart.bandHeight} fill="var(--color-sage-bg)" rx={4} />
             {chart.points.length > 1 && (
@@ -130,7 +130,7 @@ export function LabTrends() {
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
                   <label className="text-[0.72rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
-                    {t("labTrends.valueLabel", { metric: metricDef.shortLabel })}
+                    {t("labTrends.valueLabel", { metric: metricShort })}
                   </label>
                   <input
                     autoFocus

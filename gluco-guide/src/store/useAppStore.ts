@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { useTranslation } from "react-i18next"
 import { defaultTargets, fiberSupplementOptions } from "../lib/content"
 import { demoTotals } from "../lib/demoData"
 import type {
@@ -126,15 +127,21 @@ export const useAppStore = create<AppState>((set) => ({
 }))
 
 export const useCurrentSupplementInfo = () => {
+  const { t } = useTranslation()
   const reminder = useAppStore((s) => s.reminder)
   if (reminder.selectedKind === "custom") {
     return {
-      name: reminder.customName || "Your fiber supplement",
-      mechanism: "Tell us what you take so we can keep your reminder accurate.",
+      name: reminder.customName || t("fiberOptions.custom.name"),
+      mechanism: t("fiberOptions.custom.mechanism"),
       fiberPerDoseG: reminder.customFiberG,
-      timingNote: "Check the product's own label for when to take it.",
+      timingNote: t("fiberOptions.custom.timing"),
     }
   }
   const option = fiberSupplementOptions.find((o) => o.kind === reminder.selectedKind) ?? currentSupplement()
-  return { name: option.name, mechanism: option.mechanism, fiberPerDoseG: option.fiberPerDoseG, timingNote: option.timingNote }
+  return {
+    name: t(`fiberOptions.${option.kind}.name`),
+    mechanism: t(`fiberOptions.${option.kind}.mechanism`),
+    fiberPerDoseG: option.fiberPerDoseG,
+    timingNote: t(`fiberOptions.${option.kind}.timing`),
+  }
 }

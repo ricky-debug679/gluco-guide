@@ -23,7 +23,8 @@ export interface HistorySummaryResult {
 // re-fetches sooner.
 export function useHistorySummary(memberId: string | undefined, input: HistorySummaryInput | null) {
   const query = useQuery({
-    queryKey: ["history_summary", memberId],
+    // Language is part of the key so switching languages never shows a summary written in the old one.
+    queryKey: ["history_summary", memberId, input?.language],
     queryFn: async () => {
       if (!supabase || !memberId || !input) throw new Error("Not ready yet — try again in a moment.")
       const { data, error } = await supabase.functions.invoke("summarize-history", { body: input })

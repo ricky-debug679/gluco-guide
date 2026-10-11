@@ -441,5 +441,80 @@
     "customNamePlaceholder": "Supplement name",
     "customDosagePlaceholder": "Dosage (optional)",
     "trackSomethingElse": "+ Track something else"
+  },
+  "fiberOptions": {
+    "psyllium": {
+      "name": "Psyllium husk",
+      "mechanism": "Forms a thick gel in your gut that slows how fast sugar enters your bloodstream — regular use is linked to better insulin sensitivity.",
+      "timing": "Take with a full glass of water, about 30 minutes before a meal — the water matters, since psyllium gels quickly."
+    },
+    "barley": {
+      "name": "Barley beta-glucan",
+      "mechanism": "Binds bile acids in the gut, which your liver replaces using LDL cholesterol from your blood — shown to help lower LDL over time.",
+      "timing": "Take with a meal, mixed into food — it works alongside digestion rather than ahead of it."
+    },
+    "acacia": {
+      "name": "Acacia fiber",
+      "mechanism": "A gentler soluble fiber with less bloating than psyllium — a good starting point if psyllium feels like too much at first.",
+      "timing": "Gentle enough to take any time of day, mixed into food or a drink — no strict timing needed."
+    },
+    "custom": {
+      "name": "Your fiber supplement",
+      "mechanism": "Tell us what you take so we can keep your reminder accurate.",
+      "timing": "Check the product's own label for when to take it."
+    },
+    "loggedFoodName": "{{name}} (fiber supplement)",
+    "oneDose": "1 dose"
+  },
+  "supplementRecs": {
+    "vitamin_d": {
+      "name": "Vitamin D",
+      "mechanism": "Low vitamin D is strongly linked to worse insulin resistance — and deficiency is common, especially with limited sun exposure.",
+      "dosage": "1,000–2,000 IU/day (maintenance)"
+    },
+    "magnesium": {
+      "name": "Magnesium",
+      "mechanism": "Involved directly in how your cells respond to insulin — low magnesium is common in type 2 diabetes and prediabetes.",
+      "dosage": "300–400 mg/day"
+    },
+    "chromium": {
+      "name": "Chromium",
+      "mechanism": "Helps insulin do its job more effectively — some studies link low chromium to poorer glucose control.",
+      "dosage": "200 mcg/day"
+    },
+    "zinc": {
+      "name": "Zinc",
+      "mechanism": "Needed for your body to produce and store insulin properly.",
+      "dosage": "15 mg/day"
+    },
+    "b1": {
+      "name": "B1 (Thiamine)",
+      "mechanism": "People with diabetes are more likely to run low on thiamine, which matters for nerve health — a common concern with diabetes.",
+      "dosage": "100 mg/day"
+    }
+  },
+  "labMetrics": {
+    "glucose": {
+      "label": "Fasting glucose (mg/dL)",
+      "short": "Fasting Glucose",
+      "inSentence": "fasting glucose"
+    },
+    "glucose_2h": {
+      "label": "2-hour glucose, OGTT (mg/dL)",
+      "short": "2-Hr Glucose",
+      "inSentence": "2-hour glucose"
+    },
+    "a1c": {
+      "label": "HbA1c (%)",
+      "short": "HbA1c",
+      "inSentence": "HbA1c"
+    }
+  },
+  "units": {
+    "cups": "cups",
+    "minutes": "min",
+    "minutesShort": "m",
+    "hours": "h",
+    "ofTarget": "of {{target}}"
   }
 }
