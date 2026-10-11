@@ -88,7 +88,7 @@
       "supplements": "Suplementos",
       "exerciseDay": "Ejercicio"
     },
-    "encourageEmpty": "Registra tu primera comida hoy para empezar tu tendencia de fibra.",
+    "encourageEmpty": "Registra tu primera comida de hoy para ver cómo encaja en tus metas diarias.",
     "quickAdd": "Acceso rápido",
     "quickAddItems": {
       "logFood": "Registrar comida",
@@ -205,7 +205,10 @@
     "adding": "Agregando…",
     "answerAboveToAdd": "Responde arriba para agregar",
     "addToLog": "Agregar al registro de hoy",
-    "searchPlaceholder": "Buscar alimentos",
+    "searchPlaceholder": "Buscar alimentos, p. ej. leche",
+    "amountLabel": "¿Cuánto comiste?",
+    "units": { "g": "g", "oz": "oz", "serving": "porciones" },
+    "amountDetail": "{{kcal}} kcal — Fibra {{fiber}}g · Proteína {{protein}}g · Carbs {{carb}}g · Grasa {{fat}}g",
     "nutritionDataFrom": "Datos nutricionales de",
     "searchFailed": "Error en la búsqueda",
     "searching": "Buscando…",

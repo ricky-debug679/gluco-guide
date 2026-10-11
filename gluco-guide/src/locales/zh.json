@@ -87,7 +87,7 @@
       "supplements": "营养补充剂",
       "exerciseDay": "运动"
     },
-    "encourageEmpty": "今天记录第一餐，开始追踪你的膳食纤维趋势。",
+    "encourageEmpty": "记录今天的第一餐，看看它如何符合你的每日目标。",
     "quickAdd": "快速添加",
     "quickAddItems": {
       "logFood": "记录饮食",
@@ -204,7 +204,10 @@
     "adding": "添加中…",
     "answerAboveToAdd": "请先回答上方问题后再添加",
     "addToLog": "添加到今日记录",
-    "searchPlaceholder": "搜索食物",
+    "searchPlaceholder": "搜索食物，例如牛奶",
+    "amountLabel": "你吃了多少？",
+    "units": { "g": "克", "oz": "盎司", "serving": "份" },
+    "amountDetail": "{{kcal}} 千卡 — 纤维 {{fiber}}克 · 蛋白质 {{protein}}克 · 碳水 {{carb}}克 · 脂肪 {{fat}}克",
     "nutritionDataFrom": "营养数据来自",
     "searchFailed": "搜索失败",
     "searching": "搜索中…",

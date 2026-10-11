@@ -88,7 +88,7 @@
       "supplements": "Supplements",
       "exerciseDay": "Exercise"
     },
-    "encourageEmpty": "Log your first meal today to start building your fiber trend.",
+    "encourageEmpty": "Log your first meal today to see how it fits your daily targets.",
     "quickAdd": "Quick add",
     "quickAddItems": {
       "logFood": "Log Food",
@@ -205,7 +205,10 @@
     "adding": "Adding…",
     "answerAboveToAdd": "Answer above to add",
     "addToLog": "Add to today's log",
-    "searchPlaceholder": "Search foods",
+    "searchPlaceholder": "Search foods, e.g. milk",
+    "amountLabel": "How much did you have?",
+    "units": { "g": "g", "oz": "oz", "serving": "servings" },
+    "amountDetail": "{{kcal}} kcal — Fiber {{fiber}}g · Protein {{protein}}g · Carbs {{carb}}g · Fat {{fat}}g",
     "nutritionDataFrom": "Nutrition data from",
     "searchFailed": "Search failed",
     "searching": "Searching…",

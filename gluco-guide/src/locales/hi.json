@@ -88,7 +88,7 @@
       "supplements": "सप्लीमेंट्स",
       "exerciseDay": "व्यायाम"
     },
-    "encourageEmpty": "अपनी फाइबर प्रवृत्ति बनाना शुरू करने के लिए आज अपना पहला भोजन लॉग करें।",
+    "encourageEmpty": "आज अपना पहला भोजन लॉग करें और देखें कि यह आपके दैनिक लक्ष्यों में कैसे फिट होता है।",
     "quickAdd": "क्विक ऐड",
     "quickAddItems": {
       "logFood": "भोजन लॉग करें",
@@ -205,7 +205,10 @@
     "adding": "जोड़ा जा रहा है…",
     "answerAboveToAdd": "जोड़ने के लिए ऊपर उत्तर दें",
     "addToLog": "आज के लॉग में जोड़ें",
-    "searchPlaceholder": "भोजन खोजें",
+    "searchPlaceholder": "भोजन खोजें, जैसे दूध",
+    "amountLabel": "आपने कितना खाया?",
+    "units": { "g": "ग्राम", "oz": "औंस", "serving": "सर्विंग" },
+    "amountDetail": "{{kcal}} कैलोरी — फाइबर {{fiber}}ग्राम · प्रोटीन {{protein}}ग्राम · कार्ब्स {{carb}}ग्राम · वसा {{fat}}ग्राम",
     "nutritionDataFrom": "पोषण डेटा स्रोत:",
     "searchFailed": "खोज विफल रही",
     "searching": "खोजा जा रहा है…",

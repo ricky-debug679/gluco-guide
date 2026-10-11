@@ -22,6 +22,25 @@ function computeScoreFraction(fiberG: number, proteinG: number, netCarbG: number
   return Math.min(1, Math.max(0, score))
 }
 
+// Database foods are stored per 100 g; demo foods carry their own serving.
+const PER_100G = "100g"
+const GRAMS_PER_OUNCE = 28.3495
+type AmountUnit = "g" | "oz" | "serving"
+
+function scaleFood(food: FoodItem, amount: number, unit: AmountUnit): FoodItem {
+  const factor = unit === "serving" ? amount : ((unit === "oz" ? amount * GRAMS_PER_OUNCE : amount) / 100)
+  const scale = (n: number) => Math.round(n * factor * 10) / 10
+  return {
+    ...food,
+    portion: unit === "serving" ? `${amount} × ${food.portion}` : `${amount} ${unit}`,
+    fiberG: scale(food.fiberG),
+    proteinG: scale(food.proteinG),
+    carbG: scale(food.carbG),
+    fatG: scale(food.fatG),
+    caloriesKcal: Math.round(food.caloriesKcal * factor),
+  }
+}
+
 export function FoodLog() {
   const { t } = useTranslation()
   const NOT_SURE_ANSWER = t("foodLog.notSureAnswer")
@@ -33,8 +52,11 @@ export function FoodLog() {
   const isLive = !!householdCtx
   const foodLogs = useFoodLogsToday(selfMemberId)
 
-  const [query, setQuery] = useState("lentil")
-  const [results, setResults] = useState<FoodItem[]>(demoFoodSearchResults)
+  const [query, setQuery] = useState("")
+  const [results, setResults] = useState<FoodItem[]>(() => (isLive ? [] : demoFoodSearchResults))
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [amount, setAmount] = useState("")
+  const [unit, setUnit] = useState<AmountUnit>("g")
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [addError, setAddError] = useState<string | null>(null)
@@ -92,20 +114,34 @@ export function FoodLog() {
   function handleQueryChange(q: string) {
     setQuery(q)
     setJustAddedId(null)
+    setSelectedId(null)
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => void runSearch(q), 250)
   }
 
+  function toggleResult(food: FoodItem) {
+    if (selectedId === food.id) return setSelectedId(null)
+    const per100g = food.portion === PER_100G
+    setSelectedId(food.id)
+    setAmount(per100g ? "100" : "1")
+    setUnit(per100g ? "g" : "serving")
+    setJustAddedId(null)
+    setAddError(null)
+  }
+
   async function handleAddSearchResult(food: FoodItem) {
-    if (addingId || justAddedId === food.id) return
+    const quantity = Number(amount)
+    if (addingId || !(quantity > 0)) return
     setAddError(null)
     setAddingId(food.id)
     try {
+      const portion = scaleFood(food, quantity, unit)
       if (isLive) {
-        await foodLogs.addFood(food, "search")
+        await foodLogs.addFood(portion, "search")
       } else {
-        demoAddFoodToLog(food)
+        demoAddFoodToLog(portion)
       }
+      setSelectedId(null)
       setJustAddedId(food.id)
     } catch (err) {
       setAddError(err instanceof Error ? err.message : t("common.genericError"))
@@ -487,35 +523,88 @@ export function FoodLog() {
               results.map((food, i) => {
                 const isAdding = addingId === food.id
                 const isAdded = justAddedId === food.id
+                const isSelected = selectedId === food.id
+                const quantity = Number(amount)
+                const preview = isSelected && quantity > 0 ? scaleFood(food, quantity, unit) : null
+                const unitOptions: AmountUnit[] = food.portion === PER_100G ? ["g", "oz"] : ["serving"]
                 return (
-                  <button
+                  <div
                     key={food.id}
-                    onClick={() => handleAddSearchResult(food)}
-                    disabled={isAdding || isAdded}
-                    className={`w-full px-4 py-3 text-left ${
-                      i < results.length - 1 ? "border-b border-[color:var(--color-line)]" : ""
-                    } ${isAdded ? "bg-[color:var(--color-sage-bg)]" : ""}`}
+                    className={`${i < results.length - 1 ? "border-b border-[color:var(--color-line)]" : ""} ${
+                      isAdded || isSelected ? "bg-[color:var(--color-sage-bg)]" : ""
+                    }`}
                   >
-                    <div className="flex items-baseline justify-between">
-                      <div className="text-[0.88rem] font-bold">{food.name}</div>
-                      {isAdded ? (
-                        <div className="text-[0.8rem] font-bold text-[color:var(--color-sage)]">{t("foodLog.added")}</div>
-                      ) : (
-                        <div className="text-[0.8rem] font-bold text-[color:var(--color-ink-soft)]">
-                          {isAdding ? t("foodLog.adding") : `${food.caloriesKcal} kcal`}
+                    <button onClick={() => toggleResult(food)} className="w-full px-4 py-3 text-left">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <div className="text-[0.88rem] font-bold">{food.name}</div>
+                        {isAdded ? (
+                          <div className="shrink-0 text-[0.8rem] font-bold text-[color:var(--color-sage)]">{t("foodLog.added")}</div>
+                        ) : (
+                          <div className="shrink-0 text-[0.8rem] font-bold text-[color:var(--color-ink-soft)]">{`${food.caloriesKcal} kcal`}</div>
+                        )}
+                      </div>
+                      <div className="mt-0.5 text-[0.72rem] text-[color:var(--color-ink-faint)]">
+                        {t("foodLog.resultDetail", {
+                          portion: food.portion,
+                          fiber: food.fiberG,
+                          protein: food.proteinG,
+                          carb: food.carbG,
+                          fat: food.fatG,
+                        })}
+                      </div>
+                    </button>
+
+                    {isSelected && (
+                      <div className="flex flex-col gap-2.5 px-4 pb-3.5">
+                        <label htmlFor={`amount-${food.id}`} className="text-[0.72rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
+                          {t("foodLog.amountLabel")}
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            id={`amount-${food.id}`}
+                            type="number"
+                            inputMode="decimal"
+                            min="0"
+                            autoFocus
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            className="min-h-11 w-full min-w-0 flex-1 rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.92rem]"
+                          />
+                          {unitOptions.map((u) => (
+                            <button
+                              key={u}
+                              onClick={() => setUnit(u)}
+                              className={`min-h-11 rounded-xl px-3.5 text-[0.85rem] font-bold ${
+                                unit === u
+                                  ? "bg-[color:var(--color-sage)] text-white"
+                                  : "bg-[color:var(--color-surface-2)] text-[color:var(--color-ink-faint)]"
+                              }`}
+                            >
+                              {t(`foodLog.units.${u}`)}
+                            </button>
+                          ))}
                         </div>
-                      )}
-                    </div>
-                    <div className="mt-0.5 text-[0.72rem] text-[color:var(--color-ink-faint)]">
-                      {t("foodLog.resultDetail", {
-                        portion: food.portion,
-                        fiber: food.fiberG,
-                        protein: food.proteinG,
-                        carb: food.carbG,
-                        fat: food.fatG,
-                      })}
-                    </div>
-                  </button>
+                        {preview && (
+                          <div className="text-[0.8rem] text-[color:var(--color-ink)]">
+                            {t("foodLog.amountDetail", {
+                              kcal: preview.caloriesKcal,
+                              fiber: preview.fiberG,
+                              protein: preview.proteinG,
+                              carb: preview.carbG,
+                              fat: preview.fatG,
+                            })}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => handleAddSearchResult(food)}
+                          disabled={!preview || isAdding}
+                          className="min-h-11 rounded-xl bg-[color:var(--color-sage)] px-4 py-3 text-[0.88rem] font-bold text-white disabled:opacity-60"
+                        >
+                          {isAdding ? t("foodLog.adding") : t("foodLog.addToLog")}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )
               })
             )}
