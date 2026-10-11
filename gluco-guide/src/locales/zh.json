@@ -88,6 +88,7 @@
       "exerciseDay": "运动"
     },
     "encourageEmpty": "记录今天的第一餐，看看它如何符合你的每日目标。",
+    "encouragementLoading": "正在查看你今天的进展…",
     "quickAdd": "快速添加",
     "quickAddItems": {
       "logFood": "记录饮食",

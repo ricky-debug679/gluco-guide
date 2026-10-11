@@ -12,6 +12,7 @@ import { useSleepLogs } from "../hooks/useSleepLogs"
 import { useSupplements } from "../hooks/useSupplements"
 import { useExerciseLogs } from "../hooks/useExerciseLogs"
 import { usePersonalTargets } from "../hooks/usePersonalTargets"
+import { useDailyEncouragement } from "../hooks/useDailyEncouragement"
 import { LanguageSwitcher } from "../components/LanguageSwitcher"
 
 const MIND_STRESS_TARGET = 2 // a couple of mindful moments a day — a goal, not a clinical benchmark
@@ -104,6 +105,38 @@ export function Home() {
   const fiberTimingNote = isLive ? supplement.timingNote : null
   const name = isLive ? householdCtx.household.selfMember.display_name : "Asha"
 
+  const todayLoading =
+    foodLogs.isLoading || water.isLoading || exercise.isLoading || wellness.isLoading || sleep.isLoading || supplements.isLoading
+  const loggedAnythingToday =
+    foodLogs.todaysFoods.length > 0 || waterCups > 0 || exerciseTodayMinutes > 0 || mindStressCount > 0 || supplementsTaken > 0
+  const encouragement = useDailyEncouragement(
+    selfMemberId,
+    isLive && !todayLoading && loggedAnythingToday
+      ? {
+          caloriesKcal,
+          calorieTarget,
+          fiberG,
+          fiberTarget: targets.fiberG,
+          proteinG,
+          proteinTarget: targets.proteinG,
+          carbG,
+          carbTarget: targets.carbG,
+          fatG,
+          fatTarget: targets.fatG,
+          mealsLogged: foodLogs.todaysFoods.length,
+          waterCups,
+          waterTarget: targets.waterCups,
+          exerciseMinutes: exerciseTodayMinutes,
+          exerciseTarget: EXERCISE_DAILY_TARGET_MINUTES,
+          mindActivities: wellness.today.length,
+          sleepLogged: sleep.loggedToday,
+          supplementsTaken,
+          supplementsActive: supplements.active.length,
+        }
+      : null,
+    i18n.language,
+  )
+
   const hour = new Date().getHours()
   const greetingText = t(hour < 12 ? "home.greetingMorning" : hour < 18 ? "home.greetingAfternoon" : "home.greetingEvening")
 
@@ -194,9 +227,19 @@ export function Home() {
         </div>
       </Card>
 
-      {isLive && !foodLogs.isLoading && foodLogs.todaysFoods.length === 0 && (
+      {isLive && !todayLoading && (!loggedAnythingToday || encouragement.message || encouragement.pending) && (
         <Card className="border-transparent bg-[color:var(--color-sage-bg)]">
-          <div className="text-[0.85rem] leading-relaxed text-[color:var(--color-ink)]">{t("home.encourageEmpty")}</div>
+          <div
+            className={`text-[0.85rem] leading-relaxed ${
+              loggedAnythingToday && !encouragement.message
+                ? "motion-safe:animate-pulse text-[color:var(--color-ink-soft)]"
+                : "text-[color:var(--color-ink)]"
+            }`}
+          >
+            {!loggedAnythingToday
+              ? t("home.encourageEmpty")
+              : (encouragement.message ?? t("home.encouragementLoading"))}
+          </div>
         </Card>
       )}
 

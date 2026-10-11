@@ -89,6 +89,7 @@
       "exerciseDay": "Exercise"
     },
     "encourageEmpty": "Log your first meal today to see how it fits your daily targets.",
+    "encouragementLoading": "Looking at your day so far…",
     "quickAdd": "Quick add",
     "quickAddItems": {
       "logFood": "Log Food",

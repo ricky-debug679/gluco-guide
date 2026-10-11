@@ -89,6 +89,7 @@
       "exerciseDay": "Ejercicio"
     },
     "encourageEmpty": "Registra tu primera comida de hoy para ver cómo encaja en tus metas diarias.",
+    "encouragementLoading": "Revisando tu día hasta ahora…",
     "quickAdd": "Acceso rápido",
     "quickAddItems": {
       "logFood": "Registrar comida",
