@@ -80,6 +80,41 @@ export interface CaloriePlan {
 // deficit would be — a hard safety floor, not a suggestion.
 const MIN_SAFE_CALORIES: Record<BiologicalSex, number> = { male: 1500, female: 1200 }
 
+export interface MacroTargets {
+  proteinG: number
+  fatG: number
+  carbG: number
+  fiberG: number
+}
+
+const MIN_CARB_G = 130 // RDA minimum
+const MIN_FIBER_G = 25
+
+/** Splits the calorie target into protein, fat, carbs, and fiber that add back up to it. */
+export function buildMacroTargets(plan: CaloriePlan, input: CaloriePlanInput): MacroTargets {
+  const kcal = plan.targetCalories
+  // Above a healthy BMI, base protein on the top of the healthy range so the
+  // target doesn't climb with excess weight; more per kg while losing weight
+  // helps preserve muscle.
+  const referenceKg = Math.min(input.weightKg, plan.healthyWeightHighKg)
+  const gramsPerKg = plan.dailyDeficit > 0 ? 1.2 : 1.0
+  const proteinG = Math.min(referenceKg * gramsPerKg, (kcal * 0.3) / 4)
+
+  let fatG = (kcal * 0.3) / 9
+  let carbG = (kcal - proteinG * 4 - fatG * 9) / 4
+  if (carbG < MIN_CARB_G) {
+    carbG = MIN_CARB_G
+    fatG = Math.max((kcal * 0.2) / 9, (kcal - proteinG * 4 - carbG * 4) / 9)
+  }
+
+  return {
+    proteinG: Math.round(proteinG),
+    fatG: Math.round(fatG),
+    carbG: Math.round(carbG),
+    fiberG: Math.round(Math.max(MIN_FIBER_G, (kcal / 1000) * 14)),
+  }
+}
+
 export function buildCaloriePlan(input: CaloriePlanInput): CaloriePlan {
   const bmi = calculateBmi(input.heightCm, input.weightKg)
   const category = bmiCategory(bmi)

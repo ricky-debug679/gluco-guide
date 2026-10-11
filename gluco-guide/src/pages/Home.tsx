@@ -11,7 +11,7 @@ import { useWellnessActivity } from "../hooks/useWellnessActivity"
 import { useSleepLogs } from "../hooks/useSleepLogs"
 import { useSupplements } from "../hooks/useSupplements"
 import { useExerciseLogs } from "../hooks/useExerciseLogs"
-import { buildCaloriePlan } from "../lib/caloriePlan"
+import { usePersonalTargets } from "../hooks/usePersonalTargets"
 import { LanguageSwitcher } from "../components/LanguageSwitcher"
 
 const MIND_STRESS_TARGET = 2 // a couple of mindful moments a day — a goal, not a clinical benchmark
@@ -64,7 +64,7 @@ export function Home() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const totals = useAppStore((s) => s.totals)
-  const targets = useAppStore((s) => s.targets)
+  const targets = usePersonalTargets()
   const demoReminder = useAppStore((s) => s.reminder)
 
   const householdCtx = useOptionalHousehold()
@@ -84,17 +84,7 @@ export function Home() {
   const carbG = isLive ? foodLogs.totals.carbG : totals.carbG
   const fatG = isLive ? foodLogs.totals.fatG : totals.fatG
   const caloriesKcal = isLive ? foodLogs.totals.caloriesKcal : totals.caloriesKcal
-  const selfMember = householdCtx?.household.selfMember
-  const calorieTarget =
-    isLive && selfMember?.height_cm && selfMember.weight_kg && selfMember.age && selfMember.biological_sex && selfMember.activity_level
-      ? buildCaloriePlan({
-          heightCm: selfMember.height_cm,
-          weightKg: selfMember.weight_kg,
-          age: selfMember.age,
-          sex: selfMember.biological_sex,
-          activityLevel: selfMember.activity_level,
-        }).targetCalories
-      : targets.caloriesKcal
+  const calorieTarget = targets.caloriesKcal
   // "Mind/Sleep" bundles stress-relief activities and last night's sleep into
   // one ring — a logged sleep entry for today counts toward it just like a
   // stress-relief activity does, so logging sleep is actually visible here

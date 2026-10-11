@@ -4,8 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Card, Eyebrow, Screen } from "../components/Screen"
 import { HistoryChart } from "../components/HistoryChart"
 import { useOptionalHousehold } from "../context/HouseholdContext"
-import { useAppStore } from "../store/useAppStore"
-import { buildCaloriePlan } from "../lib/caloriePlan"
+import { usePersonalTargets } from "../hooks/usePersonalTargets"
 import { buildHistoryDays, type HistoryDay } from "../lib/history"
 import { useFoodLogHistory, type DayTotals } from "../hooks/useFoodLogHistory"
 import { useWaterHistory } from "../hooks/useWaterHistory"
@@ -47,18 +46,8 @@ export function FoodLogHistory() {
   const exerciseHistory = useExerciseHistory(selfMemberId)
   const sleep = useSleepLogs(selfMemberId)
   const supplementHistory = useSupplementHistory(selfMemberId)
-  const targets = useAppStore((s) => s.targets)
-
-  const calorieTarget =
-    isLive && selfMember?.height_cm && selfMember.weight_kg && selfMember.age && selfMember.biological_sex && selfMember.activity_level
-      ? buildCaloriePlan({
-          heightCm: selfMember.height_cm,
-          weightKg: selfMember.weight_kg,
-          age: selfMember.age,
-          sex: selfMember.biological_sex,
-          activityLevel: selfMember.activity_level,
-        }).targetCalories
-      : targets.caloriesKcal
+  const targets = usePersonalTargets()
+  const calorieTarget = targets.caloriesKcal
 
   const goalsByMetric: Record<FoodMetricKey, number> = {
     fiberG: targets.fiberG,
