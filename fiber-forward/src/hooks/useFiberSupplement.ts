@@ -1,12 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "../lib/supabase"
 import { fiberSupplementOptions } from "../lib/mockData"
+import { describeFunctionError } from "../lib/edgeFunctionError"
 import type { FiberSupplementKind } from "../lib/types"
 
 function startOfTodayIso() {
   const d = new Date()
   d.setHours(0, 0, 0, 0)
   return d.toISOString()
+}
+
+export interface FiberSupplementResearch {
+  description: string
+  usage: string
+  timing: string
+  estimatedFiberPerDoseG: number | null
 }
 
 export function useFiberSupplement(memberId: string | undefined) {
@@ -46,19 +54,59 @@ export function useFiberSupplement(memberId: string | undefined) {
     enabled: !!memberId && !!supabase,
   })
 
+  // A settings row only ever gets created by an explicit tap (select/saveCustom
+  // below), so its mere existence IS "the user actually chose something" —
+  // distinct from kind defaulting to psyllium below, which only governs what
+  // a brand-new user is shown as a *suggestion* before they've chosen at all.
+  const hasPreference = settingsQuery.data != null
+
   const select = useMutation({
-    mutationFn: async (input: { kind: FiberSupplementKind; customName?: string; customFiberG?: number }) => {
+    mutationFn: async (kind: Exclude<FiberSupplementKind, "custom">) => {
       if (!supabase || !memberId) return
       const { error } = await supabase.from("fiber_supplement_settings").upsert(
+        { member_id: memberId, kind, updated_at: new Date().toISOString() },
+        { onConflict: "member_id" },
+      )
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: settingsKey }),
+  })
+
+  // Researches the named product via AI, then saves name/fiber grams and the
+  // research together in one write — triggered once by an explicit Save tap,
+  // never per keystroke.
+  const saveCustom = useMutation({
+    mutationFn: async (input: { name: string; fiberGrams: number | null }) => {
+      if (!supabase || !memberId) throw new Error("Not configured")
+      const { data, error } = await supabase.functions.invoke("research-fiber-supplement", {
+        body: { name: input.name, fiberGrams: input.fiberGrams, language: "en" },
+      })
+      if (error) throw new Error(await describeFunctionError(error))
+      if (data?.error) throw new Error(data.error)
+      const research = data as FiberSupplementResearch
+
+      const { error: upsertError } = await supabase.from("fiber_supplement_settings").upsert(
         {
           member_id: memberId,
-          kind: input.kind,
-          custom_name: input.customName ?? null,
-          custom_fiber_g: input.customFiberG ?? null,
+          kind: "custom",
+          custom_name: input.name,
+          custom_fiber_g: input.fiberGrams ?? research.estimatedFiberPerDoseG ?? 0,
+          custom_description: research.description,
+          custom_usage: research.usage,
+          custom_timing: research.timing,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "member_id" },
       )
+      if (upsertError) throw upsertError
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: settingsKey }),
+  })
+
+  const remove = useMutation({
+    mutationFn: async () => {
+      if (!supabase || !memberId) return
+      const { error } = await supabase.from("fiber_supplement_settings").delete().eq("member_id", memberId)
       if (error) throw error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: settingsKey }),
@@ -67,12 +115,16 @@ export function useFiberSupplement(memberId: string | undefined) {
   const kind = (settingsQuery.data?.kind as FiberSupplementKind | undefined) ?? "psyllium"
   const customName = settingsQuery.data?.custom_name ?? ""
   const customFiberG = settingsQuery.data?.custom_fiber_g ?? undefined
+  const customDescription = settingsQuery.data?.custom_description ?? ""
+  const customUsage = settingsQuery.data?.custom_usage ?? ""
+  const customTiming = settingsQuery.data?.custom_timing ?? ""
   const info =
     kind === "custom"
       ? {
           name: customName || "Your fiber supplement",
-          mechanism: "Tell us what you take so we can keep your reminder accurate.",
+          mechanism: customDescription || "Tell us what you take so we can keep your reminder accurate.",
           fiberPerDoseG: customFiberG ?? 0,
+          timingNote: customTiming || "Check the product's own label for when to take it.",
         }
       : (fiberSupplementOptions.find((o) => o.kind === kind) ?? fiberSupplementOptions[0])
 
@@ -127,15 +179,22 @@ export function useFiberSupplement(memberId: string | undefined) {
 
   return {
     kind,
+    hasPreference,
     customName,
     customFiberG,
+    customDescription,
+    customUsage,
     name: info.name,
     mechanism: info.mechanism,
     fiberPerDoseG: info.fiberPerDoseG,
+    timingNote: info.timingNote,
     takenToday: (logsQuery.data?.length ?? 0) > 0,
     isLoading: settingsQuery.isLoading || logsQuery.isLoading,
-    select: (k: FiberSupplementKind, custom?: string, customFiber?: number) =>
-      select.mutate({ kind: k, customName: custom, customFiberG: customFiber }),
+    isSavingCustom: saveCustom.isPending,
+    isRemoving: remove.isPending,
+    select: (k: Exclude<FiberSupplementKind, "custom">) => select.mutateAsync(k),
+    saveCustom: (name: string, fiberGrams: number | null) => saveCustom.mutateAsync({ name, fiberGrams }),
+    remove: () => remove.mutateAsync(),
     markTaken: () => markTaken.mutateAsync(),
   }
 }

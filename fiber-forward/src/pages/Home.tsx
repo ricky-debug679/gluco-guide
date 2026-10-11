@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { Card, Eyebrow, Screen } from "../components/Screen"
 import { ProgressRing } from "../components/ProgressRing"
 import { useAppStore } from "../store/useAppStore"
@@ -7,62 +8,60 @@ import { useWaterToday } from "../hooks/useWaterToday"
 import { useFiberSupplement } from "../hooks/useFiberSupplement"
 import { useFoodLogsToday } from "../hooks/useFoodLogsToday"
 import { useWellnessActivity } from "../hooks/useWellnessActivity"
+import { useSleepLogs } from "../hooks/useSleepLogs"
 import { useSupplements } from "../hooks/useSupplements"
 import { useExerciseLogs } from "../hooks/useExerciseLogs"
 import { buildCaloriePlan } from "../lib/caloriePlan"
-import { SpeakButton } from "../components/SpeakButton"
+import { LanguageSwitcher } from "../components/LanguageSwitcher"
 
 const MIND_STRESS_TARGET = 2 // a couple of mindful moments a day — a goal, not a clinical benchmark
-const EXERCISE_WEEKLY_TARGET_MINUTES = 150 // CDC National DPP activity benchmark, same as the Exercise screen
+// CDC National DPP activity benchmark is 150 min/week, framed by the CDC
+// itself as ~30 min/day, 5 days a week — same guideline, daily cadence,
+// matching the Exercise screen.
+const EXERCISE_DAILY_TARGET_MINUTES = 30
 
 const quickAdd = [
   {
-    label: "Log Food",
+    labelKey: "home.quickAddItems.logFood",
     to: "/log",
     path: "M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z",
     extra: <circle cx="12" cy="13" r="3.5" />,
   },
   {
-    label: "Scan Grocery",
+    labelKey: "home.quickAddItems.scanGrocery",
     to: "/scan",
     path: "M7 8v8M10 8v8M13 8v3M13 13v3M16 8v8",
     extra: <rect x="3" y="6" width="18" height="12" rx="1.5" />,
   },
   {
-    label: "Log Exercise",
+    labelKey: "home.quickAddItems.logExercise",
     to: "/exercise",
     path: "M6.5 17.5l11-11M4 15l5 5M15 4l5 5M2.5 12.5l3-3M18.5 18.5l3-3",
   },
   {
-    label: "Log Water/Fibre",
+    labelKey: "home.quickAddItems.logWaterFibre",
     to: "/hydration",
     path: "M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z",
   },
   {
-    label: "Mind & Sleep",
+    labelKey: "home.quickAddItems.mindSleep",
     to: "/wellness",
     path: "M12 3a6 6 0 0 0 0 12 6 6 0 0 1 0 6 9 9 0 1 1 0-18z",
   },
   {
-    label: "Log Supplements",
+    labelKey: "home.quickAddItems.logSupplements",
     to: "/supplements",
     path: "M7 3.5h10a1 1 0 0 1 1 1V10a5 5 0 0 1-10 0V4.5a1 1 0 0 1 1-1z",
     extra: <path d="M9 20.5h6M12 15v5.5" />,
   },
 ]
 
-function formatToday() {
-  return new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
-}
-
-function greeting() {
-  const hour = new Date().getHours()
-  if (hour < 12) return "Good morning"
-  if (hour < 18) return "Good afternoon"
-  return "Good evening"
+function formatToday(locale: string) {
+  return new Date().toLocaleDateString(locale, { weekday: "long", month: "long", day: "numeric" })
 }
 
 export function Home() {
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const totals = useAppStore((s) => s.totals)
   const targets = useAppStore((s) => s.targets)
@@ -74,6 +73,7 @@ export function Home() {
   const supplement = useFiberSupplement(selfMemberId)
   const foodLogs = useFoodLogsToday(selfMemberId)
   const wellness = useWellnessActivity(selfMemberId)
+  const sleep = useSleepLogs(selfMemberId)
   const supplements = useSupplements(selfMemberId)
   const exercise = useExerciseLogs(selfMemberId)
 
@@ -95,27 +95,40 @@ export function Home() {
           activityLevel: selfMember.activity_level,
         }).targetCalories
       : targets.caloriesKcal
-  const mindStressCount = isLive ? wellness.today.length : 0
+  // "Mind/Sleep" bundles stress-relief activities and last night's sleep into
+  // one ring — a logged sleep entry for today counts toward it just like a
+  // stress-relief activity does, so logging sleep is actually visible here
+  // instead of silently not moving the ring.
+  const mindStressCount = isLive ? wellness.today.length + (sleep.loggedToday ? 1 : 0) : 0
   const supplementsTaken = isLive ? supplements.takenCount : 0
   const supplementsTarget = isLive ? Math.max(supplements.active.length, 1) : 1
-  const exerciseWeekMinutes = isLive ? exercise.weekMinutes : 0
-  const nextDoseLabel = isLive ? supplement.name : "Fiber supplement"
-  const nextDoseTime = mockReminder.nextDoseTime
+  const exerciseTodayMinutes = isLive ? exercise.todayMinutes : 0
+  const nextDoseLabel = isLive ? supplement.name : t("home.fiberSupplement")
   const doseTakenToday = isLive ? supplement.takenToday : mockReminder.takenToday
+  // A brand-new live user who's never touched the picker gets shown psyllium
+  // as a starting idea, not as something they chose — framed as a
+  // suggestion until they actually tap something on Hydration (even
+  // psyllium itself), which is when a real preference row exists.
+  const hasFiberPreference = isLive ? supplement.hasPreference : true
+  const isFiberSuggestion = isLive && !hasFiberPreference
+  const fiberTimingNote = isLive ? supplement.timingNote : null
   const name = isLive ? householdCtx.household.selfMember.display_name : "Asha"
 
-  const summaryText = `${greeting()}, ${name}. So far today, you've had ${caloriesKcal} of ${calorieTarget} calories, and ${fiberG} of ${targets.fiberG} grams of fiber. This week you've logged ${exerciseWeekMinutes} of ${EXERCISE_WEEKLY_TARGET_MINUTES} minutes of exercise.`
+  const hour = new Date().getHours()
+  const greetingText = t(hour < 12 ? "home.greetingMorning" : hour < 18 ? "home.greetingAfternoon" : "home.greetingEvening")
 
   return (
     <Screen>
       <div className="flex items-start justify-between gap-2">
         <div>
-          <Eyebrow>{formatToday()}</Eyebrow>
+          <Eyebrow>{formatToday(i18n.language)}</Eyebrow>
           <h1 className="mt-1 text-2xl font-semibold">
-            {greeting()}, {name}
+            {greetingText}, {name}
           </h1>
         </div>
-        <SpeakButton text={summaryText} className="mt-1" />
+        <div className="mt-1 flex items-center gap-2">
+          <LanguageSwitcher />
+        </div>
       </div>
 
       <Card>
@@ -123,14 +136,14 @@ export function Home() {
           <ProgressRing
             value={caloriesKcal}
             target={calorieTarget}
-            label="Calories"
+            label={t("home.rings.calories")}
             colorVar="--color-honey"
             bgVar="--color-honey-bg"
           />
           <ProgressRing
             value={fiberG}
             target={targets.fiberG}
-            label="Fiber"
+            label={t("home.rings.fiber")}
             unit="g"
             colorVar="--color-sage"
             bgVar="--color-sage-bg"
@@ -138,7 +151,7 @@ export function Home() {
           <ProgressRing
             value={proteinG}
             target={targets.proteinG}
-            label="Protein"
+            label={t("home.rings.protein")}
             unit="g"
             colorVar="--color-mind"
             bgVar="--color-mind-bg"
@@ -146,7 +159,7 @@ export function Home() {
           <ProgressRing
             value={carbG}
             target={targets.carbG}
-            label="Carbs"
+            label={t("home.rings.carbs")}
             unit="g"
             colorVar="--color-berry"
             bgVar="--color-berry-bg"
@@ -154,7 +167,7 @@ export function Home() {
           <ProgressRing
             value={fatG}
             target={targets.fatG}
-            label="Fat"
+            label={t("home.rings.fat")}
             unit="g"
             colorVar="--color-fat"
             bgVar="--color-fat-bg"
@@ -162,28 +175,28 @@ export function Home() {
           <ProgressRing
             value={waterCups}
             target={targets.waterCups}
-            label="Water"
+            label={t("home.rings.water")}
             colorVar="--color-water"
             bgVar="--color-water-bg"
           />
           <ProgressRing
             value={mindStressCount}
             target={MIND_STRESS_TARGET}
-            label="Mind/Sleep"
+            label={t("home.rings.mindSleep")}
             colorVar="--color-supp"
             bgVar="--color-supp-bg"
           />
           <ProgressRing
             value={supplementsTaken}
             target={supplementsTarget}
-            label="Supplements"
+            label={t("home.rings.supplements")}
             colorVar="--color-supp"
             bgVar="--color-supp-bg"
           />
           <ProgressRing
-            value={exerciseWeekMinutes}
-            target={EXERCISE_WEEKLY_TARGET_MINUTES}
-            label="Exercise/wk"
+            value={exerciseTodayMinutes}
+            target={EXERCISE_DAILY_TARGET_MINUTES}
+            label={t("home.rings.exerciseDay")}
             unit="m"
             colorVar="--color-move"
             bgVar="--color-move-bg"
@@ -195,18 +208,18 @@ export function Home() {
         <div className="text-[0.85rem] leading-relaxed text-[color:var(--color-ink)]">
           {isLive
             ? fiberG > 0
-              ? "Nice work logging today — every fiber-forward choice adds up."
-              : "Log your first meal today to start building your fiber trend."
-            : "Your fiber intake is up from last week — nice work keeping breakfast fiber-forward."}
+              ? t("home.encourageLogged")
+              : t("home.encourageEmpty")
+            : t("home.encourageMock")}
         </div>
       </Card>
 
       <div>
-        <Eyebrow>Quick add</Eyebrow>
+        <Eyebrow>{t("home.quickAdd")}</Eyebrow>
         <div className="mt-2.5 grid grid-cols-3 gap-2.5">
           {quickAdd.map((item) => (
             <button
-              key={item.label}
+              key={item.labelKey}
               onClick={() => navigate(item.to)}
               className="flex min-h-11 flex-col items-center gap-2 rounded-2xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-center"
             >
@@ -225,7 +238,7 @@ export function Home() {
                 {item.extra}
               </svg>
               <span className="text-[0.66rem] font-bold leading-tight text-[color:var(--color-ink-soft)]">
-                {item.label}
+                {t(item.labelKey)}
               </span>
             </button>
           ))}
@@ -234,10 +247,7 @@ export function Home() {
 
       {!doseTakenToday && (
       <Card>
-        <div className="flex items-center justify-between">
-          <Eyebrow>Up next</Eyebrow>
-          <SpeakButton text={`Reminder: ${nextDoseLabel} at ${nextDoseTime}.`} />
-        </div>
+        <Eyebrow>{isFiberSuggestion ? t("home.suggestedForYou") : t("home.upNext")}</Eyebrow>
         <button onClick={() => navigate("/hydration")} className="mt-2 flex w-full items-center gap-3 text-left">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[color:var(--color-honey-bg)]">
               <svg
@@ -256,10 +266,10 @@ export function Home() {
             </div>
             <div className="flex-1">
               <div className="text-[0.92rem] font-bold">
-                {nextDoseLabel} — {nextDoseTime}
+                {nextDoseLabel}
               </div>
               <div className="text-[0.78rem] text-[color:var(--color-ink-soft)]">
-                Full detail in Water &amp; Fiber
+                {fiberTimingNote ?? t("home.fullDetailIn")}
               </div>
             </div>
             <svg

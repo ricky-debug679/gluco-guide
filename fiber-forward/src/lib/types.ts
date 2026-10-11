@@ -59,7 +59,7 @@ export interface GroceryItem {
   swap: GrocerySwap
 }
 
-export type LabMetricKey = "glucose" | "a1c" | "chol"
+export type LabMetricKey = "glucose" | "glucose_2h" | "a1c"
 
 export interface LabReading {
   date: string
@@ -84,10 +84,11 @@ export interface FiberSupplementOption {
   mechanism: string
   /** Typical fiber grams per dose, for a real starting number a serving label would show. */
   fiberPerDoseG: number
+  /** Short, real guidance on when to take it relative to meals (e.g. "30 min before a meal, with water"). */
+  timingNote: string
 }
 
 export interface ReminderState {
-  nextDoseTime: string
   takenToday: boolean
   selectedKind: FiberSupplementKind
   customName: string

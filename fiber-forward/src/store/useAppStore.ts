@@ -66,7 +66,6 @@ export const useAppStore = create<AppState>((set) => ({
   activeLabKey: "glucose",
 
   reminder: {
-    nextDoseTime: "2:30 PM",
     takenToday: false,
     selectedKind: "psyllium",
     customName: "",
@@ -159,10 +158,11 @@ export const useCurrentSupplementInfo = () => {
       name: reminder.customName || "Your fiber supplement",
       mechanism: "Tell us what you take so we can keep your reminder accurate.",
       fiberPerDoseG: reminder.customFiberG,
+      timingNote: "Check the product's own label for when to take it.",
     }
   }
   const option = fiberSupplementOptions.find((o) => o.kind === reminder.selectedKind) ?? currentSupplement()
-  return { name: option.name, mechanism: option.mechanism, fiberPerDoseG: option.fiberPerDoseG }
+  return { name: option.name, mechanism: option.mechanism, fiberPerDoseG: option.fiberPerDoseG, timingNote: option.timingNote }
 }
 
 export { mockGroceryItems, mockLabMetrics, fiberSupplementOptions }

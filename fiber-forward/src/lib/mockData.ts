@@ -59,17 +59,6 @@ export const mockFoodSearchResults: FoodItem[] = [
   { id: "f3", name: "Lentil Crackers, 12 pc", portion: "12 pc", fiberG: 4, proteinG: 5, carbG: 20, fatG: 3, caloriesKcal: 140 },
 ]
 
-export const mockPhotoRecognizedFood: FoodItem = {
-  id: "photo-1",
-  name: "Sweet Potato & Black Bean Bowl",
-  portion: "1 bowl, ~320g",
-  fiberG: 9,
-  proteinG: 14,
-  carbG: 38,
-  fatG: 7,
-  caloriesKcal: 310,
-}
-
 export const mockGroceryItems: GroceryItem[] = [
   {
     id: "bread",
@@ -103,7 +92,7 @@ export const mockLabMetrics: LabMetric[] = [
   {
     key: "glucose",
     label: "Fasting glucose (mg/dL)",
-    shortLabel: "Glucose",
+    shortLabel: "Fasting Glucose",
     targetLow: 70,
     targetHigh: 99,
     readings: [
@@ -115,6 +104,22 @@ export const mockLabMetrics: LabMetric[] = [
     ],
     summary:
       "Your fasting glucose has dropped 22 points since March — inside your target range for the first time.",
+  },
+  {
+    key: "glucose_2h",
+    label: "2-hour glucose, OGTT (mg/dL)",
+    shortLabel: "2-Hr Glucose",
+    targetLow: 0,
+    targetHigh: 139,
+    readings: [
+      { date: "2026-03-02", value: 175 },
+      { date: "2026-05-04", value: 162 },
+      { date: "2026-06-08", value: 150 },
+      { date: "2026-08-03", value: 140 },
+      { date: "2026-10-05", value: 132 },
+    ],
+    summary:
+      "Your 2-hour glucose has dropped from 175 to 132 mg/dL — moving out of the prediabetes range and into normal.",
   },
   {
     key: "a1c",
@@ -132,22 +137,6 @@ export const mockLabMetrics: LabMetric[] = [
     summary:
       "HbA1c is down to 5.7% — right at the edge of your goal range, several tenths lower than your first reading.",
   },
-  {
-    key: "chol",
-    label: "LDL cholesterol (mg/dL)",
-    shortLabel: "Cholesterol",
-    targetLow: 0,
-    targetHigh: 100,
-    readings: [
-      { date: "2026-03-02", value: 132 },
-      { date: "2026-05-04", value: 126 },
-      { date: "2026-06-08", value: 118 },
-      { date: "2026-08-03", value: 109 },
-      { date: "2026-10-05", value: 98 },
-    ],
-    summary:
-      "LDL cholesterol has fallen from 132 to 98 mg/dL — now inside the goal range your care team set.",
-  },
 ]
 
 export const fiberSupplementOptions: FiberSupplementOption[] = [
@@ -157,6 +146,7 @@ export const fiberSupplementOptions: FiberSupplementOption[] = [
     mechanism:
       "Forms a thick gel in your gut that slows how fast sugar enters your bloodstream — regular use is linked to better insulin sensitivity.",
     fiberPerDoseG: 5,
+    timingNote: "Take with a full glass of water, about 30 minutes before a meal — the water matters, since psyllium gels quickly.",
   },
   {
     kind: "barley",
@@ -164,6 +154,7 @@ export const fiberSupplementOptions: FiberSupplementOption[] = [
     mechanism:
       "Binds bile acids in the gut, which your liver replaces using LDL cholesterol from your blood — shown to help lower LDL over time.",
     fiberPerDoseG: 3,
+    timingNote: "Take with a meal, mixed into food — it works alongside digestion rather than ahead of it.",
   },
   {
     kind: "acacia",
@@ -171,6 +162,7 @@ export const fiberSupplementOptions: FiberSupplementOption[] = [
     mechanism:
       "A gentler soluble fiber with less bloating than psyllium — a good starting point if psyllium feels like too much at first.",
     fiberPerDoseG: 5,
+    timingNote: "Gentle enough to take any time of day, mixed into food or a drink — no strict timing needed.",
   },
 ]
 
