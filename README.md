@@ -52,8 +52,9 @@ gluco-guide/
     lib/          calculations, app content, translations setup
     locales/      en, es, zh, hi translation files
   supabase/
-    schema.sql    base database schema
-    0NN_*.sql     migrations, run in numeric order
+    sqlscripts/
+      schema.sql  base database schema
+      0NN_*.sql   migrations, run in numeric order
     functions/    Edge Functions for AI features and account deletion
 ```
 
@@ -71,10 +72,10 @@ With no backend configured, the app opens in demo mode with sample data, so you 
 
 To connect a real backend:
 
-1. Create a Supabase project. In its SQL editor, run `supabase/schema.sql`, then each numbered migration in order.
+1. Create a Supabase project. In its SQL editor, run `supabase/sqlscripts/schema.sql`, then each numbered migration in order.
 2. Copy `.env.example` to `.env.local` and fill in your project's URL and anon key.
 3. Deploy the folders in `supabase/functions/` as Edge Functions, and add an `ANTHROPIC_API_KEY` secret.
-4. Optional: import the OpenNutrition food data for search, following the notes at the top of `supabase/010_opennutrition_foods.sql`.
+4. Optional: import the OpenNutrition food data for search, following the notes at the top of `supabase/sqlscripts/010_opennutrition_foods.sql`.
 
 ## Credits
 
