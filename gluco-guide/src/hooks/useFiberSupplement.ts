@@ -134,7 +134,9 @@ export function useFiberSupplement(memberId: string | undefined) {
     translationAttempt.current = attempt
     const fields = [settings.custom_description ?? "", settings.custom_usage ?? "", settings.custom_timing ?? ""]
     translateTexts(fields, language)
-      .then(async ([description, usage, timing]) => {
+      .then(async (raw) => {
+        // Never replace real text with a blank translation.
+        const [description, usage, timing] = raw.map((text, i) => (text.trim() ? text : fields[i]))
         const { error } = await supabase!
           .from("fiber_supplement_settings")
           .update({ custom_description: description, custom_usage: usage, custom_timing: timing, content_language: language })

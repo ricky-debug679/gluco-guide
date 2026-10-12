@@ -516,5 +516,12 @@
     "minutesShort": "m",
     "hours": "h",
     "ofTarget": "of {{target}}"
+  },
+  "keyboardTip": {
+    "title": "Want to type in English?",
+    "body": "Add an English keyboard in your phone's settings, then switch to it while typing.",
+    "iphone": "iPhone: Settings → General → Keyboard → Keyboards → Add New Keyboard",
+    "android": "Android: Settings → System → Languages & input → On-screen keyboard (names vary by phone)",
+    "dismiss": "Got it"
   }
 }

@@ -8,6 +8,7 @@ import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useFoodLogsToday } from "../hooks/useFoodLogsToday"
 import { useMealPhotoAnalysis, useMealPhotoRefinement, type MealPhotoAnalysis } from "../hooks/useMealPhotoAnalysis"
 import { PhotoCaptureButton } from "../components/PhotoCapture"
+import { useKeyboardTip } from "../components/KeyboardTip"
 import type { FoodItem } from "../lib/types"
 import { round1 } from "../lib/format"
 
@@ -80,6 +81,7 @@ export function FoodLog() {
   const mealPhotoRefinement = useMealPhotoRefinement()
 
   const [manualName, setManualName] = useState("")
+  const keyboardTip = useKeyboardTip()
   const [manualFiber, setManualFiber] = useState("")
   const [manualProtein, setManualProtein] = useState("")
   const [manualCarb, setManualCarb] = useState("")
@@ -623,11 +625,13 @@ export function FoodLog() {
                   {t("foodLog.foodNameLabel")}
                 </label>
                 <input
+                  {...keyboardTip.inputProps}
                   value={manualName}
                   onChange={(e) => setManualName(e.target.value)}
                   placeholder={t("foodLog.foodNamePlaceholder")}
                   className="mt-1.5 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
                 />
+                {keyboardTip.tip && <div className="mt-2">{keyboardTip.tip}</div>}
               </div>
               <div className="grid grid-cols-2 gap-2.5">
                 <NumberField label={t("foodLog.fiberG")} value={manualFiber} onChange={setManualFiber} />

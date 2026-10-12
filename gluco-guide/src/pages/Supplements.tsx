@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Card, Eyebrow } from "../components/Screen"
+import { useKeyboardTip } from "../components/KeyboardTip"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useSupplements } from "../hooks/useSupplements"
 import { supplementRecommendationKeys } from "../lib/content"
@@ -27,6 +28,7 @@ export function Supplements() {
   const [showCustom, setShowCustom] = useState(false)
   const [customName, setCustomName] = useState("")
   const [customDosage, setCustomDosage] = useState("")
+  const keyboardTip = useKeyboardTip()
 
   // A dosage saved from one of our own suggestions (in whatever language was
   // active then) is shown in the current language; anything typed stays as typed.
@@ -266,12 +268,14 @@ export function Supplements() {
           {showCustom ? (
             <Card className="flex flex-col gap-2.5">
               <input
+                {...keyboardTip.inputProps}
                 autoFocus
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
                 placeholder={t("supplements.customNamePlaceholder")}
                 className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
               />
+              {keyboardTip.tip}
               <input
                 value={customDosage}
                 onChange={(e) => setCustomDosage(e.target.value)}

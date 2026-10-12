@@ -28,7 +28,7 @@ const LANGUAGE_NAMES: Record<string, string> = { en: "English", es: "Spanish", z
 function languageInstruction(code: unknown): string {
   const name = typeof code === "string" ? LANGUAGE_NAMES[code] : undefined
   if (!name || name === "English") return ""
-  return `Respond in ${name}: write "name" and "insight" in ${name} (where the instructions below say to translate non-English packaging text into English, translate it into ${name} instead). Keep the JSON field names exactly as specified in English.\n\n`
+  return `Respond in ${name}: write "name" and "insight" in ${name}. Keep the JSON field names exactly as specified in English.\n\n`
 }
 function languageReminder(code: unknown): string {
   const name = typeof code === "string" ? LANGUAGE_NAMES[code] : undefined
@@ -72,11 +72,13 @@ Deno.serve(async (req) => {
     const match = dataUrl.match(/^data:(image\/\w+);base64,(.+)$/)
     if (!match) return json({ error: "No photo given." }, 400)
     const [, mediaType, base64] = match
+    // The language the person reads the app in, which packaging text is translated into.
+    const readerLanguage = (typeof body?.language === "string" && LANGUAGE_NAMES[body.language]) || "English"
 
     const prompt = `${languageInstruction(body?.language)}You are a nutrition assistant for a diabetes-prevention app, looking at a photo someone took while grocery shopping. The photo may show a single food/product, or several at once (e.g. items on a shelf, in a cart, or spread on a counter) — don't assume there's only one.
 
 For EACH distinct food or product you can clearly identify in the photo:
-1. Identify it with the fullest, most specific name you can actually read or determine. If there is ANY legible text on the packaging, your name must be based on what that text literally says — never guess the product from its color, shape, or general packaging style when there's text available that tells you directly, and never let a package's visual style (e.g. "this looks like a typical Asian candy wrapper") steer the identification instead of the words actually printed on it. This applies in every language, not just English: if the visible text isn't in English, read it character by character and translate it accurately — do not substitute a vaguely-similar-sounding or stylistically-plausible guess for an actual translation. When you do translate non-English text, give the name as "<original text> (<English translation>)" so the translation can be double-checked against the photo. If a brand, variety, flavor, or size is also visible, include all of it (e.g. "Cheerios Honey Nut, Family Size" not just "cereal"; "Honeycrisp apple" not just "apple"). Only fall back to a generic visual description (e.g. "red apple, variety unclear") when there is genuinely no legible text at all to read.
+1. Identify it with the fullest, most specific name you can actually read or determine. If there is ANY legible text on the packaging, your name must be based on what that text literally says — never guess the product from its color, shape, or general packaging style when there's text available that tells you directly, and never let a package's visual style (e.g. "this looks like a typical Asian candy wrapper") steer the identification instead of the words actually printed on it. This applies in every language: read the visible text character by character — do not substitute a vaguely-similar-sounding or stylistically-plausible guess for what is actually printed. If that text is in a language other than ${readerLanguage}, give the name as "<original text> (<accurate ${readerLanguage} translation>)" so the translation can be double-checked against the photo. If it is already in ${readerLanguage}, give the name exactly as printed, with no translation in parentheses. If a brand, variety, flavor, or size is also visible, include all of it (e.g. "Cheerios Honey Nut, Family Size" not just "cereal"; "Honeycrisp apple" not just "apple"). Only fall back to a generic visual description (e.g. "red apple, variety unclear") when there is genuinely no legible text at all to read.
 2. If a nutrition facts panel or ingredient list is readable for that item, read the real numbers/ingredients directly from it rather than guessing. If none is visible (e.g. a piece of fruit, a prepared dish, or an unreadable label), estimate a plausible nutrition profile from general knowledge of that type of food instead — these are reasonable estimates, not verified lab values, so keep them plausible.
 3. Give a short, concrete explanation of its likely impact on blood sugar and diabetes risk, naming specific ingredients or nutritional traits (sugar, refined carbs, fiber, protein, etc.) that drove your verdict.
 

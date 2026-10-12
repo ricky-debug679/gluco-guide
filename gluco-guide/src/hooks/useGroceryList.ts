@@ -113,7 +113,9 @@ export function useGroceryLists(householdId: string | undefined) {
       todo.map((i) => i.note ?? ""),
       language,
     )
-      .then(async (translated) => {
+      .then(async (raw) => {
+        // Never replace a real note with a blank translation.
+        const translated = raw.map((text, idx) => (text.trim() ? text : (todo[idx].note ?? "")))
         const results = await Promise.all(
           todo.map((item, idx) =>
             supabase!
@@ -214,8 +216,8 @@ export function useGroceryListItems(householdId: string | undefined) {
             list_id: input.listId,
             household_id: householdId,
             name: i.name,
-            verdict: i.verdict === "neutral" ? null : i.verdict,
-            note: i.verdict === "neutral" ? null : i.note,
+            verdict: i.verdict === "neutral" || !i.note?.trim() ? null : i.verdict,
+            note: i.verdict === "neutral" || !i.note?.trim() ? null : i.note,
             note_language: input.noteLanguage,
           })),
         )
@@ -263,8 +265,10 @@ export function useGroceryListItems(householdId: string | undefined) {
   const saveVerdicts = useMutation({
     mutationFn: async (input: { listId: string; items: GroceryListItem[]; flags: ItemFlag[] }) => {
       if (!supabase) return null
+      // A verdict with no explanation isn't useful to show, so it isn't saved.
+      const explained = input.flags.filter((f) => f.note?.trim())
       const updates = input.items
-        .map((item) => ({ item, flag: input.flags.find((f) => matchesFlag(item.name, f.name)) }))
+        .map((item) => ({ item, flag: explained.find((f) => matchesFlag(item.name, f.name)) }))
         .filter((x): x is { item: GroceryListItem; flag: ItemFlag } => !!x.flag)
       await Promise.all(
         updates.map(({ item, flag }) =>

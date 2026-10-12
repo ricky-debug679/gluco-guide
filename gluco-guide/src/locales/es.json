@@ -516,5 +516,12 @@
     "minutesShort": "min",
     "hours": "h",
     "ofTarget": "de {{target}}"
+  },
+  "keyboardTip": {
+    "title": "¿Quieres escribir en español?",
+    "body": "Agrega un teclado en español en los ajustes de tu teléfono y cámbialo al escribir.",
+    "iphone": "iPhone: Ajustes → General → Teclado → Teclados → Añadir teclado",
+    "android": "Android: Ajustes → Sistema → Idiomas e introducción de texto → Teclado en pantalla (los nombres varían según el teléfono)",
+    "dismiss": "Entendido"
   }
 }

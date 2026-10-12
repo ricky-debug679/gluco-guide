@@ -13,6 +13,7 @@ import { useFoodPhotoAnalysis, type FoodPhotoItem } from "../hooks/useFoodPhotoA
 import { buildGroceryTrendChart } from "../lib/groceryTrend"
 import { round1 } from "../lib/format"
 import { PhotoCaptureButton } from "../components/PhotoCapture"
+import { useKeyboardTip } from "../components/KeyboardTip"
 
 function computeScoreFraction(fiberG: number, proteinG: number, netCarbG: number) {
   const score = (fiberG * 4 + proteinG * 2) / (fiberG * 4 + proteinG * 2 + netCarbG + 5)
@@ -48,6 +49,8 @@ export function GroceryScan() {
   // The language the photo results were written in; saved notes are stamped
   // with it so they get translated later if it differs from the user's.
   const [photoLanguage, setPhotoLanguage] = useState(i18n.language)
+  const itemKeyboardTip = useKeyboardTip()
+  const favoriteKeyboardTip = useKeyboardTip()
 
   const activeList = groceryLists.activeList
   const activeItems = activeList?.items ?? []
@@ -413,6 +416,7 @@ export function GroceryScan() {
                   </div>
                   <div className="mt-3 flex gap-2">
                     <input
+                      {...itemKeyboardTip.inputProps}
                       value={newItemName}
                       onChange={(e) => setNewItemName(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleAddListItem()}
@@ -427,6 +431,7 @@ export function GroceryScan() {
                       {t("common.add")}
                     </button>
                   </div>
+                  {itemKeyboardTip.tip && <div className="mt-2.5">{itemKeyboardTip.tip}</div>}
                 </Card>
 
                 {activeItems.length > 0 && (
@@ -480,7 +485,7 @@ export function GroceryScan() {
                             {t("groceryScan.remove")}
                           </button>
                         </div>
-                        {item.verdict && (
+                        {item.verdict && item.note?.trim() && (
                           <div
                             className={`mt-1.5 ml-8 text-[0.76rem] ${
                               item.verdict === "caution"
@@ -633,6 +638,7 @@ export function GroceryScan() {
                   </div>
                   <div className="mt-3 flex gap-2">
                     <input
+                      {...favoriteKeyboardTip.inputProps}
                       value={newFavoriteName}
                       onChange={(e) => setNewFavoriteName(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleAddFavorite()}
@@ -647,6 +653,7 @@ export function GroceryScan() {
                       {t("common.add")}
                     </button>
                   </div>
+                  {favoriteKeyboardTip.tip && <div className="mt-2.5">{favoriteKeyboardTip.tip}</div>}
                 </Card>
 
                 {favorites.favorites.length > 0 ? (

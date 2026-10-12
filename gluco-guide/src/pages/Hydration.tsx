@@ -5,6 +5,7 @@ import { Card, Eyebrow } from "../components/Screen"
 import { useAppStore, useCurrentSupplementInfo } from "../store/useAppStore"
 import { fiberSupplementOptions } from "../lib/content"
 import { round1 } from "../lib/format"
+import { useKeyboardTip } from "../components/KeyboardTip"
 import { useOptionalHousehold } from "../context/HouseholdContext"
 import { useWaterToday } from "../hooks/useWaterToday"
 import { useFiberSupplement } from "../hooks/useFiberSupplement"
@@ -38,6 +39,7 @@ export function Hydration() {
   const [editingCustom, setEditingCustom] = useState(false)
   const [customNameDraft, setCustomNameDraft] = useState("")
   const [customFiberDraft, setCustomFiberDraft] = useState("")
+  const keyboardTip = useKeyboardTip()
   const [customError, setCustomError] = useState<string | null>(null)
 
   const isLive = !!householdCtx
@@ -288,6 +290,7 @@ export function Hydration() {
                   <div className="mt-2.5 flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
                     <div className="grid grid-cols-3 gap-2">
                       <input
+                        {...keyboardTip.inputProps}
                         autoFocus
                         value={customNameDraft}
                         onChange={(e) => setCustomNameDraft(e.target.value)}
@@ -303,6 +306,7 @@ export function Hydration() {
                         className="min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3 text-[0.9rem]"
                       />
                     </div>
+                    {keyboardTip.tip}
                     <div className="text-[0.72rem] text-[color:var(--color-ink-faint)]">
                       {t("hydration.customResearchNote")}
                     </div>

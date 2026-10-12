@@ -512,5 +512,12 @@
     "minutesShort": "分",
     "hours": "小时",
     "ofTarget": "目标 {{target}}"
+  },
+  "keyboardTip": {
+    "title": "想用中文输入？",
+    "body": "在手机设置中添加中文键盘，输入时切换到中文键盘即可。",
+    "iphone": "iPhone：设置 → 通用 → 键盘 → 键盘 → 添加新键盘",
+    "android": "Android：设置 → 系统 → 语言和输入法 → 屏幕键盘（不同手机名称可能不同）",
+    "dismiss": "知道了"
   }
 }
