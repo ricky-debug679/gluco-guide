@@ -1,8 +1,9 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "../lib/supabase"
-import type { ActivityLevel, BiologicalSex } from "../lib/caloriePlan"
+import type { ActivityLevel, BiologicalSex, WeightPace } from "../lib/caloriePlan"
 import { localDateKey } from "../lib/history"
+import type { TrackedArea } from "../lib/trackedAreas"
 
 export interface MemberRow {
   id: string
@@ -21,6 +22,8 @@ export interface MemberRow {
   goal_start_weight_kg: number | null
   goal_set_at: string | null
   goal_deadline: string | null
+  tracked_areas: string[] | null
+  weight_pace: WeightPace | null
 }
 
 export interface HouseholdData {
@@ -102,6 +105,8 @@ export function useCompleteProfile(memberId: string | undefined) {
       age: number
       sex: BiologicalSex
       activityLevel: ActivityLevel
+      /** Only sent from onboarding; Profile edits these with useSetTrackedAreas. */
+      trackedAreas?: TrackedArea[]
     }) => {
       if (!supabase || !memberId) throw new Error("No profile to update yet")
       const { error } = await supabase
@@ -114,8 +119,33 @@ export function useCompleteProfile(memberId: string | undefined) {
           age: input.age,
           biological_sex: input.sex,
           activity_level: input.activityLevel,
+          ...(input.trackedAreas && { tracked_areas: input.trackedAreas }),
         })
         .eq("id", memberId)
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["household"] }),
+  })
+}
+
+export function useSetWeightPace(memberId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (pace: WeightPace) => {
+      if (!supabase || !memberId) throw new Error("No profile to update yet")
+      const { error } = await supabase.from("members").update({ weight_pace: pace }).eq("id", memberId)
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["household"] }),
+  })
+}
+
+export function useSetTrackedAreas(memberId: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (trackedAreas: TrackedArea[]) => {
+      if (!supabase || !memberId) throw new Error("No profile to update yet")
+      const { error } = await supabase.from("members").update({ tracked_areas: trackedAreas }).eq("id", memberId)
       if (error) throw error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["household"] }),

@@ -63,7 +63,18 @@ export interface CaloriePlanInput {
   activityLevel: ActivityLevel
   /** From the user's weight goal, if they set one. */
   targetWeightKg?: number | null
+  /** The pace they picked; unset uses the default for their BMI. */
+  pace?: WeightPace | null
 }
+
+export type WeightPace = "gentle" | "steady" | "faster"
+export const weightPaceKeys: WeightPace[] = ["gentle", "steady", "faster"]
+
+// Daily calories under or over maintenance (~3,500 kcal per lb). Loss spans
+// the commonly cited safe 1–2 lb/week (plus a gentler 0.5); gain stays at
+// 0.5–1 lb/week, the usual guidance for healthy weight gain.
+const LOSS_DEFICIT: Record<WeightPace, number> = { gentle: 250, steady: 500, faster: 1000 }
+const GAIN_SURPLUS: Record<WeightPace, number> = { gentle: 250, steady: 350, faster: 500 }
 
 export interface CaloriePlan {
   bmi: number
@@ -76,7 +87,15 @@ export interface CaloriePlan {
   weeklyChangeKg: number
   /** Daily calorie reduction from maintenance; 0 when maintaining. The UI builds the localized message from this rather than a baked-in English string. */
   dailyDeficit: number
+  /** Daily calories added over maintenance for a healthy gain; 0 otherwise. */
+  dailySurplus: number
+  /** Under 18: adult BMI cutoffs and this equation don't apply to a growing body, so the plan stays at maintenance. */
+  isMinor: boolean
+  /** True when the safety floor made the deficit smaller than the chosen pace asked for. */
+  cappedByFloor: boolean
 }
+
+const ADULT_AGE = 18
 
 // Never recommend below these, regardless of how large the computed
 // deficit would be — a hard safety floor, not a suggestion.
@@ -95,11 +114,12 @@ const MIN_FIBER_G = 25
 /** Splits the calorie target into protein, fat, carbs, and fiber that add back up to it. */
 export function buildMacroTargets(plan: CaloriePlan, input: CaloriePlanInput): MacroTargets {
   const kcal = plan.targetCalories
-  // Above a healthy BMI, base protein on the top of the healthy range so the
-  // target doesn't climb with excess weight; more per kg while losing weight
-  // (preserves muscle) or exercising most days.
-  const referenceKg = Math.min(input.weightKg, plan.healthyWeightHighKg)
-  const gramsPerKg = plan.dailyDeficit > 0 || input.activityLevel === "active" ? 1.2 : 1.0
+  // Base protein on a weight inside the healthy range, so the target doesn't
+  // climb with excess weight or stay too low while underweight; more per kg
+  // while losing (preserves muscle), gaining (builds it), or exercising most days.
+  const referenceKg = Math.min(Math.max(input.weightKg, plan.healthyWeightLowKg), plan.healthyWeightHighKg)
+  const gramsPerKg =
+    plan.dailyDeficit > 0 || plan.dailySurplus > 0 || input.activityLevel === "active" ? 1.2 : 1.0
   const proteinG = Math.min(referenceKg * gramsPerKg, (kcal * 0.3) / 4)
 
   let fatG = (kcal * 0.3) / 9
@@ -125,15 +145,28 @@ export function buildCaloriePlan(input: CaloriePlanInput): CaloriePlan {
     bmr(input.weightKg, input.heightCm, input.age, input.sex) * ACTIVITY_MULTIPLIERS[input.activityLevel],
   )
 
-  // Gradual, capped deficits only — never a crash diet. Above a healthy BMI,
-  // ~1 lb/week; within it, ~0.5 lb/week toward a goal weight that stays in
-  // the healthy range. Underweight is never given a deficit.
+  // Gradual, capped changes only — never a crash diet or a binge. The person
+  // picks a pace; without one, above a healthy BMI defaults to ~1 lb/week
+  // down, underweight to ~0.7 lb/week up, and within the healthy range to
+  // ~0.5 lb/week toward a goal weight that stays in it. The calorie floor
+  // always wins over the pace. Under 18 always stays at maintenance.
+  const isMinor = input.age < ADULT_AGE
   const target = input.targetWeightKg
-  const goalWithinHealthyRange = category === "healthy" && !!target && target < input.weightKg && target >= low
-  const plannedDeficit = category === "overweight" || category === "obese" ? 500 : goalWithinHealthyRange ? 250 : 0
+  const lossGoalInRange = category === "healthy" && !!target && target < input.weightKg && target >= low
+  const gainGoalInRange = category === "healthy" && !!target && target > input.weightKg && target <= high
+  let plannedDeficit = 0
+  let plannedSurplus = 0
+  if (!isMinor) {
+    if (category === "overweight" || category === "obese") plannedDeficit = LOSS_DEFICIT[input.pace ?? "steady"]
+    else if (category === "underweight") plannedSurplus = GAIN_SURPLUS[input.pace ?? "steady"]
+    else if (lossGoalInRange) plannedDeficit = LOSS_DEFICIT[input.pace ?? "gentle"]
+    else if (gainGoalInRange) plannedSurplus = GAIN_SURPLUS[input.pace ?? "gentle"]
+  }
   const floor = Math.min(maintenanceCalories, MIN_SAFE_CALORIES[input.sex])
-  const targetCalories = Math.max(maintenanceCalories - plannedDeficit, floor)
-  const dailyDeficit = maintenanceCalories - targetCalories
+  const cappedByFloor = maintenanceCalories - plannedDeficit < floor
+  const targetCalories = Math.max(maintenanceCalories - plannedDeficit, floor) + plannedSurplus
+  const dailyDeficit = Math.max(0, maintenanceCalories - targetCalories)
+  const dailySurplus = Math.max(0, targetCalories - maintenanceCalories)
 
   return {
     bmi,
@@ -142,7 +175,10 @@ export function buildCaloriePlan(input: CaloriePlanInput): CaloriePlan {
     healthyWeightHighKg: high,
     maintenanceCalories,
     targetCalories,
-    weeklyChangeKg: -(dailyDeficit * 7) / 7700, // ~7,700 kcal per kg of body fat
+    weeklyChangeKg: ((dailySurplus - dailyDeficit) * 7) / 7700, // ~7,700 kcal per kg of body weight
     dailyDeficit,
+    dailySurplus,
+    isMinor,
+    cappedByFloor,
   }
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { supabase, takeAuthLinkError } from "../lib/supabase"
-import { LanguageSwitcher } from "../components/LanguageSwitcher"
+import { LanguageButtons } from "../components/LanguageButtons"
 
 export function Auth({ passwordJustReset = false }: { passwordJustReset?: boolean }) {
   const { t } = useTranslation()
@@ -51,11 +51,9 @@ export function Auth({ passwordJustReset = false }: { passwordJustReset?: boolea
     <div className="flex h-screen w-full justify-center bg-[color:var(--color-bg)]">
       <div className="flex w-full max-w-md flex-col justify-center gap-5 px-6">
         <div>
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-[0.78rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-              {t("auth.brand")}
-            </div>
-            <LanguageSwitcher />
+          <LanguageButtons />
+          <div className="mt-5 text-[0.78rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
+            {t("auth.brand")}
           </div>
           <h1 className="mt-2 text-[1.6rem] font-semibold">
             {mode === "in" ? t("auth.welcomeBack") : mode === "up" ? t("auth.createAccount") : t("auth.resetPasswordTitle")}

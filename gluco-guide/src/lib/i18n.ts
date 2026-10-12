@@ -6,12 +6,35 @@ import es from "../locales/es.json"
 import zh from "../locales/zh.json"
 import hi from "../locales/hi.json"
 
+// `choose` is shown in its own language on the first-launch picker, so
+// someone who can't read English still recognizes the question.
 export const supportedLanguages = [
-  { code: "en", label: "English" },
-  { code: "es", label: "Español" },
-  { code: "zh", label: "中文" },
-  { code: "hi", label: "हिन्दी" },
+  { code: "en", label: "English", choose: "Choose your language" },
+  { code: "es", label: "Español", choose: "Elige tu idioma" },
+  { code: "zh", label: "中文", choose: "选择你的语言" },
+  { code: "hi", label: "हिन्दी", choose: "अपनी भाषा चुनें" },
 ] as const
+
+// Set once a person picks a language themselves; the detector's own cache
+// can't tell a real choice from the phone's guess.
+const LANGUAGE_CHOSEN_KEY = "glucoguide_lang_chosen"
+
+export function hasChosenLanguage() {
+  try {
+    return localStorage.getItem(LANGUAGE_CHOSEN_KEY) === "1"
+  } catch {
+    return true
+  }
+}
+
+export function chooseLanguage(code: string) {
+  void i18n.changeLanguage(code)
+  try {
+    localStorage.setItem(LANGUAGE_CHOSEN_KEY, "1")
+  } catch {
+    // Storage blocked: the language still applies for this visit.
+  }
+}
 
 i18n
   .use(LanguageDetector)

@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react"
 import { Navigate, Route, Routes } from "react-router-dom"
+import { useTranslation } from "react-i18next"
+import { LanguagePicker } from "./pages/LanguagePicker"
+import { hasChosenLanguage } from "./lib/i18n"
 import { Onboarding } from "./pages/Onboarding"
 import { Home } from "./pages/Home"
 import { FoodLog } from "./pages/FoodLog"
@@ -50,8 +53,10 @@ function AppRoutes({ isLive }: { isLive: boolean }) {
 }
 
 export function App() {
+  const { t } = useTranslation()
   const { session, loading, recovering } = useSession()
   const [passwordJustReset, setPasswordJustReset] = useState(false)
+  const [languageChosen, setLanguageChosen] = useState(hasChosenLanguage)
 
   useEffect(() => {
     if (session && !recovering) setPasswordJustReset(false)
@@ -64,10 +69,14 @@ export function App() {
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[color:var(--color-bg)] text-[color:var(--color-ink-soft)]">
-        Loading…
+        {t("common.loading")}
       </div>
     )
   }
+
+  // A new device asks for a language before anything else, so someone who
+  // doesn't read English can still find their way to creating an account.
+  if (!session && !languageChosen) return <LanguagePicker onChosen={() => setLanguageChosen(true)} />
 
   if (!session) return <Auth passwordJustReset={passwordJustReset} />
 

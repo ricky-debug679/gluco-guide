@@ -2,7 +2,14 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Card, Eyebrow, Screen } from "../components/Screen"
 import { useOptionalHousehold } from "../context/HouseholdContext"
-import { useClearWeightGoal, useCompleteProfile, useSetWeightGoal } from "../hooks/useHousehold"
+import {
+  useClearWeightGoal,
+  useCompleteProfile,
+  useSetTrackedAreas,
+  useSetWeightGoal,
+  useSetWeightPace,
+} from "../hooks/useHousehold"
+import { resolveTrackedAreas, trackedAreaKeys, type TrackedArea } from "../lib/trackedAreas"
 import { useDeleteAccount } from "../hooks/useDeleteAccount"
 import { supabase } from "../lib/supabase"
 import {
@@ -14,8 +21,10 @@ import {
   feetInchesToCm,
   kgToLbs,
   lbsToKg,
+  weightPaceKeys,
   type ActivityLevel,
   type BiologicalSex,
+  type WeightPace,
 } from "../lib/caloriePlan"
 import { goalKeys } from "../lib/goals"
 import { round1 } from "../lib/format"
@@ -64,6 +73,21 @@ export function Profile() {
   const weightKgDraft = Number(weightLbs) ? lbsToKg(Number(weightLbs)) : null
   const bmi = heightCmDraft && weightKgDraft ? calculateBmi(heightCmDraft, weightKgDraft) : null
   const bmiCat = bmi ? bmiCategory(bmi) : null
+  const isMinorDraft = !!Number(age) && Number(age) < 18
+
+  const tracked = resolveTrackedAreas(selfMember?.tracked_areas)
+  const setTrackedAreas = useSetTrackedAreas(selfMember?.id)
+  const [trackingError, setTrackingError] = useState<string | null>(null)
+
+  async function toggleTrackedArea(key: TrackedArea) {
+    setTrackingError(null)
+    const next = trackedAreaKeys.filter((k) => (k === key ? !tracked.has(k) : tracked.has(k)))
+    try {
+      await setTrackedAreas.mutateAsync(next)
+    } catch (err) {
+      setTrackingError(err instanceof Error ? err.message : t("onboarding.genericError"))
+    }
+  }
 
   const hasGoal = !!selfMember?.target_weight_kg
   const goalStartKg = selfMember?.goal_start_weight_kg ?? selfMember?.weight_kg ?? 0
@@ -80,28 +104,58 @@ export function Profile() {
   const goalReached = goalTotalDeltaKg > 0 ? goalCurrentKg <= goalTargetKg : goalTotalDeltaKg < 0 ? goalCurrentKg >= goalTargetKg : true
   // The finish date comes from the same calorie plan the rings use, so it
   // always matches the pace the app is actually planning for.
-  const goalEstimate = (() => {
+  const goalPlanInput = (() => {
     const m = selfMember
     if (!hasGoal || goalReached || !m?.height_cm || !m.weight_kg || !m.age || !m.biological_sex || !m.activity_level) return null
-    if (goalTargetKg >= goalCurrentKg) return { kind: "gain" as const }
-    const plan = buildCaloriePlan({
+    return {
       heightCm: m.height_cm,
       weightKg: m.weight_kg,
       age: m.age,
       sex: m.biological_sex,
       activityLevel: m.activity_level,
       targetWeightKg: goalTargetKg,
-    })
-    if (plan.weeklyChangeKg >= 0) {
-      return { kind: goalTargetKg < plan.healthyWeightLowKg ? ("belowHealthy" as const) : ("noDeficit" as const) }
-    }
-    const weeks = (goalCurrentKg - goalTargetKg) / -plan.weeklyChangeKg
-    return {
-      kind: "eta" as const,
-      rateLb: round1(kgToLbs(-plan.weeklyChangeKg)),
-      date: new Date(Date.now() + weeks * 7 * MS_PER_DAY),
     }
   })()
+  const goalEstimate = (() => {
+    if (!goalPlanInput) return null
+    const plan = buildCaloriePlan({ ...goalPlanInput, pace: selfMember?.weight_pace })
+    if (plan.isMinor) return { kind: "minor" as const }
+    const gaining = goalTargetKg > goalCurrentKg
+    if (gaining && goalTargetKg > plan.healthyWeightHighKg) return { kind: "aboveHealthy" as const }
+    if (!gaining && goalTargetKg < plan.healthyWeightLowKg) return { kind: "belowHealthy" as const }
+    // The plan must actually be moving toward the goal for a date to mean anything.
+    const towardGoal = gaining ? plan.weeklyChangeKg > 0 : plan.weeklyChangeKg < 0
+    if (!towardGoal) return { kind: "noChange" as const }
+    const ratePerWeekKg = Math.abs(plan.weeklyChangeKg)
+    const weeks = Math.abs(goalTargetKg - goalCurrentKg) / ratePerWeekKg
+    return {
+      kind: "eta" as const,
+      gaining,
+      rateLb: round1(kgToLbs(ratePerWeekKg)),
+      date: new Date(Date.now() + weeks * 7 * MS_PER_DAY),
+      // Without a saved choice the plan uses its default: gentle within the healthy range, steady outside it.
+      activePace: selfMember?.weight_pace ?? (plan.category === "healthy" ? "gentle" : "steady"),
+    }
+  })()
+  // Each pace's real weekly rate for this person, after the calorie floor.
+  const paceOptions =
+    goalPlanInput && goalEstimate?.kind === "eta"
+      ? weightPaceKeys.map((pace) => ({
+          pace,
+          rateLb: round1(kgToLbs(Math.abs(buildCaloriePlan({ ...goalPlanInput, pace }).weeklyChangeKg))),
+        }))
+      : null
+  const setWeightPace = useSetWeightPace(selfMember?.id)
+  const [paceError, setPaceError] = useState<string | null>(null)
+
+  async function handlePickPace(pace: WeightPace) {
+    setPaceError(null)
+    try {
+      await setWeightPace.mutateAsync(pace)
+    } catch (err) {
+      setPaceError(err instanceof Error ? err.message : t("onboarding.genericError"))
+    }
+  }
   const goalStatus = goalReached
     ? t("profile.goalReached")
     : goalEstimate?.kind === "eta"
@@ -117,11 +171,13 @@ export function Profile() {
         })
       : goalEstimate?.kind === "belowHealthy"
         ? t("profile.goalBelowHealthy")
-        : goalEstimate?.kind === "gain"
-          ? t("profile.goalGain")
-          : goalEstimate?.kind === "noDeficit"
-            ? t("profile.goalNoDeficit")
-            : null
+        : goalEstimate?.kind === "aboveHealthy"
+          ? t("profile.goalAboveHealthy")
+          : goalEstimate?.kind === "minor"
+            ? t("profile.goalMinor")
+            : goalEstimate?.kind === "noChange"
+              ? t("profile.goalNoDeficit")
+              : null
 
   async function handleSave() {
     if (!selfMember || !sex || !activityLevel) return
@@ -283,10 +339,12 @@ export function Profile() {
                 </div>
                 <div className="font-serif text-[1.6rem]">{bmi.toFixed(1)}</div>
               </div>
-              <div className="mt-1 text-[0.85rem] capitalize text-[color:var(--color-ink-soft)]">
-                {bmiCat === "healthy"
-                  ? t("onboarding.categoryHealthy")
-                  : t("onboarding.categoryOther", { category: t(`onboarding.categories.${bmiCat}`) })}
+              <div className={`mt-1 text-[0.85rem] text-[color:var(--color-ink-soft)] ${isMinorDraft ? "" : "capitalize"}`}>
+                {isMinorDraft
+                  ? t("onboarding.categoryMinor")
+                  : bmiCat === "healthy"
+                    ? t("onboarding.categoryHealthy")
+                    : t("onboarding.categoryOther", { category: t(`onboarding.categories.${bmiCat}`) })}
               </div>
             </Card>
           )}
@@ -329,6 +387,38 @@ export function Profile() {
                   />
                 </div>
                 {goalStatus && <div className="text-[0.82rem] leading-relaxed text-[color:var(--color-ink-soft)]">{goalStatus}</div>}
+                {paceOptions && goalEstimate?.kind === "eta" && (
+                  <div className="flex flex-col gap-2">
+                    <div className="text-[0.72rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
+                      {t("profile.paceLabel")}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {paceOptions.map(({ pace, rateLb }) => {
+                        const active = goalEstimate.activePace === pace
+                        return (
+                          <button
+                            key={pace}
+                            aria-pressed={active}
+                            onClick={() => void handlePickPace(pace)}
+                            disabled={setWeightPace.isPending}
+                            className={`flex min-h-14 flex-col items-center justify-center rounded-xl border-[1.5px] px-1 py-2 disabled:opacity-60 ${
+                              active
+                                ? "border-[color:var(--color-sage)] bg-[color:var(--color-sage-bg)] text-[color:var(--color-sage)]"
+                                : "border-[color:var(--color-line)] bg-[color:var(--color-surface)] text-[color:var(--color-ink-soft)]"
+                            }`}
+                          >
+                            <span className="text-[0.84rem] font-bold">{t(`profile.paces.${pace}`)}</span>
+                            <span className="text-[0.7rem]">{t("profile.paceRate", { rate: rateLb, unit: t("profile.lb") })}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <div className="text-[0.75rem] leading-relaxed text-[color:var(--color-ink-faint)]">
+                      {goalEstimate.gaining ? t("profile.paceGainNote") : t("profile.paceLossNote")}
+                    </div>
+                    {paceError && <div className="rounded-xl bg-[color:var(--color-berry-bg)] p-3 text-[0.82rem]">{paceError}</div>}
+                  </div>
+                )}
                 {goalError && (
                   <div className="rounded-xl bg-[color:var(--color-berry-bg)] p-3 text-[0.82rem]">{goalError}</div>
                 )}
@@ -365,6 +455,49 @@ export function Profile() {
                   {goalSaving ? t("onboarding.saving") : t("profile.setGoalButton")}
                 </button>
               </>
+            )}
+          </Card>
+
+          <Card className="flex flex-col gap-3">
+            <div>
+              <div className="text-[0.8rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
+                {t("profile.trackingSection")}
+              </div>
+              <div className="mt-1 text-[0.82rem] text-[color:var(--color-ink-soft)]">{t("profile.trackingIntro")}</div>
+            </div>
+            <div className="flex flex-col gap-2">
+              {trackedAreaKeys.map((key) => {
+                const on = tracked.has(key)
+                return (
+                  <button
+                    key={key}
+                    role="switch"
+                    aria-checked={on}
+                    onClick={() => void toggleTrackedArea(key)}
+                    disabled={setTrackedAreas.isPending}
+                    className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] px-3.5 py-2.5 text-left disabled:opacity-60"
+                  >
+                    <span>
+                      <span className="block text-[0.86rem] font-bold">{t(`onboarding.trackAreas.${key}.label`)}</span>
+                      <span className="block text-[0.72rem] text-[color:var(--color-ink-faint)]">
+                        {t(`onboarding.trackAreas.${key}.hint`)}
+                      </span>
+                    </span>
+                    <span
+                      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+                        on ? "bg-[color:var(--color-sage)]" : "bg-[color:var(--color-surface-2)]"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? "left-[22px]" : "left-0.5"}`}
+                      />
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            {trackingError && (
+              <div className="rounded-xl bg-[color:var(--color-berry-bg)] p-3 text-[0.82rem]">{trackingError}</div>
             )}
           </Card>
 

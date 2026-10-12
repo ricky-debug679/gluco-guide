@@ -434,9 +434,14 @@ export function FoodLogHistory() {
                       <div className="text-[0.7rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-honey)]">
                         {t("foodLogHistory.summary.improveLabel")}
                       </div>
-                      <div className="mt-1 text-[0.85rem] leading-relaxed text-[color:var(--color-ink)]">
-                        {summary.data.improve}
-                      </div>
+                      <ul className="mt-1.5 flex flex-col gap-1.5">
+                        {summary.data.tips.map((tip) => (
+                          <li key={tip} className="flex gap-2 text-[0.85rem] leading-snug text-[color:var(--color-ink)]">
+                            <span aria-hidden className="mt-[0.45em] h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--color-honey)]" />
+                            {tip}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
                 )}

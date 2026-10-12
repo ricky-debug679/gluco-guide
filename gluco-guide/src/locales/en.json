@@ -60,11 +60,19 @@
     "goalCurrent": "Current",
     "goalTarget": "Target",
     "goalReached": "Goal reached!",
-    "goalEta": "At a steady, safe pace of about {{rate}} {{unit}} a week, you'll reach {{target}} {{unit}} around {{date}}.",
+    "goalEta": "At about {{rate}} {{unit}} a week, you'll reach {{target}} {{unit}} around {{date}}.",
     "goalBelowHealthy": "This goal is below the healthy weight range for your height, so your plan keeps you at your current weight.",
     "goalNoDeficit": "Your plan keeps you at your current weight for now, so there's no estimated date for this goal.",
-    "goalGain": "GlucoGuide plans for maintaining or losing weight, so your plan keeps you at your current weight.",
+    "paceLabel": "Pace",
+    "paces": { "gentle": "Gentle", "steady": "Steady", "faster": "Faster" },
+    "paceRate": "about {{rate}} {{unit}}/week",
+    "paceLossNote": "Most adults can safely lose 1–2 lb a week. Your plan never goes below 1,200 calories a day (1,500 for men), so a faster pace may be slower for you.",
+    "paceGainNote": "A healthy gain is about 0.5–1 lb a week. Include protein at each meal.",
+    "goalAboveHealthy": "This goal is above the healthy weight range for your height, so your plan keeps you at your current weight.",
+    "goalMinor": "Under 18, a healthy weight depends on age and growth, so set weight goals with your doctor. Your plan keeps your current weight and focuses on healthy habits.",
     "clearGoal": "Clear goal",
+    "trackingSection": "What you track",
+    "trackingIntro": "Food is always on. Turn the others on or off anytime.",
     "dangerZone": "Danger zone",
     "deleteAccount": "Delete account",
     "deleteAccountWarning": "This permanently deletes your account and all your data — food logs, water, exercise, sleep, supplements, grocery lists, everything. This can't be undone.",
@@ -88,14 +96,19 @@
     },
     "encourageEmpty": "Log your first meal today to see how it fits your daily targets.",
     "encouragementLoading": "Looking at your day so far…",
-    "quickAdd": "Quick add",
-    "quickAddItems": {
-      "logFood": "Log Food",
-      "scanGrocery": "Scan Grocery",
-      "logExercise": "Log Exercise",
-      "logWaterFibre": "Log Water/Fibre",
-      "mindSleep": "Mind & Sleep",
-      "logSupplements": "Log Supplements"
+    "tapRingHint": "Tap a ring to add to it.",
+    "seeAll": "See all ({{count}} more)",
+    "seeLess": "Show less",
+    "logMeal": "Log a meal",
+    "checkGroceries": "Check groceries",
+    "startHere": {
+      "title": "Start here",
+      "subtitle": "Three small steps to see how your day adds up.",
+      "meal": "Log a meal",
+      "water": "Drink a glass of water",
+      "exercise": "Move for 10 minutes",
+      "mind": "Log sleep or a calm moment",
+      "hide": "Hide"
     },
     "upNext": "Up next",
     "suggestedForYou": "Suggested for you",
@@ -118,7 +131,16 @@
       "reversePrediabetes": "Reverse prediabetes",
       "preventFamily": "Prevent diabetes in my family",
       "supportFamily": "Support a family member",
-      "generalWellness": "General wellness"
+      "generalWellness": "General wellness",
+      "healthyWeight": "Reach a healthy weight"
+    },
+    "trackTitle": "What do you want to track?",
+    "trackSubtitle": "Food is always on. Pick the others you want. You can change this later in Profile.",
+    "trackAreas": {
+      "waterFiber": { "label": "Water & fiber", "hint": "Cups of water and a fiber supplement" },
+      "exercise": { "label": "Exercise", "hint": "Minutes of activity each day" },
+      "mindSleep": { "label": "Mind & sleep", "hint": "Stress relief and nightly sleep" },
+      "supplements": { "label": "Supplements", "hint": "Vitamin D, magnesium, and others" }
     },
     "aboutYouTitle": "About you",
     "aboutYouSubtitle": "This builds your BMI and a real calorie estimate — not just a guess. Age and sex are only used for that calculation.",
@@ -145,6 +167,7 @@
     "yourBmi": "Your BMI",
     "categoryHealthy": "In the healthy range",
     "categoryOther": "Category: {{category}}",
+    "categoryMinor": "Under 18, BMI is read with age-based growth charts, so ask your doctor what it means for you.",
     "categories": {
       "underweight": "underweight",
       "overweight": "overweight",
@@ -154,7 +177,8 @@
     "estimatedMaintenance": "Estimated maintenance: {{kcal}} kcal",
     "plan": {
       "messageHealthy": "Your BMI is already in the healthy range — this plan is set to maintenance calories to help you stay there, not lose more.",
-      "messageUnderweight": "Your BMI is below the typical healthy range. This app won't suggest a calorie deficit here — talk to your doctor about a healthy weight gain plan tailored to you.",
+      "messageUnderweight": "Your BMI is below the healthy range. A gentle {{surplus}}-calorie-a-day increase over maintenance adds about {{kg}}kg ({{lb}}lb) a week toward a healthy weight. Include protein at each meal, and check with your doctor.",
+      "messageMinor": "Because you're under 18, your calories are set to maintenance and the focus is on healthy habits. A growing body's healthy weight depends on age and growth, so talk to your doctor before trying to gain or lose weight.",
       "messageDeficit": "A gradual {{deficit}}-calorie-a-day reduction from your estimated maintenance is a safe pace — about {{kg}}kg ({{lb}}lb) a week toward a healthier BMI."
     },
     "disclaimer": "This is a general estimate assuming the activity level you picked — not a diagnosis. Always confirm before changing your diet significantly, especially alongside diabetes medication.",
@@ -172,6 +196,7 @@
     "genericError": "Couldn't save that — try again."
   },
   "common": {
+    "loading": "Loading…",
     "back": "Back",
     "cancel": "Cancel",
     "save": "Save",

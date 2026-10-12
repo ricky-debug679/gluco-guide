@@ -60,11 +60,19 @@
     "goalCurrent": "当前",
     "goalTarget": "目标",
     "goalReached": "目标已达成！",
-    "goalEta": "按每周约 {{rate}} {{unit}}的稳定、安全速度，你将在 {{date}} 左右达到 {{target}} {{unit}}。",
+    "goalEta": "按每周约 {{rate}} {{unit}}的速度，你将在 {{date}} 左右达到 {{target}} {{unit}}。",
     "goalBelowHealthy": "这个目标低于你身高对应的健康体重范围，因此你的计划会保持当前体重。",
     "goalNoDeficit": "目前你的计划会保持当前体重，因此这个目标暂无预计日期。",
-    "goalGain": "GlucoGuide 的计划用于保持或减轻体重，因此你的计划会保持当前体重。",
+    "paceLabel": "速度",
+    "paces": { "gentle": "温和", "steady": "稳定", "faster": "较快" },
+    "paceRate": "每周约 {{rate}} {{unit}}",
+    "paceLossNote": "大多数成年人每周安全减重 1 到 2 磅。你的计划每天热量不会低于 1,200 卡路里（男性为 1,500），所以较快的速度对你来说可能会慢一些。",
+    "paceGainNote": "健康的增重速度约为每周 0.5 到 1 磅。每餐都要摄入蛋白质。",
+    "goalAboveHealthy": "这个目标高于你身高对应的健康体重范围，因此你的计划会保持当前体重。",
+    "goalMinor": "18 岁以下的健康体重取决于年龄和生长发育，请和医生一起设定体重目标。你的计划会保持当前体重，并专注于健康习惯。",
     "clearGoal": "清除目标",
+    "trackingSection": "你记录的内容",
+    "trackingIntro": "饮食始终开启。其他项目可随时开启或关闭。",
     "dangerZone": "危险区域",
     "deleteAccount": "删除账户",
     "deleteAccountWarning": "此操作将永久删除你的账户和所有数据——饮食记录、饮水、运动、睡眠、补充剂、购物清单，全部数据。此操作无法撤销。",
@@ -88,14 +96,19 @@
     },
     "encourageEmpty": "记录今天的第一餐，看看它如何符合你的每日目标。",
     "encouragementLoading": "正在查看你今天的进展…",
-    "quickAdd": "快速添加",
-    "quickAddItems": {
-      "logFood": "记录饮食",
-      "scanGrocery": "扫描商品",
-      "logExercise": "记录运动",
-      "logWaterFibre": "记录水分/纤维",
-      "mindSleep": "身心与睡眠",
-      "logSupplements": "记录补充剂"
+    "tapRingHint": "点按圆环即可记录。",
+    "seeAll": "查看全部（另外 {{count}} 项）",
+    "seeLess": "收起",
+    "logMeal": "记录一餐",
+    "checkGroceries": "检查购物清单",
+    "startHere": {
+      "title": "从这里开始",
+      "subtitle": "三个小步骤，看看你的一天进展如何。",
+      "meal": "记录一餐",
+      "water": "喝一杯水",
+      "exercise": "活动 10 分钟",
+      "mind": "记录睡眠或片刻放松",
+      "hide": "隐藏"
     },
     "upNext": "接下来",
     "suggestedForYou": "为你推荐",
@@ -118,7 +131,16 @@
       "reversePrediabetes": "逆转糖尿病前期",
       "preventFamily": "预防家人患糖尿病",
       "supportFamily": "帮助一位家庭成员",
-      "generalWellness": "全面健康管理"
+      "generalWellness": "全面健康管理",
+      "healthyWeight": "达到健康体重"
+    },
+    "trackTitle": "你想记录什么？",
+    "trackSubtitle": "饮食始终开启。选择你想记录的其他项目，之后可在个人资料中更改。",
+    "trackAreas": {
+      "waterFiber": { "label": "水分和纤维", "hint": "每天喝水杯数和纤维补充剂" },
+      "exercise": { "label": "运动", "hint": "每天的活动分钟数" },
+      "mindSleep": { "label": "身心与睡眠", "hint": "减压活动和夜间睡眠" },
+      "supplements": { "label": "补充剂", "hint": "维生素 D、镁等" }
     },
     "aboutYouTitle": "关于你",
     "aboutYouSubtitle": "这将计算你的 BMI 和真实的卡路里估算值——而不只是猜测。年龄和性别仅用于该计算。",
@@ -145,6 +167,7 @@
     "yourBmi": "你的 BMI",
     "categoryHealthy": "处于健康范围内",
     "categoryOther": "分类：{{category}}",
+    "categoryMinor": "18 岁以下的 BMI 需要结合年龄生长曲线来判断，请向医生了解它对你意味着什么。",
     "categories": {
       "underweight": "偏瘦",
       "overweight": "超重",
@@ -154,7 +177,8 @@
     "estimatedMaintenance": "维持体重估算：{{kcal}} 千卡",
     "plan": {
       "messageHealthy": "你的 BMI 已经处于健康范围——此计划设定为维持热量，帮助你保持现状，而不是继续减重。",
-      "messageUnderweight": "你的 BMI 低于典型健康范围。本应用不会在此建议热量缺口——请咨询医生，制定适合你的健康增重计划。",
+      "messageUnderweight": "你的 BMI 低于健康范围。在维持热量的基础上每天温和增加 {{surplus}} 卡路里，每周大约增加 {{kg}} 公斤（{{lb}} 磅），逐步达到健康体重。每餐都要摄入蛋白质，并咨询医生。",
+      "messageMinor": "因为你未满 18 岁，你的热量设定为维持水平，重点放在健康习惯上。成长中身体的健康体重取决于年龄和生长发育，因此在尝试增重或减重前请先咨询医生。",
       "messageDeficit": "从你的估算维持热量中每天逐步减少 {{deficit}} 千卡是安全的节奏——相当于每周约 {{kg}} 公斤（{{lb}} 磅），帮助你迈向更健康的 BMI。"
     },
     "disclaimer": "这是基于你所选活动水平的一般估算——并非诊断。在大幅调整饮食之前，尤其是在服用糖尿病药物的情况下，请务必先咨询医生。",
@@ -172,6 +196,7 @@
     "genericError": "保存失败——请重试。"
   },
   "common": {
+    "loading": "加载中…",
     "back": "返回",
     "cancel": "取消",
     "save": "保存",

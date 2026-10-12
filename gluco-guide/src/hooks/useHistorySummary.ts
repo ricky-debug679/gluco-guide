@@ -13,7 +13,8 @@ export interface HistorySummaryInput {
 
 export interface HistorySummaryResult {
   doingWell: string
-  improve: string
+  /** Up to 3 short tips, most important first. */
+  tips: string[]
 }
 
 // Triggered on demand (a button tap), never automatically — this hits a
@@ -30,7 +31,9 @@ export function useHistorySummary(memberId: string | undefined, input: HistorySu
       const { data, error } = await supabase.functions.invoke("summarize-history", { body: input })
       if (error) throw new Error(await describeFunctionError(error))
       if (data?.error) throw new Error(data.error)
-      return data as HistorySummaryResult
+      // Until the new function is deployed, the reply has one "improve" paragraph instead of tips.
+      const tips: string[] = Array.isArray(data?.tips) ? data.tips : data?.improve ? [data.improve] : []
+      return { doingWell: data?.doingWell ?? "", tips } satisfies HistorySummaryResult
     },
     enabled: false,
     staleTime: 1000 * 60 * 60 * 12,

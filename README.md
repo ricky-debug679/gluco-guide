@@ -8,7 +8,9 @@ Built for the 2026 Congressional App Challenge.
 
 ## What it does
 
-**Daily dashboard.** Nine progress rings track calories, fiber, protein, carbs, fat, water, mind and sleep, supplements, and exercise. The calorie target is personalized from height, weight, age, sex, and activity level using the Mifflin-St Jeor equation.
+**Daily dashboard.** Progress rings track calories, fiber, protein, carbs, fat, water, mind and sleep, supplements, and exercise. Three main rings show first, and tapping a ring opens the screen where you log it. New users get a short "Start here" checklist, and everyone chooses which areas to track. The calorie target is personalized from height, weight, age, sex, and activity level using the Mifflin-St Jeor equation.
+
+**A healthy weight, in either direction.** Based on BMI, the plan helps people lose or gain weight toward the healthy range at a pace they choose, and never drops below 1,200 calories a day (1,500 for men). People under 18 stay at maintenance calories, since adult BMI cutoffs don't apply to a growing body.
 
 **Log a meal by photo.** Snap a plate and AI identifies the dish, estimates nutrition for the portion shown, and asks a short question when something can't be told from a photo, such as whether a dish is made with chicken or paneer, instead of guessing. You can also search about 326,000 foods from the OpenNutrition database or enter a meal by hand.
 
@@ -22,7 +24,7 @@ Built for the 2026 Congressional App Challenge.
 
 **History and progress summary.** Fourteen-day charts for food, water, exercise, sleep, and supplements. On request, AI writes a short, encouraging summary of what's going well and what to focus on next.
 
-**Four languages.** The whole app, including AI responses, works in English, Spanish, Simplified Chinese, and Hindi.
+**Four languages.** The whole app, including AI responses, works in English, Spanish, Simplified Chinese, and Hindi. The first screen on a new phone asks for a language before sign-up, so nobody has to read English to create an account.
 
 ## Privacy and safety
 

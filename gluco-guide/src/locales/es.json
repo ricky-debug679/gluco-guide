@@ -60,11 +60,19 @@
     "goalCurrent": "Actual",
     "goalTarget": "Objetivo",
     "goalReached": "¡Objetivo alcanzado!",
-    "goalEta": "A un ritmo constante y seguro de unas {{rate}} {{unit}} por semana, llegarás a {{target}} {{unit}} alrededor del {{date}}.",
+    "goalEta": "A unas {{rate}} {{unit}} por semana, llegarás a {{target}} {{unit}} alrededor del {{date}}.",
     "goalBelowHealthy": "Esta meta está por debajo del rango de peso saludable para tu estatura, así que tu plan te mantiene en tu peso actual.",
     "goalNoDeficit": "Por ahora tu plan te mantiene en tu peso actual, así que no hay una fecha estimada para esta meta.",
-    "goalGain": "GlucoGuide planifica para mantener o bajar de peso, así que tu plan te mantiene en tu peso actual.",
+    "paceLabel": "Ritmo",
+    "paces": { "gentle": "Suave", "steady": "Constante", "faster": "Más rápido" },
+    "paceRate": "unas {{rate}} {{unit}}/semana",
+    "paceLossNote": "La mayoría de los adultos puede bajar de 1 a 2 lb por semana de forma segura. Tu plan nunca baja de 1,200 calorías al día (1,500 para hombres), así que un ritmo más rápido puede ser más lento para ti.",
+    "paceGainNote": "Un aumento saludable es de unas 0.5 a 1 lb por semana. Incluye proteína en cada comida.",
+    "goalAboveHealthy": "Esta meta está por encima del rango de peso saludable para tu estatura, así que tu plan te mantiene en tu peso actual.",
+    "goalMinor": "Antes de los 18 años, el peso saludable depende de la edad y el crecimiento, así que fija metas de peso con tu médico. Tu plan mantiene tu peso actual y se enfoca en hábitos saludables.",
     "clearGoal": "Quitar objetivo",
+    "trackingSection": "Lo que registras",
+    "trackingIntro": "La comida siempre está activada. Activa o desactiva lo demás cuando quieras.",
     "dangerZone": "Zona de peligro",
     "deleteAccount": "Eliminar cuenta",
     "deleteAccountWarning": "Esto elimina permanentemente tu cuenta y todos tus datos — registros de comida, agua, ejercicio, sueño, suplementos, listas de compras, todo. No se puede deshacer.",
@@ -88,14 +96,19 @@
     },
     "encourageEmpty": "Registra tu primera comida de hoy para ver cómo encaja en tus metas diarias.",
     "encouragementLoading": "Revisando tu día hasta ahora…",
-    "quickAdd": "Acceso rápido",
-    "quickAddItems": {
-      "logFood": "Registrar comida",
-      "scanGrocery": "Escanear producto",
-      "logExercise": "Registrar ejercicio",
-      "logWaterFibre": "Agua y fibra",
-      "mindSleep": "Mente y sueño",
-      "logSupplements": "Suplementos"
+    "tapRingHint": "Toca un anillo para agregarle algo.",
+    "seeAll": "Ver todo ({{count}} más)",
+    "seeLess": "Ver menos",
+    "logMeal": "Registrar comida",
+    "checkGroceries": "Revisar compras",
+    "startHere": {
+      "title": "Empieza aquí",
+      "subtitle": "Tres pasos pequeños para ver cómo va tu día.",
+      "meal": "Registra una comida",
+      "water": "Toma un vaso de agua",
+      "exercise": "Muévete 10 minutos",
+      "mind": "Registra tu sueño o un momento de calma",
+      "hide": "Ocultar"
     },
     "upNext": "Próximo",
     "suggestedForYou": "Sugerencia para ti",
@@ -118,7 +131,16 @@
       "reversePrediabetes": "Revertir la prediabetes",
       "preventFamily": "Prevenir la diabetes en mi familia",
       "supportFamily": "Apoyar a un familiar",
-      "generalWellness": "Bienestar general"
+      "generalWellness": "Bienestar general",
+      "healthyWeight": "Llegar a un peso saludable"
+    },
+    "trackTitle": "¿Qué quieres registrar?",
+    "trackSubtitle": "La comida siempre está activada. Elige lo demás que quieras. Puedes cambiarlo luego en tu perfil.",
+    "trackAreas": {
+      "waterFiber": { "label": "Agua y fibra", "hint": "Vasos de agua y un suplemento de fibra" },
+      "exercise": { "label": "Ejercicio", "hint": "Minutos de actividad cada día" },
+      "mindSleep": { "label": "Mente y sueño", "hint": "Alivio del estrés y sueño nocturno" },
+      "supplements": { "label": "Suplementos", "hint": "Vitamina D, magnesio y otros" }
     },
     "aboutYouTitle": "Sobre ti",
     "aboutYouSubtitle": "Esto calcula tu IMC y una estimación real de calorías — no solo una suposición. La edad y el sexo solo se usan para ese cálculo.",
@@ -145,6 +167,7 @@
     "yourBmi": "Tu IMC",
     "categoryHealthy": "Dentro del rango saludable",
     "categoryOther": "Categoría: {{category}}",
+    "categoryMinor": "Antes de los 18 años, el IMC se interpreta con tablas de crecimiento por edad, así que pregunta a tu médico qué significa para ti.",
     "categories": {
       "underweight": "bajo peso",
       "overweight": "sobrepeso",
@@ -154,7 +177,8 @@
     "estimatedMaintenance": "Mantenimiento estimado: {{kcal}} kcal",
     "plan": {
       "messageHealthy": "Tu IMC ya está dentro del rango saludable — este plan se ajusta a calorías de mantenimiento para ayudarte a quedarte ahí, no a perder más.",
-      "messageUnderweight": "Tu IMC está por debajo del rango saludable típico. Esta app no sugerirá un déficit calórico aquí — habla con tu médico sobre un plan saludable de aumento de peso hecho para ti.",
+      "messageUnderweight": "Tu IMC está por debajo del rango saludable. Un aumento suave de {{surplus}} calorías al día sobre tu mantenimiento suma unos {{kg}} kg ({{lb}} lb) por semana hacia un peso saludable. Incluye proteína en cada comida y consulta con tu médico.",
+      "messageMinor": "Como tienes menos de 18 años, tus calorías están en mantenimiento y el enfoque está en hábitos saludables. El peso saludable de un cuerpo en crecimiento depende de la edad y el crecimiento, así que habla con tu médico antes de intentar subir o bajar de peso.",
       "messageDeficit": "Una reducción gradual de {{deficit}} calorías al día desde tu mantenimiento estimado es un ritmo seguro — cerca de {{kg}}kg ({{lb}}lb) por semana hacia un IMC más saludable."
     },
     "disclaimer": "Esta es una estimación general que asume el nivel de actividad que elegiste — no es un diagnóstico. Siempre confirma antes de cambiar tu dieta significativamente, especialmente si tomas medicación para la diabetes.",
@@ -172,6 +196,7 @@
     "genericError": "No se pudo guardar — inténtalo de nuevo."
   },
   "common": {
+    "loading": "Cargando…",
     "back": "Atrás",
     "cancel": "Cancelar",
     "save": "Guardar",

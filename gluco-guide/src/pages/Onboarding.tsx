@@ -14,6 +14,8 @@ import {
   type BiologicalSex,
 } from "../lib/caloriePlan"
 import { goalKeys } from "../lib/goals"
+import { trackedAreaKeys, type TrackedArea } from "../lib/trackedAreas"
+import { LanguageSwitcher } from "../components/LanguageSwitcher"
 import { localDateKey } from "../lib/history"
 
 // Accepts how people actually write lab results: "5.7%", "110 mg/dL", "5,7".
@@ -43,6 +45,7 @@ export function Onboarding() {
   // name, so every user has to actually type their own name here.
   const [name, setName] = useState("")
   const [goalIndex, setGoalIndex] = useState<number | null>(null)
+  const [trackedAreas, setTrackedAreas] = useState<TrackedArea[]>([...trackedAreaKeys])
   const [heightFeet, setHeightFeet] = useState("5")
   const [heightInches, setHeightInches] = useState("4")
   const [weightLbs, setWeightLbs] = useState("160")
@@ -55,7 +58,12 @@ export function Onboarding() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const lastStep = isLive ? 3 : 2
+  // Live steps: 0 name, 1 goal, 2 what to track, 3 about you, 4 plan.
+  const lastStep = isLive ? 4 : 2
+
+  function toggleTrackedArea(key: TrackedArea) {
+    setTrackedAreas((current) => (current.includes(key) ? current.filter((k) => k !== key) : [...current, key]))
+  }
 
   const currentName = isLive ? name : demoOnboarding.name
   const canContinueName = currentName.trim().length > 0
@@ -92,6 +100,7 @@ export function Onboarding() {
         age: Number(age),
         sex,
         activityLevel,
+        trackedAreas,
       })
 
       if (supabase) {
@@ -165,6 +174,7 @@ export function Onboarding() {
               }`}
             />
           ))}
+          <LanguageSwitcher className="ml-auto" />
         </div>
 
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-7">
@@ -227,6 +237,58 @@ export function Onboarding() {
               <div>
                 <div className="text-[0.78rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
                   {t("onboarding.stepOf", { n: 3, total: lastStep + 1 })}
+                </div>
+                <h1 className="mt-2 text-[1.5rem] font-semibold">{t("onboarding.trackTitle")}</h1>
+                <div className="mt-2 text-[0.9rem] text-[color:var(--color-ink-soft)]">
+                  {t("onboarding.trackSubtitle")}
+                </div>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                {trackedAreaKeys.map((key) => {
+                  const on = trackedAreas.includes(key)
+                  return (
+                    <button
+                      key={key}
+                      role="checkbox"
+                      aria-checked={on}
+                      onClick={() => toggleTrackedArea(key)}
+                      className={`flex min-h-11 items-center gap-3 rounded-2xl border-[1.5px] px-4 py-3 text-left ${
+                        on
+                          ? "border-[color:var(--color-sage)] bg-[color:var(--color-sage-bg)]"
+                          : "border-[color:var(--color-line)] bg-[color:var(--color-surface)]"
+                      }`}
+                    >
+                      <span
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${
+                          on
+                            ? "border-[color:var(--color-sage)] bg-[color:var(--color-sage)] text-white"
+                            : "border-[color:var(--color-line)]"
+                        }`}
+                      >
+                        {on && (
+                          <svg width={14} height={14} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 12l5 5 9-10" />
+                          </svg>
+                        )}
+                      </span>
+                      <span>
+                        <span className="block text-[0.9rem] font-bold">{t(`onboarding.trackAreas.${key}.label`)}</span>
+                        <span className="block text-[0.75rem] text-[color:var(--color-ink-faint)]">
+                          {t(`onboarding.trackAreas.${key}.hint`)}
+                        </span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
+
+          {isLive && displayStep === 3 && (
+            <>
+              <div>
+                <div className="text-[0.78rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
+                  {t("onboarding.stepOf", { n: 4, total: lastStep + 1 })}
                 </div>
                 <h1 className="mt-2 text-[1.5rem] font-semibold">{t("onboarding.aboutYouTitle")}</h1>
                 <div className="mt-2 text-[0.9rem] text-[color:var(--color-ink-soft)]">
@@ -368,11 +430,11 @@ export function Onboarding() {
             </>
           )}
 
-          {isLive && displayStep === 3 && plan && (
+          {isLive && displayStep === 4 && plan && (
             <>
               <div>
                 <div className="text-[0.78rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                  {t("onboarding.stepOf", { n: 4, total: lastStep + 1 })}
+                  {t("onboarding.stepOf", { n: 5, total: lastStep + 1 })}
                 </div>
                 <h1 className="mt-2 text-[1.5rem] font-semibold">{t("onboarding.planTitle")}</h1>
               </div>
@@ -384,10 +446,12 @@ export function Onboarding() {
                   </div>
                   <div className="font-serif text-[1.6rem]">{plan.bmi.toFixed(1)}</div>
                 </div>
-                <div className="mt-1 text-[0.85rem] capitalize text-[color:var(--color-ink-soft)]">
-                  {plan.category === "healthy"
-                    ? t("onboarding.categoryHealthy")
-                    : t("onboarding.categoryOther", { category: t(`onboarding.categories.${plan.category}`) })}
+                <div className={`mt-1 text-[0.85rem] text-[color:var(--color-ink-soft)] ${plan.isMinor ? "" : "capitalize"}`}>
+                  {plan.isMinor
+                    ? t("onboarding.categoryMinor")
+                    : plan.category === "healthy"
+                      ? t("onboarding.categoryHealthy")
+                      : t("onboarding.categoryOther", { category: t(`onboarding.categories.${plan.category}`) })}
                 </div>
               </div>
 
@@ -400,15 +464,21 @@ export function Onboarding() {
                   {t("onboarding.estimatedMaintenance", { kcal: plan.maintenanceCalories.toLocaleString() })}
                 </div>
                 <div className="mt-2.5 text-[0.85rem] leading-relaxed">
-                  {plan.category === "healthy"
-                    ? t("onboarding.plan.messageHealthy")
-                    : plan.category === "underweight"
-                      ? t("onboarding.plan.messageUnderweight")
-                      : t("onboarding.plan.messageDeficit", {
-                          deficit: Math.round(plan.dailyDeficit),
-                          kg: Math.abs(plan.weeklyChangeKg).toFixed(1),
-                          lb: Math.abs(plan.weeklyChangeKg * 2.2046).toFixed(1),
-                        })}
+                  {plan.isMinor
+                    ? t("onboarding.plan.messageMinor")
+                    : plan.category === "healthy"
+                      ? t("onboarding.plan.messageHealthy")
+                      : plan.category === "underweight"
+                        ? t("onboarding.plan.messageUnderweight", {
+                            surplus: Math.round(plan.dailySurplus),
+                            kg: Math.abs(plan.weeklyChangeKg).toFixed(1),
+                            lb: Math.abs(plan.weeklyChangeKg * 2.2046).toFixed(1),
+                          })
+                        : t("onboarding.plan.messageDeficit", {
+                            deficit: Math.round(plan.dailyDeficit),
+                            kg: Math.abs(plan.weeklyChangeKg).toFixed(1),
+                            lb: Math.abs(plan.weeklyChangeKg * 2.2046).toFixed(1),
+                          })}
                 </div>
               </div>
 
@@ -472,7 +542,7 @@ export function Onboarding() {
             onClick={handleNext}
             disabled={
               (displayStep === 0 && !canContinueName) ||
-              (isLive && displayStep === 2 && !canContinueAboutYou) ||
+              (isLive && displayStep === 3 && !canContinueAboutYou) ||
               saving
             }
             className="min-h-11 rounded-xl bg-[color:var(--color-sage)] px-4 py-3.5 text-[0.92rem] font-bold text-white disabled:opacity-60"

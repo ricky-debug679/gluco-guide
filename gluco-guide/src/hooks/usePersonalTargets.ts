@@ -14,11 +14,12 @@ export function usePersonalTargets(): NutrientTargets {
   const sex = self?.biological_sex
   const activityLevel = self?.activity_level
   const targetWeightKg = self?.target_weight_kg
+  const pace = self?.weight_pace
 
   return useMemo(() => {
     if (!heightCm || !weightKg || !age || !sex || !activityLevel) return defaults
-    const input = { heightCm, weightKg, age, sex, activityLevel, targetWeightKg }
+    const input = { heightCm, weightKg, age, sex, activityLevel, targetWeightKg, pace }
     const plan = buildCaloriePlan(input)
     return { ...defaults, ...buildMacroTargets(plan, input), caloriesKcal: plan.targetCalories }
-  }, [defaults, heightCm, weightKg, age, sex, activityLevel, targetWeightKg])
+  }, [defaults, heightCm, weightKg, age, sex, activityLevel, targetWeightKg, pace])
 }
