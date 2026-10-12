@@ -196,6 +196,7 @@
     "genericError": "Couldn't save that — try again."
   },
   "common": {
+    "accountLoadError": "Couldn't load your account. Check your connection and try again.",
     "loading": "Loading…",
     "back": "Back",
     "cancel": "Cancel",

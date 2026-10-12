@@ -196,6 +196,7 @@
     "genericError": "No se pudo guardar — inténtalo de nuevo."
   },
   "common": {
+    "accountLoadError": "No se pudo cargar tu cuenta. Revisa tu conexión e inténtalo de nuevo.",
     "loading": "Cargando…",
     "back": "Atrás",
     "cancel": "Cancelar",

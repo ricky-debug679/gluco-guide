@@ -196,6 +196,7 @@
     "genericError": "保存失败——请重试。"
   },
   "common": {
+    "accountLoadError": "无法加载你的账户。请检查网络连接后重试。",
     "loading": "加载中…",
     "back": "返回",
     "cancel": "取消",

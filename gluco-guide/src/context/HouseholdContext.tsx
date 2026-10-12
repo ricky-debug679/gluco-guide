@@ -1,4 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 import type { User } from "@supabase/supabase-js"
 import { useHousehold, type HouseholdData } from "../hooks/useHousehold"
 
@@ -10,20 +11,22 @@ interface HouseholdContextValue {
 const HouseholdContext = createContext<HouseholdContextValue | null>(null)
 
 export function HouseholdProvider({ user, children }: { user: User; children: ReactNode }) {
+  const { t } = useTranslation()
   const { data, isLoading, isError, error } = useHousehold(user)
 
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[color:var(--color-bg)] text-[color:var(--color-ink-soft)]">
-        Setting up your household…
+        {t("common.loading")}
       </div>
     )
   }
 
   if (isError || !data) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[color:var(--color-bg)] p-6 text-center text-[color:var(--color-ink-soft)]">
-        Couldn't set up your household: {error instanceof Error ? error.message : "unknown error"}
+      <div className="flex h-screen w-full flex-col items-center justify-center gap-2 bg-[color:var(--color-bg)] p-6 text-center text-[color:var(--color-ink-soft)]">
+        <div>{t("common.accountLoadError")}</div>
+        {error instanceof Error && <div className="text-[0.78rem] text-[color:var(--color-ink-faint)]">{error.message}</div>}
       </div>
     )
   }
