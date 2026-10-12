@@ -17,7 +17,7 @@ export default defineConfig({
     mkcert(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'GlucoGuide',
         short_name: 'GlucoGuide',
@@ -25,6 +25,13 @@ export default defineConfig({
         theme_color: '#5E8261',
         background_color: '#FBF7F1',
         display: 'standalone',
+        // The "Ring and Leaf" logo. The maskable one has extra padding so
+        // phones that crop icons into circles or squircles keep the leaf.
+        icons: [
+          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
