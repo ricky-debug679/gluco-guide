@@ -131,9 +131,11 @@ export function Home() {
     setStartHereDone(true)
   }
 
+  // Not requested while the Start here card is up: that card replaces the
+  // message, so asking the AI then would be a paid call nobody sees.
   const encouragement = useDailyEncouragement(
     selfMemberId,
-    isLive && !todayLoading && loggedAnythingToday
+    isLive && !todayLoading && loggedAnythingToday && !showStartHere
       ? {
           caloriesKcal,
           calorieTarget,
