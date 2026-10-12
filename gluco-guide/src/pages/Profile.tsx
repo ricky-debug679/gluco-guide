@@ -8,6 +8,7 @@ import { supabase } from "../lib/supabase"
 import {
   activityLevelKeys,
   bmiCategory,
+  buildCaloriePlan,
   calculateBmi,
   cmToFeetInches,
   feetInchesToCm,
@@ -17,12 +18,12 @@ import {
   type BiologicalSex,
 } from "../lib/caloriePlan"
 import { goalKeys } from "../lib/goals"
-import { parseLocalDate } from "../lib/history"
+import { round1 } from "../lib/format"
 
 const MS_PER_DAY = 86_400_000
 
 export function Profile() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const householdCtx = useOptionalHousehold()
   const isLive = !!householdCtx
   const selfMember = householdCtx?.household.selfMember
@@ -53,7 +54,6 @@ export function Profile() {
   const [passwordSaved, setPasswordSaved] = useState(false)
 
   const [targetWeightLbs, setTargetWeightLbs] = useState("")
-  const [goalDuration, setGoalDuration] = useState<7 | 30>(7)
   const [goalSaving, setGoalSaving] = useState(false)
   const [goalError, setGoalError] = useState<string | null>(null)
 
@@ -65,7 +65,7 @@ export function Profile() {
   const bmi = heightCmDraft && weightKgDraft ? calculateBmi(heightCmDraft, weightKgDraft) : null
   const bmiCat = bmi ? bmiCategory(bmi) : null
 
-  const hasGoal = !!selfMember?.target_weight_kg && !!selfMember?.goal_deadline
+  const hasGoal = !!selfMember?.target_weight_kg
   const goalStartKg = selfMember?.goal_start_weight_kg ?? selfMember?.weight_kg ?? 0
   const goalCurrentKg = selfMember?.weight_kg ?? goalStartKg
   const goalTargetKg = selfMember?.target_weight_kg ?? 0
@@ -78,9 +78,50 @@ export function Profile() {
         ? 1
         : 0
   const goalReached = goalTotalDeltaKg > 0 ? goalCurrentKg <= goalTargetKg : goalTotalDeltaKg < 0 ? goalCurrentKg >= goalTargetKg : true
-  const goalDaysLeft = selfMember?.goal_deadline
-    ? Math.ceil((parseLocalDate(selfMember.goal_deadline).getTime() - Date.now()) / MS_PER_DAY)
-    : 0
+  // The finish date comes from the same calorie plan the rings use, so it
+  // always matches the pace the app is actually planning for.
+  const goalEstimate = (() => {
+    const m = selfMember
+    if (!hasGoal || goalReached || !m?.height_cm || !m.weight_kg || !m.age || !m.biological_sex || !m.activity_level) return null
+    if (goalTargetKg >= goalCurrentKg) return { kind: "gain" as const }
+    const plan = buildCaloriePlan({
+      heightCm: m.height_cm,
+      weightKg: m.weight_kg,
+      age: m.age,
+      sex: m.biological_sex,
+      activityLevel: m.activity_level,
+      targetWeightKg: goalTargetKg,
+    })
+    if (plan.weeklyChangeKg >= 0) {
+      return { kind: goalTargetKg < plan.healthyWeightLowKg ? ("belowHealthy" as const) : ("noDeficit" as const) }
+    }
+    const weeks = (goalCurrentKg - goalTargetKg) / -plan.weeklyChangeKg
+    return {
+      kind: "eta" as const,
+      rateLb: round1(kgToLbs(-plan.weeklyChangeKg)),
+      date: new Date(Date.now() + weeks * 7 * MS_PER_DAY),
+    }
+  })()
+  const goalStatus = goalReached
+    ? t("profile.goalReached")
+    : goalEstimate?.kind === "eta"
+      ? t("profile.goalEta", {
+          rate: goalEstimate.rateLb,
+          target: Math.round(kgToLbs(goalTargetKg)),
+          unit: t("profile.lb"),
+          date: goalEstimate.date.toLocaleDateString(i18n.language, {
+            month: "short",
+            day: "numeric",
+            ...(goalEstimate.date.getFullYear() !== new Date().getFullYear() && { year: "numeric" }),
+          }),
+        })
+      : goalEstimate?.kind === "belowHealthy"
+        ? t("profile.goalBelowHealthy")
+        : goalEstimate?.kind === "gain"
+          ? t("profile.goalGain")
+          : goalEstimate?.kind === "noDeficit"
+            ? t("profile.goalNoDeficit")
+            : null
 
   async function handleSave() {
     if (!selfMember || !sex || !activityLevel) return
@@ -143,7 +184,6 @@ export function Profile() {
       await setWeightGoal.mutateAsync({
         targetWeightKg: lbsToKg(Number(targetWeightLbs)),
         startWeightKg: selfMember.weight_kg,
-        durationDays: goalDuration,
       })
       setTargetWeightLbs("")
     } catch (err) {
@@ -288,13 +328,7 @@ export function Profile() {
                     style={{ width: `${Math.round(goalFraction * 100)}%` }}
                   />
                 </div>
-                <div className="text-[0.82rem] text-[color:var(--color-ink-soft)]">
-                  {goalReached
-                    ? t("profile.goalReached")
-                    : goalDaysLeft > 0
-                      ? t("profile.daysLeft", { count: goalDaysLeft })
-                      : t("profile.goalPassed")}
-                </div>
+                {goalStatus && <div className="text-[0.82rem] leading-relaxed text-[color:var(--color-ink-soft)]">{goalStatus}</div>}
                 {goalError && (
                   <div className="rounded-xl bg-[color:var(--color-berry-bg)] p-3 text-[0.82rem]">{goalError}</div>
                 )}
@@ -319,26 +353,6 @@ export function Profile() {
                     onChange={(e) => setTargetWeightLbs(e.target.value)}
                     className="mt-2 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
                   />
-                </div>
-                <div>
-                  <label className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
-                    {t("profile.durationLabel")}
-                  </label>
-                  <div className="mt-2 flex gap-2.5">
-                    {([7, 30] as const).map((d) => (
-                      <button
-                        key={d}
-                        onClick={() => setGoalDuration(d)}
-                        className={`min-h-11 flex-1 rounded-xl text-[0.88rem] font-bold ${
-                          goalDuration === d
-                            ? "bg-[color:var(--color-sage)] text-white"
-                            : "bg-[color:var(--color-surface-2)] text-[color:var(--color-ink-faint)]"
-                        }`}
-                      >
-                        {d === 7 ? t("profile.oneWeek") : t("profile.oneMonth")}
-                      </button>
-                    ))}
-                  </div>
                 </div>
                 {goalError && (
                   <div className="rounded-xl bg-[color:var(--color-berry-bg)] p-3 text-[0.82rem]">{goalError}</div>

@@ -125,18 +125,16 @@ export function useCompleteProfile(memberId: string | undefined) {
 export function useSetWeightGoal(memberId: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { targetWeightKg: number; startWeightKg: number; durationDays: 7 | 30 }) => {
+    // No deadline: the finish date is estimated from the calorie plan's safe pace instead.
+    mutationFn: async (input: { targetWeightKg: number; startWeightKg: number }) => {
       if (!supabase || !memberId) throw new Error("No profile to update yet")
-      const today = new Date()
-      const deadline = new Date(today)
-      deadline.setDate(deadline.getDate() + input.durationDays)
       const { error } = await supabase
         .from("members")
         .update({
           target_weight_kg: input.targetWeightKg,
           goal_start_weight_kg: input.startWeightKg,
-          goal_set_at: localDateKey(today),
-          goal_deadline: localDateKey(deadline),
+          goal_set_at: localDateKey(),
+          goal_deadline: null,
         })
         .eq("id", memberId)
       if (error) throw error

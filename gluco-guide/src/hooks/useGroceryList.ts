@@ -265,12 +265,13 @@ export function useGroceryListItems(householdId: string | undefined) {
   const saveVerdicts = useMutation({
     mutationFn: async (input: { listId: string; items: GroceryListItem[]; flags: ItemFlag[] }) => {
       if (!supabase) return null
-      // A verdict with no explanation isn't useful to show, so it isn't saved.
-      const explained = input.flags.filter((f) => f.note?.trim())
+      // Only explained good/caution verdicts are saved; the AI sometimes also
+      // returns "neutral" or an empty note, which would show as a bare mark.
+      const explained = input.flags.filter((f) => (f.verdict === "good" || f.verdict === "caution") && f.note?.trim())
       const updates = input.items
         .map((item) => ({ item, flag: explained.find((f) => matchesFlag(item.name, f.name)) }))
         .filter((x): x is { item: GroceryListItem; flag: ItemFlag } => !!x.flag)
-      await Promise.all(
+      const results = await Promise.all(
         updates.map(({ item, flag }) =>
           supabase!
             .from("grocery_list_items")
@@ -278,6 +279,8 @@ export function useGroceryListItems(householdId: string | undefined) {
             .eq("id", item.id),
         ),
       )
+      const failed = results.find((r) => r.error)
+      if (failed?.error) throw failed.error
       return { listId: input.listId, updates }
     },
     onSuccess: (result) => {
@@ -319,6 +322,8 @@ export function useGroceryListItems(householdId: string | undefined) {
       saveVerdicts.mutateAsync({ listId, items, flags }),
     analyze: (items: string[]) => analyze.mutateAsync(items),
     analyzing: analyze.isPending,
+    // True while a just-added item is still saving, so Analyze can wait for it.
+    adding: addItem.isPending || addManyItems.isPending || addManyItemsWithVerdicts.isPending,
   }
 }
 

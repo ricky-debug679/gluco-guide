@@ -523,7 +523,7 @@ export function GroceryScan() {
                 {activeItems.length > 0 && (
                   <button
                     onClick={handleAnalyzeList}
-                    disabled={groceryItems.analyzing}
+                    disabled={groceryItems.analyzing || groceryItems.adding}
                     className="min-h-11 rounded-xl bg-[color:var(--color-sage)] px-4 py-3.5 text-[0.9rem] font-bold text-white disabled:opacity-60"
                   >
                     {groceryItems.analyzing ? t("groceryScan.analyzing") : t("groceryScan.analyzeMyList")}
