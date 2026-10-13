@@ -6,13 +6,13 @@ import es from "../locales/es.json"
 import zh from "../locales/zh.json"
 import hi from "../locales/hi.json"
 
-// `choose` is shown in its own language on the first-launch picker, so
-// someone who can't read English still recognizes the question.
+// Everything but `englishName` is written in the language itself, so the
+// first-launch picker is readable before anyone has chosen a language.
 export const supportedLanguages = [
-  { code: "en", label: "English", choose: "Choose your language" },
-  { code: "es", label: "Español", choose: "Elige tu idioma" },
-  { code: "zh", label: "中文", choose: "选择你的语言" },
-  { code: "hi", label: "हिन्दी", choose: "अपनी भाषा चुनें" },
+  { code: "en", label: "English", englishName: "English", hello: "Hello", welcome: "Welcome", choose: "Choose your language", suggested: "Suggested" },
+  { code: "es", label: "Español", englishName: "Spanish", hello: "Hola", welcome: "Bienvenido", choose: "Elige tu idioma", suggested: "Sugerido" },
+  { code: "zh", label: "中文", englishName: "Chinese", hello: "你好", welcome: "欢迎", choose: "选择你的语言", suggested: "推荐" },
+  { code: "hi", label: "हिन्दी", englishName: "Hindi", hello: "नमस्ते", welcome: "स्वागत है", choose: "अपनी भाषा चुनें", suggested: "सुझाव" },
 ] as const
 
 // Set once a person picks a language themselves; the detector's own cache
