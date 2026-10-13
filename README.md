@@ -6,6 +6,12 @@ GlucoGuide helps people with prediabetes, or at risk of it, build the daily habi
 
 Built for the 2026 Congressional App Challenge.
 
+## See it in action
+
+<img src="docs/screenshots/05-meal-photo-analysis.png" width="200" alt="AI meal photo analysis"> <img src="docs/screenshots/10-home-ai-note.png" width="200" alt="Home with an AI note about the day"> <img src="docs/screenshots/13-grocery-meal-tips.png" width="200" alt="AI grocery suggestions"> <img src="docs/screenshots/21-lab-trends.png" width="200" alt="Fasting glucose trend">
+
+📸 **[See every screen](docs/SCREENS.md)**, following one person through his first day and the weeks after.
+
 ## What it does
 
 **Daily dashboard.** Progress rings track calories, fiber, protein, carbs, fat, water, mind and sleep, supplements, and exercise. Three main rings show first, and tapping a ring opens the screen where you log it. New users get a short "Start here" checklist, and everyone chooses which areas to track. The calorie target is personalized from height, weight, age, sex, and activity level using the Mifflin-St Jeor equation.
