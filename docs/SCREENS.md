@@ -15,11 +15,11 @@ These screens follow one person, Alex, who was just told he has prediabetes, thr
 
 ## Getting started
 
-Before sign-up, the app asks for a language, greeting the person in their phone's language. Sign-up then takes five short steps: Alex's name, why he's here, what he wants to track, a few details about himself, and the calorie plan built from them. Because Alex's BMI is above the healthy range, he can then set a weight goal in Profile and pick a safe pace (Gentle, Steady, or Faster), and the app shows when he'd reach it. Day one opens with three small steps instead of a blank screen.
+Before sign-up, the app asks for a language, greeting the person in their phone's language. Sign-up then takes five short steps: Alex's name, why he's here, what he wants to track, a few details about himself, and the calorie plan built from them. His plan starts at a steady pace of about 1 lb (0.5 kg) a week. Later, in Profile, Alex sets a target of 180 lb and switches to Gentle, about 0.5 lb a week, and the app moves his expected finish from February to June 2027. Day one opens with three small steps instead of a blank screen.
 
 <img src="screenshots/01-language-picker.png" width="240" alt="Welcome screen asking for a language, greeting in Spanish"> <img src="screenshots/02-your-name.png" width="240" alt="Step 1: what should we call you?"> <img src="screenshots/03-your-goal.png" width="240" alt="Step 2: what brings you here, with Reverse prediabetes selected"> <img src="screenshots/04-choose-what-to-track.png" width="240" alt="Step 3: choosing what to track">
 
-<img src="screenshots/05-about-you.png" width="240" alt="Step 4: height, weight, age, sex, and activity level"> <img src="screenshots/06-your-plan.png" width="240" alt="Step 5: Alex's plan with BMI and a daily calorie target"> <img src="screenshots/07-weight-pace.png" width="240" alt="Weight goal in Profile with Gentle, Steady, and Faster pace"> <img src="screenshots/08-home-start-here.png" width="240" alt="Home with the Start here checklist">
+<img src="screenshots/05-about-you.png" width="240" alt="Step 4: height, weight, age, sex, and activity level"> <img src="screenshots/06-your-plan.png" width="240" alt="Step 5: Alex's plan with BMI and a daily calorie target"> <img src="screenshots/07-weight-pace.png" width="240" alt="Weight goal in Profile with the Gentle pace chosen and a June 2027 finish date"> <img src="screenshots/08-home-start-here.png" width="240" alt="Home with the Start here checklist">
 
 ## Logging a meal
 
