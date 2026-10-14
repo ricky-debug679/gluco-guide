@@ -8,7 +8,7 @@ Built for the 2026 Congressional App Challenge.
 
 ## See it in action
 
-<img src="docs/screenshots/05-meal-photo-analysis.png" width="200" alt="AI meal photo analysis"> <img src="docs/screenshots/10-home-ai-note.png" width="200" alt="Home with an AI note about the day"> <img src="docs/screenshots/13-grocery-meal-tips.png" width="200" alt="AI grocery suggestions"> <img src="docs/screenshots/21-lab-trends.png" width="200" alt="Fasting glucose trend">
+<img src="docs/screenshots/08-meal-photo-asks-first.png" width="200" alt="AI meal photo analysis asking which protein is in the dish"> <img src="docs/screenshots/14-home-ai-note.png" width="200" alt="Home with an AI note about the day"> <img src="docs/screenshots/17-grocery-meal-tips.png" width="200" alt="AI grocery suggestions"> <img src="docs/screenshots/25-lab-trends.png" width="200" alt="Fasting glucose trend">
 
 📸 **[See every screen](docs/SCREENS.md)**, following one person through his first day and the weeks after.
 
