@@ -193,6 +193,12 @@
     "continue": "继续",
     "getStarted": "开始使用",
     "skipForNow": "暂时跳过",
+    "weightGoalTitle": "你的体重目标",
+    "weightGoalLoss": "美国疾控中心（CDC）的糖尿病预防计划目标是减掉体重的 5–7%。我们已为你填入 7%，你可以修改。",
+    "weightGoalGain": "我们已填入你身高对应的健康体重范围下限。你可以修改，并请咨询医生。",
+    "weightGoalHealthy": "你的体重已在健康范围内。留空即可保持当前体重，或设定一个仍在健康范围内的目标。",
+    "targetWeightOptional": "目标体重（磅，可选）",
+    "weightGoalLater": "你可以随时在“我的”中修改目标和速度。",
     "genericError": "保存失败——请重试。"
   },
   "common": {

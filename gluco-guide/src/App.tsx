@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Navigate, Route, Routes } from "react-router-dom"
+import { Navigate, Route, Routes, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { LanguagePicker } from "./pages/LanguagePicker"
 import { hasChosenLanguage } from "./lib/i18n"
@@ -25,14 +25,21 @@ import { supabase } from "./lib/supabase"
 // onboarding is gated on the real profile actually being complete (height
 // set on the member row), proven by Supabase rather than in-memory UI
 // state, so it never re-traps a returning user who already finished it.
+// The gate covers every page, not just Home: signing in keeps whatever page
+// the browser was on (Profile, where Sign out lives, or wherever an
+// installed app reopens), and an unfinished profile must still start with
+// onboarding.
 // The demo-data fallback (no backend configured) still gates on the
 // in-memory onboarding flag, since there's nothing else to check it
 // against.
 function AppRoutes({ isLive }: { isLive: boolean }) {
   const onboardingDone = useAppStore((s) => s.onboarding.done)
   const householdCtx = useOptionalHousehold()
+  const { pathname } = useLocation()
   const profileIncomplete = isLive && !!householdCtx && !householdCtx.household.selfMember.height_cm
   const showOnboardingGate = isLive ? profileIncomplete : !onboardingDone
+
+  if (profileIncomplete && pathname !== "/onboarding") return <Navigate to="/onboarding" replace />
 
   return (
     <Routes>

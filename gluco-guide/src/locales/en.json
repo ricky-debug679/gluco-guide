@@ -193,6 +193,12 @@
     "continue": "Continue",
     "getStarted": "Get started",
     "skipForNow": "Skip for now",
+    "weightGoalTitle": "Your weight goal",
+    "weightGoalLoss": "The CDC's Diabetes Prevention Program aims for losing 5–7% of body weight. We've filled in 7% for you. Change it if you like.",
+    "weightGoalGain": "We've filled in the low end of the healthy weight range for your height. Change it if you like, and check with your doctor.",
+    "weightGoalHealthy": "Your weight is already in the healthy range. Leave this blank to keep it steady, or set a goal that stays in the range.",
+    "targetWeightOptional": "Target weight (lb, optional)",
+    "weightGoalLater": "You can change your goal and pace anytime in Profile.",
     "genericError": "Couldn't save that — try again."
   },
   "common": {

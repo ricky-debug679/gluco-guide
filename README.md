@@ -16,7 +16,7 @@ Built for the 2026 Congressional App Challenge.
 
 **Daily dashboard.** Progress rings track calories, fiber, protein, carbs, fat, water, mind and sleep, supplements, and exercise. Three main rings show first, and tapping a ring opens the screen where you log it. New users get a short "Start here" checklist, and everyone chooses which areas to track. The calorie target is personalized from height, weight, age, sex, and activity level using the Mifflin-St Jeor equation.
 
-**A healthy weight, in either direction.** Based on BMI, the plan helps people lose or gain weight toward the healthy range at a pace they choose, and never drops below 1,200 calories a day (1,500 for men). People under 18 stay at maintenance calories, since adult BMI cutoffs don't apply to a growing body.
+**A healthy weight, in either direction.** Based on BMI, the plan helps people lose or gain weight toward the healthy range. The last sign-up step suggests a target (7% lighter above the healthy range, the CDC Diabetes Prevention Program's goal) and lets people pick a pace, with the finish date shown as they choose. The plan never drops below 1,200 calories a day (1,500 for men). People under 18 stay at maintenance calories, since adult BMI cutoffs don't apply to a growing body.
 
 **Log a meal by photo.** Snap a plate and AI identifies the dish, estimates nutrition for the portion shown, and asks a short question when something can't be told from a photo, such as whether a dish is made with chicken or paneer, instead of guessing. You can also search about 326,000 foods from the OpenNutrition database or enter a meal by hand.
 

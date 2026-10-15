@@ -15,21 +15,17 @@ import { supabase } from "../lib/supabase"
 import {
   activityLevelKeys,
   bmiCategory,
-  buildCaloriePlan,
   calculateBmi,
   cmToFeetInches,
   feetInchesToCm,
   kgToLbs,
   lbsToKg,
-  weightPaceKeys,
   type ActivityLevel,
   type BiologicalSex,
   type WeightPace,
 } from "../lib/caloriePlan"
 import { goalKeys } from "../lib/goals"
-import { round1 } from "../lib/format"
-
-const MS_PER_DAY = 86_400_000
+import { estimateGoal, formatGoalDate, paceOptions as buildPaceOptions } from "../lib/weightGoal"
 
 export function Profile() {
   const { t, i18n } = useTranslation()
@@ -102,8 +98,6 @@ export function Profile() {
         ? 1
         : 0
   const goalReached = goalTotalDeltaKg > 0 ? goalCurrentKg <= goalTargetKg : goalTotalDeltaKg < 0 ? goalCurrentKg >= goalTargetKg : true
-  // The finish date comes from the same calorie plan the rings use, so it
-  // always matches the pace the app is actually planning for.
   const goalPlanInput = (() => {
     const m = selfMember
     if (!hasGoal || goalReached || !m?.height_cm || !m.weight_kg || !m.age || !m.biological_sex || !m.activity_level) return null
@@ -116,35 +110,8 @@ export function Profile() {
       targetWeightKg: goalTargetKg,
     }
   })()
-  const goalEstimate = (() => {
-    if (!goalPlanInput) return null
-    const plan = buildCaloriePlan({ ...goalPlanInput, pace: selfMember?.weight_pace })
-    if (plan.isMinor) return { kind: "minor" as const }
-    const gaining = goalTargetKg > goalCurrentKg
-    if (gaining && goalTargetKg > plan.healthyWeightHighKg) return { kind: "aboveHealthy" as const }
-    if (!gaining && goalTargetKg < plan.healthyWeightLowKg) return { kind: "belowHealthy" as const }
-    // The plan must actually be moving toward the goal for a date to mean anything.
-    const towardGoal = gaining ? plan.weeklyChangeKg > 0 : plan.weeklyChangeKg < 0
-    if (!towardGoal) return { kind: "noChange" as const }
-    const ratePerWeekKg = Math.abs(plan.weeklyChangeKg)
-    const weeks = Math.abs(goalTargetKg - goalCurrentKg) / ratePerWeekKg
-    return {
-      kind: "eta" as const,
-      gaining,
-      rateLb: round1(kgToLbs(ratePerWeekKg)),
-      date: new Date(Date.now() + weeks * 7 * MS_PER_DAY),
-      // Without a saved choice the plan uses its default: gentle within the healthy range, steady outside it.
-      activePace: selfMember?.weight_pace ?? (plan.category === "healthy" ? "gentle" : "steady"),
-    }
-  })()
-  // Each pace's real weekly rate for this person, after the calorie floor.
-  const paceOptions =
-    goalPlanInput && goalEstimate?.kind === "eta"
-      ? weightPaceKeys.map((pace) => ({
-          pace,
-          rateLb: round1(kgToLbs(Math.abs(buildCaloriePlan({ ...goalPlanInput, pace }).weeklyChangeKg))),
-        }))
-      : null
+  const goalEstimate = goalPlanInput ? estimateGoal(goalPlanInput, selfMember?.weight_pace) : null
+  const paceOptions = goalPlanInput && goalEstimate?.kind === "eta" ? buildPaceOptions(goalPlanInput) : null
   const setWeightPace = useSetWeightPace(selfMember?.id)
   const [paceError, setPaceError] = useState<string | null>(null)
 
@@ -163,11 +130,7 @@ export function Profile() {
           rate: goalEstimate.rateLb,
           target: Math.round(kgToLbs(goalTargetKg)),
           unit: t("profile.lb"),
-          date: goalEstimate.date.toLocaleDateString(i18n.language, {
-            month: "short",
-            day: "numeric",
-            ...(goalEstimate.date.getFullYear() !== new Date().getFullYear() && { year: "numeric" }),
-          }),
+          date: formatGoalDate(goalEstimate.date, i18n.language),
         })
       : goalEstimate?.kind === "belowHealthy"
         ? t("profile.goalBelowHealthy")

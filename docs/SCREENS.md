@@ -15,17 +15,17 @@ These screens follow one person, Alex, who was just told he has prediabetes, thr
 
 ## Getting started
 
-Before sign-up, the app asks for a language, greeting the person in their phone's language. Sign-up then takes five short steps: Alex's name, why he's here, what he wants to track, a few details about himself, and the calorie plan built from them. His plan starts at a steady pace of about 1 lb (0.5 kg) a week. Later, in Profile, Alex sets a target of 180 lb and switches to Gentle, about 0.5 lb a week, and the app moves his expected finish from February to June 2027. Day one opens with three small steps instead of a blank screen.
+Before sign-up, the app asks for a language, greeting the person in their phone's language. Sign-up then takes six short steps: Alex's name, why he's here, what he wants to track, a few details about himself, the calorie plan built from them, and his weight goal. Because his BMI is above the healthy range, the app fills in a target 7% lighter (184 lb), the weight-loss goal of the CDC's Diabetes Prevention Program. He can change it, pick a safe pace, and see his finish date and daily calories update as he chooses. Day one then opens with three small steps instead of a blank screen.
 
 <img src="screenshots/01-language-picker.png" width="240" alt="Welcome screen asking for a language, greeting in Spanish"> <img src="screenshots/02-your-name.png" width="240" alt="Step 1: what should we call you?"> <img src="screenshots/03-your-goal.png" width="240" alt="Step 2: what brings you here, with Reverse prediabetes selected"> <img src="screenshots/04-choose-what-to-track.png" width="240" alt="Step 3: choosing what to track">
 
-<img src="screenshots/05-about-you.png" width="240" alt="Step 4: height, weight, age, sex, and activity level"> <img src="screenshots/06-your-plan.png" width="240" alt="Step 5: Alex's plan with BMI and a daily calorie target"> <img src="screenshots/07-weight-pace.png" width="240" alt="Weight goal in Profile with the Gentle pace chosen and a June 2027 finish date"> <img src="screenshots/08-home-start-here.png" width="240" alt="Home with the Start here checklist">
+<img src="screenshots/05-about-you.png" width="240" alt="Step 4: height, weight, age, sex, and activity level"> <img src="screenshots/06-your-plan.png" width="240" alt="Step 5: Alex's plan with BMI and a daily calorie target"> <img src="screenshots/07-your-weight-goal.png" width="240" alt="Step 6: a suggested 184 lb target, the Steady pace, and a finish date"> <img src="screenshots/08-home-start-here.png" width="240" alt="Home with the Start here checklist">
 
 ## Logging a meal
 
 Alex photographs his lunch. The AI names the dish, estimates the portion, flags ingredients to watch (⚠), and scores the meal from refined carbs to fiber and protein.
 
-The battered pieces in this dish could be chicken, paneer, tofu, or cauliflower, and each has very different nutrition. So instead of guessing, the AI asks. Until Alex answers, the estimate stays greyed out and can't be added to his log. He answers "Paneer or tofu," and the AI recalculates: protein drops from 28 g to 18 g and calories from 620 to 520, and the notes change to match. It then suggests one swap for next time, and one tap adds the meal to today's log.
+The battered pieces in this dish could be chicken, paneer, tofu, or cauliflower, and each has very different nutrition. So instead of guessing, the AI asks. Until Alex answers, the estimate stays greyed out and can't be added to his log. He answers "Paneer or tofu," and the AI recalculates: protein drops from 28 g to 18 g, the calorie estimate is recalculated to 520, and the notes change to match. It then suggests one swap for next time, and one tap adds the meal to today's log.
 
 Alex can also search about 326,000 foods from the OpenNutrition database or type in a nutrition label.
 
@@ -41,7 +41,7 @@ Lunch fills the rings, and the AI reads Alex's day so far and writes him a short
 
 ## Groceries
 
-The AI reviews Alex's whole shopping list. It flags items to limit, links to healthier homemade recipes, and looks at the items together to guess what he plans to cook. Here it spots a chicken, beans, and spinach bowl and suggests brown or cauliflower rice instead of white. History shows whether his lists are getting healthier, and Favorites adds his usual staples in one tap.
+The AI reviews Alex's whole shopping list. It flags items to limit, links to healthier homemade recipes, and looks at the items together to guess what he plans to cook. Here it spots a rice and chicken dish and suggests brown rice, wild rice, or cauliflower rice instead of white. History shows whether his lists are getting healthier, and Favorites adds his usual staples in one tap.
 
 <img src="screenshots/17-grocery-ai-review.png" width="240" alt="Grocery list with AI notes on each item"> <img src="screenshots/18-grocery-meal-tips.png" width="240" alt="AI suggestions based on the meal the list suggests"> <img src="screenshots/19-grocery-history.png" width="240" alt="Healthy versus caution items across past lists"> <img src="screenshots/20-grocery-favorites.png" width="240" alt="Favorite grocery items">
 

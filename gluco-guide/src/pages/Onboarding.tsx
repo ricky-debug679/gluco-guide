@@ -3,16 +3,19 @@ import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { useAppStore } from "../store/useAppStore"
 import { useOptionalHousehold } from "../context/HouseholdContext"
-import { useCompleteProfile } from "../hooks/useHousehold"
+import { useCompleteProfile, useSetWeightGoal, useSetWeightPace } from "../hooks/useHousehold"
 import { supabase } from "../lib/supabase"
 import {
   activityLevelKeys,
   buildCaloriePlan,
   feetInchesToCm,
+  kgToLbs,
   lbsToKg,
   type ActivityLevel,
   type BiologicalSex,
+  type WeightPace,
 } from "../lib/caloriePlan"
+import { estimateGoal, formatGoalDate, paceOptions, suggestedTargetLbs } from "../lib/weightGoal"
 import { goalKeys } from "../lib/goals"
 import { trackedAreaKeys, type TrackedArea } from "../lib/trackedAreas"
 import { LanguageSwitcher } from "../components/LanguageSwitcher"
@@ -25,7 +28,7 @@ function parseLabValue(raw: string): number | null {
 }
 
 export function Onboarding() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
 
   // Demo-data path (no backend configured)
@@ -39,6 +42,8 @@ export function Onboarding() {
   const householdCtx = useOptionalHousehold()
   const isLive = !!householdCtx
   const completeProfile = useCompleteProfile(householdCtx?.household.selfMember.id)
+  const setWeightGoal = useSetWeightGoal(householdCtx?.household.selfMember.id)
+  const setWeightPace = useSetWeightPace(householdCtx?.household.selfMember.id)
 
   const [step, setStep] = useState(0)
   // Always starts blank — never pre-filled from the placeholder bootstrap
@@ -55,11 +60,13 @@ export function Onboarding() {
   const [fastingGlucose, setFastingGlucose] = useState("")
   const [glucose2h, setGlucose2h] = useState("")
   const [hbA1c, setHbA1c] = useState("")
+  const [targetLbs, setTargetLbs] = useState("")
+  const [pace, setPace] = useState<WeightPace | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Live steps: 0 name, 1 goal, 2 what to track, 3 about you, 4 plan.
-  const lastStep = isLive ? 4 : 2
+  // Live steps: 0 name, 1 goal, 2 what to track, 3 about you, 4 plan, 5 weight goal.
+  const lastStep = isLive ? 5 : 2
 
   function toggleTrackedArea(key: TrackedArea) {
     setTrackedAreas((current) => (current.includes(key) ? current.filter((k) => k !== key) : [...current, key]))
@@ -72,18 +79,26 @@ export function Onboarding() {
     ? Boolean(heightFeet && weightLbs && age && sex && activityLevel)
     : true
 
-  const plan =
+  const planInput =
     isLive && sex && activityLevel && heightFeet && weightLbs && age
-      ? buildCaloriePlan({
+      ? {
           heightCm: feetInchesToCm(Number(heightFeet), Number(heightInches) || 0),
           weightKg: lbsToKg(Number(weightLbs)),
           age: Number(age),
           sex,
           activityLevel,
-        })
+        }
       : null
+  const plan = planInput ? buildCaloriePlan(planInput) : null
 
-  async function handleFinish() {
+  // Weight goal step: a blank target means no goal (the plan's default pace still applies).
+  const goalInput = planInput && Number(targetLbs) > 0 ? { ...planInput, targetWeightKg: lbsToKg(Number(targetLbs)) } : null
+  const goalEstimate = goalInput ? estimateGoal(goalInput, pace) : null
+  const goalIsValid = goalEstimate?.kind === "eta"
+  const goalPlan = planInput ? buildCaloriePlan(goalIsValid && goalInput ? { ...goalInput, pace } : planInput) : null
+  const canFinishGoal = !targetLbs.trim() || goalIsValid
+
+  async function handleFinish(saveGoal = false) {
     if (!isLive || !sex || !activityLevel) {
       completeDemo()
       navigate("/")
@@ -102,6 +117,11 @@ export function Onboarding() {
         activityLevel,
         trackedAreas,
       })
+
+      if (saveGoal && goalInput && goalEstimate?.kind === "eta") {
+        await setWeightGoal.mutateAsync({ targetWeightKg: goalInput.targetWeightKg, startWeightKg: goalInput.weightKg })
+        await setWeightPace.mutateAsync(goalEstimate.activePace)
+      }
 
       if (supabase) {
         const memberId = householdCtx!.household.selfMember.id
@@ -144,10 +164,22 @@ export function Onboarding() {
     }
 
     if (step === lastStep) {
-      void handleFinish()
+      void handleFinish(true)
       return
     }
+    // Entering the weight goal step: start from the suggested target for this body.
+    if (step === lastStep - 1 && plan && planInput) {
+      const suggestion = suggestedTargetLbs(plan, planInput.weightKg)
+      setTargetLbs(suggestion ? String(suggestion) : "")
+      setPace(null)
+    }
     setStep((s) => Math.min(lastStep, s + 1))
+  }
+
+  // Back to the home address, so whoever signs in next starts from the top.
+  async function handleSignOut() {
+    if (supabase) await supabase.auth.signOut()
+    navigate("/", { replace: true })
   }
 
   function handleSkip() {
@@ -174,7 +206,16 @@ export function Onboarding() {
               }`}
             />
           ))}
-          <LanguageSwitcher className="ml-auto" />
+          {/* Other pages wait until sign-up is done, so this is the way out for someone in the wrong account. */}
+          {isLive && (
+            <button
+              onClick={() => void handleSignOut()}
+              className="ml-auto min-h-9 px-1 text-[0.78rem] font-semibold text-[color:var(--color-ink-faint)]"
+            >
+              {t("nav.signOut")}
+            </button>
+          )}
+          <LanguageSwitcher className={isLive ? "" : "ml-auto"} />
         </div>
 
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-7">
@@ -488,6 +529,104 @@ export function Onboarding() {
             </>
           )}
 
+          {isLive && displayStep === 5 && plan && goalPlan && (
+            <>
+              <div>
+                <div className="text-[0.78rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
+                  {t("onboarding.stepOf", { n: 6, total: lastStep + 1 })}
+                </div>
+                <h1 className="mt-2 text-[1.5rem] font-semibold">{t("onboarding.weightGoalTitle")}</h1>
+                <div className="mt-2 text-[0.9rem] leading-relaxed text-[color:var(--color-ink-soft)]">
+                  {plan.isMinor
+                    ? t("profile.goalMinor")
+                    : plan.category === "healthy"
+                      ? t("onboarding.weightGoalHealthy")
+                      : plan.category === "underweight"
+                        ? t("onboarding.weightGoalGain")
+                        : t("onboarding.weightGoalLoss")}
+                </div>
+              </div>
+
+              {!plan.isMinor && (
+                <>
+                  <div>
+                    <label
+                      htmlFor="onboarding-target-weight"
+                      className="text-[0.76rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]"
+                    >
+                      {plan.category === "healthy" ? t("onboarding.targetWeightOptional") : t("profile.targetWeightLabel")}
+                    </label>
+                    <input
+                      id="onboarding-target-weight"
+                      type="number"
+                      inputMode="numeric"
+                      className="mt-2 min-h-11 w-full rounded-xl border border-[color:var(--color-line)] bg-[color:var(--color-surface)] p-3.5 text-[0.95rem]"
+                      value={targetLbs}
+                      onChange={(e) => setTargetLbs(e.target.value)}
+                    />
+                  </div>
+
+                  {goalEstimate?.kind === "eta" && goalInput ? (
+                    <div className="flex flex-col gap-2">
+                      <div className="text-[0.72rem] font-bold uppercase tracking-[0.06em] text-[color:var(--color-ink-faint)]">
+                        {t("profile.paceLabel")}
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {paceOptions(goalInput).map(({ pace: option, rateLb }) => {
+                          const active = goalEstimate.activePace === option
+                          return (
+                            <button
+                              key={option}
+                              aria-pressed={active}
+                              onClick={() => setPace(option)}
+                              className={`flex min-h-14 flex-col items-center justify-center rounded-xl border-[1.5px] px-1 py-2 ${
+                                active
+                                  ? "border-[color:var(--color-sage)] bg-[color:var(--color-sage-bg)] text-[color:var(--color-sage)]"
+                                  : "border-[color:var(--color-line)] bg-[color:var(--color-surface)] text-[color:var(--color-ink-soft)]"
+                              }`}
+                            >
+                              <span className="text-[0.84rem] font-bold">{t(`profile.paces.${option}`)}</span>
+                              <span className="text-[0.7rem]">{t("profile.paceRate", { rate: rateLb, unit: t("profile.lb") })}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                      <div className="text-[0.85rem] leading-relaxed">
+                        {t("profile.goalEta", {
+                          rate: goalEstimate.rateLb,
+                          target: Math.round(kgToLbs(goalInput.targetWeightKg)),
+                          unit: t("profile.lb"),
+                          date: formatGoalDate(goalEstimate.date, i18n.language),
+                        })}
+                      </div>
+                      <div className="text-[0.75rem] leading-relaxed text-[color:var(--color-ink-faint)]">
+                        {goalEstimate.gaining ? t("profile.paceGainNote") : t("profile.paceLossNote")}
+                      </div>
+                    </div>
+                  ) : goalEstimate ? (
+                    <div className="rounded-xl bg-[color:var(--color-honey-bg)] p-3 text-[0.82rem] leading-relaxed">
+                      {goalEstimate.kind === "belowHealthy"
+                        ? t("profile.goalBelowHealthy")
+                        : goalEstimate.kind === "aboveHealthy"
+                          ? t("profile.goalAboveHealthy")
+                          : t("profile.goalNoDeficit")}
+                    </div>
+                  ) : null}
+                </>
+              )}
+
+              <div className="rounded-2xl bg-[color:var(--color-sage-bg)] p-4">
+                <div className="text-[0.8rem] font-bold uppercase tracking-[0.05em] text-[color:var(--color-ink-faint)]">
+                  {t("onboarding.dailyCalorieTarget")}
+                </div>
+                <div className="mt-1 font-serif text-[1.8rem]">{goalPlan.targetCalories.toLocaleString()} kcal</div>
+                <div className="mt-1 text-[0.78rem] text-[color:var(--color-ink-faint)]">
+                  {t("onboarding.weightGoalLater")}
+                </div>
+              </div>
+            </>
+          )}
+
           {!isLive && demoOnboarding.step === 2 && (
             <>
               <div>
@@ -543,13 +682,14 @@ export function Onboarding() {
             disabled={
               (displayStep === 0 && !canContinueName) ||
               (isLive && displayStep === 3 && !canContinueAboutYou) ||
+              (isLive && displayStep === 5 && !canFinishGoal) ||
               saving
             }
             className="min-h-11 rounded-xl bg-[color:var(--color-sage)] px-4 py-3.5 text-[0.92rem] font-bold text-white disabled:opacity-60"
           >
             {saving ? t("onboarding.saving") : displayStep === lastStep ? t("onboarding.getStarted") : t("onboarding.continue")}
           </button>
-          {!isLive && displayStep === lastStep && (
+          {displayStep === lastStep && (!isLive || targetLbs.trim() !== "") && (
             <button
               onClick={handleSkip}
               disabled={saving}

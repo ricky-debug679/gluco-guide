@@ -193,6 +193,12 @@
     "continue": "Continuar",
     "getStarted": "Comenzar",
     "skipForNow": "Omitir por ahora",
+    "weightGoalTitle": "Tu meta de peso",
+    "weightGoalLoss": "El Programa de Prevención de la Diabetes de los CDC busca perder entre el 5 y el 7 % del peso corporal. Te sugerimos el 7 %. Cámbialo si quieres.",
+    "weightGoalGain": "Te sugerimos el límite inferior del rango de peso saludable para tu estatura. Cámbialo si quieres y consulta a tu médico.",
+    "weightGoalHealthy": "Tu peso ya está en el rango saludable. Déjalo en blanco para mantenerlo, o fija una meta dentro del rango.",
+    "targetWeightOptional": "Peso meta (lb, opcional)",
+    "weightGoalLater": "Puedes cambiar tu meta y tu ritmo cuando quieras en Perfil.",
     "genericError": "No se pudo guardar — inténtalo de nuevo."
   },
   "common": {
