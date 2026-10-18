@@ -37,6 +37,7 @@ Built for the 2026 Congressional App Challenge.
 - Every table holding personal data uses row-level security, so each person can only read and change their own data.
 - AI requests run on the server (Supabase Edge Functions). The AI provider's key is never sent to the browser, and every request requires a signed-in user.
 - The progress summary sends only aggregate numbers, such as average cups of water per day, never raw logs.
+- Meal photos, grocery lists, and progress summaries are analyzed by Anthropic's Claude API. GlucoGuide does not sell or share user data.
 - Users can permanently delete their account and all of its data from the Profile screen.
 
 GlucoGuide is an educational tool, not medical advice. Lab ranges follow published ADA and CDC guidance; always confirm changes with a doctor.
